@@ -1,0 +1,39 @@
+{
+ "interaction_id": "v1_ChdZcERlYXRHY09QQ3Y5TW9QcnNxU3FBYxIXWXBEZWF0R2NPUEN2OU1vUHJzcVNxQWM",
+ "usage": {
+  "input_tokens_by_modality": [
+   {
+    "modality": "text",
+    "tokens": 58707
+   }
+  ],
+  "output_tokens_by_modality": [
+   {
+    "modality": "text",
+    "tokens": 6034
+   }
+  ],
+  "total_cached_tokens": 0,
+  "total_input_tokens": 58707,
+  "total_output_tokens": 6034,
+  "total_thought_tokens": 16927,
+  "total_tokens": 81668,
+  "total_tool_use_tokens": 0
+ },
+ "cost_usd": 0.347024,
+ "hypothesis": "Implement `aermod_py/prmcalc.py` containing `prmcalc`, `gamcalc`, `prmheff`, `prm_pchi`, and `prm_plume` translated from `calc1.f` according to the tier B PRIME conventions.",
+ "accepted": true,
+ "reason": "all checks pass",
+ "files": [
+  "prmcalc.py"
+ ],
+ "tier_a": {
+  "aertest_nobldg": "aertest_nobldg       PASS  slope 1.000000/1.000000/1.000000 [ok]  zero 100.000%  p99 0.00e+00  H4H fail 0/144  stab 100.00%(64h) conv 100.00%(32h)",
+  "CAPPED_STACK2": "CAPPED_STACK2        PASS  slope 1.000000/1.000000/1.000000 [ok]  zero 100.000%  p99 0.00e+00  H4H fail 0/288  stab 100.00%(64h) conv 100.00%(32h)",
+  "CAPPED_STACK2C0": "CAPPED_STACK2C0      PASS  slope 1.000000/1.000000/1.000000 [ok]  zero 100.000%  p99 0.00e+00  H4H fail 0/288  stab 100.00%(64h) conv 100.00%(32h)",
+  "CAPPED_STACK2CE": "CAPPED_STACK2CE      PASS  slope 1.000000/1.000000/1.000000 [ok]  zero 100.000%  p99 0.00e+00  H4H fail 0/288  stab 100.00%(64h) conv 100.00%(32h)",
+  "HRDOW_STACK1": "HRDOW_STACK1         PASS  slope 1.000000/1.000000/1.000000 [ok]  zero 100.000%  p99 0.00e+00  H4H fail 0/36  stab 100.00%(3520h) conv 100.00%(5264h)",
+  "FLATELEV_FLAT_STK": "FLATELEV_FLAT_STK    PASS  slope 1.000000/1.000000/1.000000 [ok]  zero 100.000%  p99 0.00e+00  H4H fail 0/11  stab 100.00%(5144h) conv 100.00%(3640h)",
+  "testpm10_stack2": "testpm10_stack2      PASS  slope 1.000000/1.000000/1.000000 [ok]  zero 100.000%  p99 0.00e+00  H4H fail 0/36  stab 100.00%(20926h) conv 100.00%(22898h)"
+ }
+}
