@@ -880,9 +880,9 @@ def write_postfile(path: Path | str, project: Project, dates: np.ndarray, conc: 
         POSTFILE_COLUMNS,
         POSTFILE_RULE,
     ]
-    for h, date in enumerate(dates):
+    for h, kurdat in enumerate(dates):
         for i in range(len(r)):
             lines.append(format_row(r.AXR[i], r.AYR[i], float(conc[h, i]), r.AZELEV[i],
-                                    r.AZHILL[i], r.AZFLAG[i], project.group, int(date),
+                                    r.AZHILL[i], r.AZFLAG[i], project.group, int(kurdat),
                                     r.NETID[i], project.file_format))
     Path(path).write_text("\n".join(lines) + "\n")

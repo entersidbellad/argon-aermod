@@ -174,10 +174,9 @@ def read_obukhov(sfc: Path | str) -> pd.Series:
     """YYMMDDHH (str) -> Monin-Obukhov length L (m) from an AERMET .sfc file."""
     out = {}
     with open(sfc, errors="replace") as f:
-        next(f)
         for line in f:
             t = line.split()
-            if len(t) < 12:
+            if ":" in line or len(t) < 12:     # header records (repeated per year in multi-year files)
                 continue
             yy, mo, dy, hr = int(t[0]) % 100, int(t[1]), int(t[2]), int(t[4])
             out[f"{yy:02d}{mo:02d}{dy:02d}{hr:02d}"] = float(t[11])
