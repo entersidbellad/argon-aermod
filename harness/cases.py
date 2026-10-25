@@ -46,6 +46,8 @@ class Case:
         return EPA_DIR / "postfiles" / self.epa_postfile if self.epa_postfile else None
 
     def out_dir(self, who: str) -> Path:
+        if not who or Path(who).name != who or who in (".", ".."):
+            raise ValueError(f"who must be a plain directory name under out/, got {who!r}")
         return OUT_DIR / who / self.name
 
     def postfile(self, who: str) -> Path:
