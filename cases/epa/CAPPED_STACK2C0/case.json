@@ -13,27 +13,28 @@
   ],
   "includes": [],
   "sources": [
-    "STACK1",
-    "STACK1C0",
-    "STACK2",
-    "STACK2C0",
-    "STACK2CE"
+    "STACK2C0"
   ],
+  "origin_sources": [],
   "removed": {
     "sources": [
+      "STACK1",
       "STACK1C",
+      "STACK1C0",
       "STACK1H",
+      "STACK2",
       "STACK2C",
+      "STACK2CE",
       "STACK2H"
     ],
     "keywords": {
-      "LOCATION": 4,
-      "SRCPARAM": 4,
-      "BUILDHGT": 2,
-      "BUILDWID": 12,
-      "BUILDLEN": 12,
-      "XBADJ": 12,
-      "YBADJ": 12,
+      "LOCATION": 8,
+      "SRCPARAM": 8,
+      "BUILDHGT": 4,
+      "BUILDWID": 24,
+      "BUILDLEN": 24,
+      "XBADJ": 24,
+      "YBADJ": 24,
       "SRCGROUP": 8
     }
   },

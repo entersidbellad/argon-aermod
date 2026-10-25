@@ -15,6 +15,7 @@
   "sources": [
     "STACK2"
   ],
+  "origin_sources": [],
   "removed": {
     "sources": [
       "STACK1"

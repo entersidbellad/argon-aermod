@@ -15,12 +15,16 @@
     "inputs/lovett_rec.dat"
   ],
   "sources": [
-    "ELEV_STK",
     "FLAT_STK"
   ],
+  "origin_sources": [],
   "removed": {
-    "sources": [],
+    "sources": [
+      "ELEV_STK"
+    ],
     "keywords": {
+      "LOCATION": 1,
+      "SRCPARAM": 1,
       "SRCGROUP": 1
     }
   },

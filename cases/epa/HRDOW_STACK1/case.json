@@ -13,16 +13,21 @@
   ],
   "includes": [],
   "sources": [
-    "STACK1",
-    "STACK2",
-    "STACK3",
-    "STACK4",
-    "STACK5",
-    "STACK6"
+    "STACK1"
   ],
+  "origin_sources": [],
   "removed": {
-    "sources": [],
+    "sources": [
+      "STACK2",
+      "STACK3",
+      "STACK4",
+      "STACK5",
+      "STACK6"
+    ],
     "keywords": {
+      "LOCATION": 5,
+      "SRCPARAM": 5,
+      "EMISFACT": 30,
       "SRCGROUP": 5
     }
   },

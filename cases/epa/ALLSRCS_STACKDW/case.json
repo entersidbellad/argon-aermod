@@ -13,8 +13,10 @@
   ],
   "includes": [],
   "sources": [
-    "STACK",
     "STACKDW"
+  ],
+  "origin_sources": [
+    "STACK"
   ],
   "removed": {
     "sources": [

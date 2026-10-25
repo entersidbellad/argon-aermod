@@ -2,9 +2,11 @@
 """Generate cases/<kind>/<name>/case.inp and case.json from EPA's decks.
 
 Reductions applied to every deck (see harness/cases.py for per-case options):
-  * SO: keep only POINT sources (optionally only ``keep_sources``); drop every
-    keyword that names a dropped source; optionally drop building keywords.
-    Keep only the SRCGROUP of the case's group.
+  * SO: keep only the POINT sources of the case's group (optionally only
+    ``keep_sources``), plus any POINT source a polar receptor network uses as
+    its origin (kept outside the group, listed as ``origin_sources``); drop
+    every keyword that names a dropped source; optionally drop building
+    keywords. Keep only the SRCGROUP of the case's group.
   * CO: ERRORFIL errors.out; drop EVENTFIL. AVERTIME is left as EPA wrote it:
     with POLLUTID SO2, "AVERTIME 1" alone switches AERMOD into the 1-hr SO2
     NAAQS processing, which rejects less than a year of met (error E480).
@@ -56,13 +58,61 @@ def point_sources(lines: list[str]) -> dict[str, str]:
     return out
 
 
+def group_members(lines: list[str], group: str) -> set[str] | None:
+    """Sources named on the SRCGROUP cards of ``group``; None for ALL."""
+    if group.upper() == "ALL":
+        return None
+    members: set[str] = set()
+    for line in lines:
+        pw, rest = split_line(line)
+        if len(rest) >= 2 and rest[0].upper() == "SRCGROUP" and rest[1].upper() == group.upper():
+            for m in rest[2:]:
+                if "-" in m:
+                    raise SystemExit(f"source range {m!r} in SRCGROUP {group} is not supported")
+                members.add(m.upper())
+    if not members:
+        raise SystemExit(f"no SRCGROUP cards for group {group}")
+    return members
+
+
+def receptor_origins(lines: list[str]) -> set[str]:
+    """Source IDs that RE GRIDPOLR ORIG / DISCPOLR cards use as a receptor origin."""
+    origins: set[str] = set()
+    path = None
+    for line in lines:
+        if line.lstrip().startswith("**"):
+            continue
+        pw, rest = split_line(line)
+        path = pw or path
+        if path != "RE" or not rest:
+            continue
+        up = [t.upper() for t in rest]
+        if up[0] == "DISCPOLR" and len(up) > 1:
+            origins.add(up[1])
+        if "ORIG" in up:
+            i = up.index("ORIG")
+            if i + 1 < len(up) and not re.fullmatch(r"[-+.\d]+", up[i + 1]):
+                origins.add(up[i + 1])
+    return origins
+
+
 def reduce_deck(text: str, case: Case) -> tuple[str, dict]:
     lines = text.splitlines()
     types = point_sources(lines)
-    keep = {
+    members = group_members(lines, case.group)
+    # Concentrations are computed source by source, so sources outside the
+    # POSTFILE group cannot change it and are dropped -- except sources that
+    # anchor a polar receptor network, which stay in the deck (outside the group).
+    scored = {
         sid for sid, typ in types.items()
-        if typ == "POINT" and (case.keep_sources is None or sid in case.keep_sources)
+        if typ == "POINT"
+        and (case.keep_sources is None or sid in case.keep_sources)
+        and (members is None or sid in members)
     }
+    origins = receptor_origins(lines) - scored
+    if any(types.get(o) != "POINT" for o in origins):
+        raise SystemExit(f"{case.name}: receptor origin(s) {sorted(origins)} are not POINT sources")
+    keep = scored | origins
     dropped_sources = sorted(set(types) - keep)
     removed = {"sources": dropped_sources, "keywords": {}}
 
@@ -152,7 +202,7 @@ def reduce_deck(text: str, case: Case) -> tuple[str, dict]:
     if len(met) != 2:
         raise SystemExit(f"{case.name}: expected SURFFILE and PROFFILE, found {met}")
     return "\n".join(out) + "\n", {"removed": removed, "met": met, "includes": includes,
-                                   "sources": sorted(keep)}
+                                   "sources": sorted(scored), "origin_sources": sorted(origins)}
 
 
 _RE_KEYWORDS = {
@@ -181,6 +231,7 @@ def build(case: Case) -> Path:
         "met": [f"meteorology/{m}" for m in info["met"]],
         "includes": [f"inputs/{i}" for i in info["includes"]],
         "sources": info["sources"],
+        "origin_sources": info["origin_sources"],
         "removed": info["removed"],
         "notes": case.notes,
     }
