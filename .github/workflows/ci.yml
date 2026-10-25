@@ -1,113 +1,60 @@
-name: AERMOD Port CI
+name: harness
 
 on:
   push:
-    branches: [ main, cursor/* ]
+    branches: [main, "cursor/**"]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  build-reference:
+  fast:
+    # No EPA download: tests that need the binary or its outputs skip with a reason.
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Install gfortran
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gfortran
-    
-    - name: Download AERMOD source
-      run: |
-        cd ref
-        ./download_aermod.sh
-    
-    - name: Build AERMOD reference
-      run: |
-        cd ref
-        ./build_aermod.sh
-    
-    - name: Verify binary
-      run: |
-        ./ref/aermod --version || echo "Binary exists"
-    
-    - name: Cache reference binary
-      uses: actions/cache@v3
-      with:
-        path: |
-          ref/build/
-          ref/aermod
-        key: aermod-binary-${{ runner.os }}-26135
-  
-  test-harness:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q -rs -m "not slow"
+      - name: port/aermod_py provenance
+        run: python split.py --verify
+      - name: compare.py sha256
+        run: make freeze
+
+  reference:
+    # Builds our gfortran AERMOD 26135, regenerates every oracle, dump and
+    # DEBUGOPT run, then runs the whole suite and a fuzz batch against them.
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 60
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-    
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-    
-    - name: Run unit tests
-      run: |
-        python -m pytest tests/ -v --cov=harness --cov-report=term-missing
-    
-    - name: Test pack.py
-      run: |
-        # Test without actual source (just verify scripts work)
-        python pack.py --help
-        python split.py --help
-    
-    - name: Verify compare.py hash
-      run: |
-        make freeze
-  
-  test-reference-cases:
-    runs-on: ubuntu-latest
-    needs: build-reference
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Install gfortran
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gfortran
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-    
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-    
-    - name: Restore reference binary
-      uses: actions/cache@v3
-      with:
-        path: |
-          ref/build/
-          ref/aermod
-        key: aermod-binary-${{ runner.os }}-26135
-    
-    - name: Download test cases
-      run: |
-        cd ref
-        ./download_aermod.sh
-    
-    - name: Run AERTEST reference
-      run: |
-        python harness/run_ref.py AERTEST --verbose || echo "Expected: needs test case files"
-    
-    - name: Test ref-vs-ref comparison
-      run: |
-        echo "This would compare our binary vs EPA reference files"
-        echo "Expected: Some cases differ at 1e-4 precision (documented)"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update && sudo apt-get install -y gfortran
+      - run: pip install -r requirements.txt
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ref/aermod_source
+            ref/epa_testcases
+          key: epa-26135-${{ hashFiles('ref/checksums.sha256', 'ref/testcase_manifest.txt') }}
+      - name: Fetch EPA source and test cases (checksummed)
+        run: python ref/fetch.py
+      - name: Build ref/aermod and ref/aermod_dump
+        run: ref/build.sh && ref/build_dump.sh
+      - name: Oracles, setup dumps, DEBUGOPT runs
+        run: make refs dumps debug-refs
+      - name: Oracle checksums vs the committed build (informational across gfortran versions)
+        continue-on-error: true
+        run: python harness/suite.py --check-checksums
+      - name: Ref-vs-ref through compare.py
+        run: python harness/suite.py --who ref2 --tier all
+      - run: python -m pytest -q -rs
+      - name: Fuzz decks against the binary and SETUP.DMP
+        run: |
+          python harness/fuzz.py -n 10 --tier A --seed 1
+          python harness/fuzz.py -n 10 --tier B --seed 2
+      - run: python pack.py
+      - run: python split.py --verify

@@ -4,10 +4,11 @@ Most tests run against real artefacts that are not committed (EPA source, our
 compiled binaries, their outputs). Each test skips, saying what to run, when
 its artefact is missing:
 
-    python ref/fetch.py && ref/build.sh && ref/build_dump.sh
-    python harness/run_ref.py --all                       # out/ref
-    python harness/run_ref.py --debug AERTEST aertest_nobldg   # out/ref_debug
-    (setup dumps: see ref/build_dump.sh; out/setup_dump/<case>/SETUP.DMP)
+    make ref          # python ref/fetch.py && ref/build.sh && ref/build_dump.sh
+    make refs         # out/ref
+    make debug-refs   # out/ref_debug (AERTEST, aertest_nobldg)
+    make dumps        # out/setup_dump/<case>/SETUP.DMP
+    python pack.py    # context/
 """
 
 from __future__ import annotations

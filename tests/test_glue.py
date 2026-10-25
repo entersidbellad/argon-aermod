@@ -60,7 +60,7 @@ def test_postfile_round_trip_matches_binary(name, tmp_path):
 def test_setup_values_match_aermods_dump(name):
     """Every SETUP input bit for bit against SETUP.DMP from ref/aermod_dump."""
     workdir = catalog.get(name).out_dir("setup_dump")
-    dump = require(workdir / "SETUP.DMP", "run ref/aermod_dump on the case (ref/build_dump.sh)")
+    dump = require(workdir / "SETUP.DMP", "run make dumps (needs ref/build_dump.sh)")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         project = glue.load_project(workdir / "case.inp")
