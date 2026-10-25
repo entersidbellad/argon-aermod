@@ -44,18 +44,26 @@ def setup_table() -> str:
     return "\n".join(rows)
 
 
-def build_input(tier: str) -> str:
-    fortran = pack.CONTEXT / f"tier_{tier}.txt"
-    if not fortran.exists():
-        raise SystemExit(f"{fortran} missing; run python pack.py --tier {tier}")
-    parts = [
+def shared_parts() -> list[tuple[str, str]]:
+    """What every request needs besides Fortran: the contract, glue, SETUP inputs and debug names."""
+    return [
         ("Contract (prompts/contract.md)", (PROMPTS / "contract.md").read_text()),
         ("harness/glue.py (import it; do not port it)",
          "```python\n" + (ROOT / "harness" / "glue.py").read_text() + "```"),
         ("SETUP inputs (harness/setup_inputs.json): the keys of `setup`", setup_table()),
         ("DEBUGOPT variables (prompts/debug_vars.md)", (PROMPTS / "debug_vars.md").read_text()),
-        (f"Fortran, tier {tier}", fortran.read_text()),
     ]
+
+
+def shared_context() -> str:
+    return "\n\n".join(f"# {title}\n\n{text}" for title, text in shared_parts())
+
+
+def build_input(tier: str) -> str:
+    fortran = pack.CONTEXT / f"tier_{tier}.txt"
+    if not fortran.exists():
+        raise SystemExit(f"{fortran} missing; run python pack.py --tier {tier}")
+    parts = shared_parts() + [(f"Fortran, tier {tier}", fortran.read_text())]
     body = "\n\n".join(f"# PART {i}: {title}\n\n{text}" for i, (title, text) in enumerate(parts, 1))
     return body + f"\n\n# TASK\n\nWrite the complete `aermod_py` package for tier {tier} now.\n"
 
@@ -108,7 +116,7 @@ def main() -> int:
     print(f"{run_id}: smoke test {smoke.case} {'ok' if smoke.ok else 'FAILED'}")
     if not smoke.ok:
         print(smoke.error, file=sys.stderr)
-    return 0
+    return 0 if smoke.ok else 1
 
 
 if __name__ == "__main__":
