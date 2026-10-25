@@ -94,12 +94,12 @@ def check_result(result: object, project: glue.Project, met: glue.Met) -> glue.R
     return glue.Result(dates=want, conc=conc, debug=list(getattr(result, "debug", []) or []))
 
 
-def run_case(case: catalog.Case, *, debug: bool = False, who: str = "port",
-             package_dir: Path = PORT_DIR) -> PortRun:
-    workdir = case.out_dir(who)
+def run_staged(inp: Path, *, debug: bool = False, package_dir: Path = PORT_DIR,
+               name: str = "") -> PortRun:
+    """Run the port on a deck already staged with its met files (see run_ref.stage)."""
+    workdir = inp.parent
     t0 = time.monotonic()
     try:
-        inp = run_ref.stage(case.inp.read_text(), run_ref.case_files(case), workdir)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             project = glue.load_project(inp)
@@ -113,10 +113,19 @@ def run_case(case: catalog.Case, *, debug: bool = False, who: str = "port",
                 pickle.dump(result.debug, f)
     except Exception:
         err = traceback.format_exc()
-        if workdir.exists():
-            (workdir / ERROR_FILE).write_text(err)
-        return PortRun(case.name, workdir, False, time.monotonic() - t0, err)
-    return PortRun(case.name, workdir, True, time.monotonic() - t0)
+        (workdir / ERROR_FILE).write_text(err)
+        return PortRun(name or workdir.name, workdir, False, time.monotonic() - t0, err)
+    return PortRun(name or workdir.name, workdir, True, time.monotonic() - t0)
+
+
+def run_case(case: catalog.Case, *, debug: bool = False, who: str = "port",
+             package_dir: Path = PORT_DIR) -> PortRun:
+    workdir = case.out_dir(who)
+    try:
+        inp = run_ref.stage(case.inp.read_text(), run_ref.case_files(case), workdir)
+    except Exception:
+        return PortRun(case.name, workdir, False, 0.0, traceback.format_exc())
+    return run_staged(inp, debug=debug, package_dir=package_dir, name=case.name)
 
 
 def main() -> int:
