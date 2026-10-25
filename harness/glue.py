@@ -18,10 +18,12 @@ tests/test_glue.py checks the result against every oracle POSTFILE.
 
 from __future__ import annotations
 
+import json
 import math
 import re
 import warnings
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from datetime import date
 from pathlib import Path
 from typing import Optional
 
@@ -50,19 +52,29 @@ RE_KEYWORDS = {"GRIDCART", "GRIDPOLR", "DISCCART", "DISCPOLR", "EVALCART", "ELEV
                "INCLUDED", "STARTING", "FINISHED"}
 GRID_SUBKEYS = {"STA", "END", "XYINC", "XPNTS", "YPNTS", "ORIG", "DIST", "DDIR", "GDIR",
                 "ELEV", "HILL", "FLAG"}
-# Keywords this module models (or that cannot change 1-hr concentrations). Anything
-# else is rejected so an unmodelled option never passes silently.
+# Keywords and MODELOPT options this module models and some case exercises (so
+# setup_values is checked against AERMOD for them). Anything else is rejected so
+# an unmodelled option never passes silently; add a case before widening these.
 KNOWN_KEYWORDS = {
     "CO": {"STARTING", "FINISHED", "TITLEONE", "TITLETWO", "MODELOPT", "AVERTIME", "POLLUTID",
-           "RUNORNOT", "ERRORFIL", "FLAGPOLE"},
+           "RUNORNOT", "ERRORFIL"},
     "SO": {"STARTING", "FINISHED", "ELEVUNIT", "LOCATION", "SRCPARAM", "BUILDHGT", "BUILDWID",
            "BUILDLEN", "XBADJ", "YBADJ", "EMISFACT", "SRCGROUP"},
     "ME": {"STARTING", "FINISHED", "SURFFILE", "PROFFILE", "SURFDATA", "UAIRDATA", "SITEDATA",
            "PROFBASE", "STARTEND"},
     "OU": {"STARTING", "FINISHED", "RECTABLE", "POSTFILE", "FILEFORM"},
 }
-MODELOPT_ALLOWED = {"CONC", "FLAT", "ELEV", "DFAULT", "BETA", "ALPHA", "WARNCHKD", "NOWARN",
-                    "NOCHKD"}
+MODELOPT_ALLOWED = {"CONC", "FLAT", "ELEV", "BETA", "ALPHA", "WARNCHKD"}
+ME_IMSTAT = {"STARTING": 1, "SURFFILE": 2, "PROFFILE": 3, "SURFDATA": 4, "UAIRDATA": 5,
+             "STARTEND": 6, "SITEDATA": 9, "PROFBASE": 10, "FINISHED": 50}   # meset.f MECARD
+DAY_OF_WEEK_QFLAGS = {"HRDOW", "HRDOW7", "SHRDOW", "SHRDOW7", "MHRDOW", "MHRDOW7"}
+# modules.f DATA GRIDHT, first 29 levels: soset.f locates stack tops in these (<= 600 m).
+GRIDHT_29 = (0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 14.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0,
+             90.0, 100.0, 120.0, 140.0, 160.0, 180.0, 200.0, 250.0, 300.0, 350.0, 400.0,
+             450.0, 500.0, 550.0, 600.0)
+# Module variables harness/setup_inputs.py flags but that the ported code only ever
+# assigns through a CALL argument or names as an IOSTAT= specifier.
+SETUP_SCRATCH = {"FNUM", "IMIT", "IOERRN", "IOSTAT"}
 
 
 @dataclass(frozen=True)
@@ -117,6 +129,7 @@ class Project:
     group: str                         # POSTFILE source group
     receptors: Receptors
     file_format: str                   # "FIX" or "EXP" (OU FILEFORM)
+    cards: dict[str, list[list[str]]] = field(default_factory=dict)   # pathway -> token lists
     title: str = ""
 
     @property
@@ -175,15 +188,70 @@ def _cards_included(path: Path, pathway: str) -> list[list[str]]:
     return out
 
 
+def stodbl(text: str) -> tuple[float, int]:
+    """AERMOD's STODBL: (value, repeat count) of one field, bit-for-bit.
+
+    AERMOD reads every runstream number this way, digit by digit in double
+    precision, which is not correctly rounded (``62.26`` -> 62.260000000000005),
+    so ``float()`` would give the port different inputs from AERMOD's.
+    """
+    cnum, head, fdec, imuti = 0.0, 0.0, 1.0, 1
+    nmark = pmark = dmark = mmark = emark = False
+    started = False
+    for chk in text.upper():
+        if chk == " ":
+            if started:
+                break
+            continue
+        started = True
+        if "0" <= chk <= "9":
+            if not dmark:
+                cnum = cnum * 10.0 + float(ord(chk) - 48)
+            else:
+                fdec = fdec / 10.0
+                cnum = cnum + fdec * float(ord(chk) - 48)
+        elif dmark and not emark and chk in "ED":
+            emark = True
+            head = -cnum if nmark else cnum
+            dmark = nmark = False
+            cnum = 0.0
+        elif not pmark and chk == "+":
+            pmark = True
+        elif not nmark and chk == "-":
+            nmark = True
+        elif not dmark and chk == ".":
+            dmark = True
+        elif not mmark and chk == "*" and not nmark:
+            mmark = True
+            imuti = _nint(cnum)
+            cnum = 0.0
+        else:
+            raise ValueError(f"invalid number {text!r}")
+    fnum = -cnum if nmark else cnum
+    if emark:
+        fnum = head * 10.0 ** fnum if abs(fnum) <= 30.0 else (
+            0.0 if fnum < 0.0 else head * 10.0 ** 30.0 if fnum > 0.0 else fnum)
+    return fnum, imuti
+
+
+def _nint(x: float) -> int:
+    """Fortran NINT/IDNINT: round half away from zero."""
+    return int(math.copysign(math.floor(abs(x) + 0.5), x))
+
+
+def num(text: str) -> float:
+    value, count = stodbl(text)
+    if count != 1:
+        raise ValueError(f"repeat count not allowed here: {text!r}")
+    return value
+
+
 def _numbers(tokens: list[str]) -> list[float]:
-    """Expand AERMOD 'n*value' repeats."""
+    """STODBL every field, expanding AERMOD 'n*value' repeats."""
     out: list[float] = []
     for t in tokens:
-        if "*" in t:
-            n, v = t.split("*", 1)
-            out += [float(v)] * int(n)
-        else:
-            out.append(float(t))
+        value, count = stodbl(t)
+        out += [value] * count
     return out
 
 
@@ -247,16 +315,16 @@ def expand_receptors(cards: list[list[str]], src_xy: dict[str, tuple[float, floa
                 _expand_grid(grid, src_xy, acc)
                 grid = None
             elif sub == "XYINC":
-                x0, nx, dx, y0, ny, dy = (float(v) for v in vals[:6])
-                grid.xs = [x0 + dx * float(i) for i in range(int(nx))]
-                grid.ys = [y0 + dy * float(j) for j in range(int(ny))]
+                x0, nx, dx, y0, ny, dy = (num(v) for v in vals[:6])
+                grid.xs = [x0 + dx * float(i) for i in range(_nint(nx))]
+                grid.ys = [y0 + dy * float(j) for j in range(_nint(ny))]
             elif sub == "XPNTS":
                 grid.xs += _numbers(vals)
             elif sub == "YPNTS":
                 grid.ys += _numbers(vals)
             elif sub == "ORIG":
                 if re.fullmatch(r"[-+.\dEeDd]+", vals[0]):
-                    grid.xint, grid.yint = float(vals[0]), float(vals[1])
+                    grid.xint, grid.yint = num(vals[0]), num(vals[1])
                 else:
                     grid.xint, grid.yint = src_xy[vals[0].upper()]
             elif sub == "DIST":
@@ -264,7 +332,7 @@ def expand_receptors(cards: list[list[str]], src_xy: dict[str, tuple[float, floa
             elif sub == "DDIR":
                 grid.ys += _numbers(vals)
             elif sub == "GDIR":
-                n, dirini, dirinc = int(float(vals[0])), float(vals[1]), float(vals[2])
+                n, dirini, dirinc = _nint(num(vals[0])), num(vals[1]), num(vals[2])
                 for j in range(n):
                     d = dirini + dirinc * float(j)
                     if d > 360.0:
@@ -273,13 +341,13 @@ def expand_receptors(cards: list[list[str]], src_xy: dict[str, tuple[float, floa
                         d += 360.0
                     grid.ys.append(d)
             elif sub in ("ELEV", "HILL", "FLAG"):
-                grid.rows.setdefault(sub, {}).setdefault(int(float(vals[0])), []).extend(
+                grid.rows.setdefault(sub, {}).setdefault(_nint(num(vals[0])), []).extend(
                     _numbers(vals[1:]))
             else:
                 raise ValueError(f"unsupported {kw} subkey {sub}")
             continue
         if kw == "DISCCART":
-            v = [float(t) for t in args]
+            v = [num(t) for t in args]
             ze = zh = zf = None
             if elev and flgpol:
                 ze = v[2] if len(v) >= 3 else None
@@ -294,7 +362,7 @@ def expand_receptors(cards: list[list[str]], src_xy: dict[str, tuple[float, floa
             continue
         if kw == "DISCPOLR":
             xs, ys = src_xy[args[0].upper()]
-            v = [float(t) for t in args[1:]]
+            v = [num(t) for t in args[1:]]
             rng, direct = v[0], v[1]
             ze = zh = zf = None
             if elev:
@@ -307,7 +375,7 @@ def expand_receptors(cards: list[list[str]], src_xy: dict[str, tuple[float, floa
                     ze, zh, zf, "", "DP")
             continue
         if kw == "EVALCART":
-            v = [float(t) for t in args[:5]]
+            v = [num(t) for t in args[:5]]
             _append(acc, v[0], v[1], v[2] if elev else None, v[3] if elev else None,
                     v[4] if flgpol else None, "", "DC")
             continue
@@ -358,36 +426,80 @@ def _group_members(cards: list[list[str]], group: str) -> Optional[set[str]]:
     return members
 
 
-def _sources(deck: AERMODProject, so_cards: list[list[str]], group: str) -> list[Source]:
+def _pparm(ats: float, avs: float, ads: float) -> tuple[float, float, float]:
+    """soset.f PPARM's adjustments to a POINT source's exit parameters."""
+    if ats == 0.0:
+        ats = -1.0e-5
+    elif 0.0 < ats < 200.0:
+        raise ValueError(f"stack temperature {ats} K < 200 K (AERMOD error 320)")
+    if avs < 1.0e-5:
+        avs = 1.0e-5
+    if ads < 0.0:
+        raise ValueError("negative stack diameter (AERMOD error 209)")
+    if ads < 1.0e-5:
+        ads = 1.0e-5
+    return ats, avs, ads
+
+
+def _sources(so_cards: list[list[str]], group: str, flatsrcs: bool) -> list[Source]:
+    """soset.f SOLOCA/SOPARM/PPARM/DSFILL/EFFILL for POINT sources, deck order = ISRC."""
     emis = _emisfact(so_cards)
     members = _group_members(so_cards, group)
-    flat_ids = {t[1].upper() for t in so_cards
-                if t[0].upper() == "LOCATION" and t[-1].upper() == "FLAT"}
+    loc: dict[str, tuple[float, float, float, bool]] = {}
+    parm: dict[str, list[float]] = {}
+    bld: dict[str, dict[str, list[float]]] = {}
+    for toks in so_cards:
+        kw = toks[0].upper()
+        if kw == "LOCATION":
+            sid, styp = toks[1].upper(), toks[2].upper()
+            if styp != "POINT":
+                raise ValueError(f"{sid}: only POINT sources are in scope, got {styp}")
+            flat = len(toks) == 6 and toks[5].upper() == "FLAT"
+            if flat and not flatsrcs:
+                raise ValueError(f"{sid}: LOCATION ... FLAT needs MODELOPT FLAT ELEV")
+            z = num(toks[5]) if len(toks) == 6 and not flat else 0.0
+            loc[sid] = (num(toks[3]), num(toks[4]), z, flat)
+        elif kw == "SRCPARAM":
+            parm[toks[1].upper()] = [num(t) for t in toks[2:7]]
+        elif kw in BUILDING_KEYS:
+            if "-" in toks[1]:
+                raise ValueError(f"{kw} source range {toks[1]} not supported")
+            bld.setdefault(toks[1].upper(), {}).setdefault(BUILDING_KEYS[kw], []).extend(
+                _numbers(toks[2:]))
     out = []
-    for i, s in enumerate(deck.sources.sources, start=1):
-        if not isinstance(s, PointSource):
-            raise ValueError(f"{s.source_id}: only POINT sources are in scope")
-        bld = None
-        if s.building_height is not None:
-            bld = {
-                "ADSBH": np.asarray(s.building_height, dtype=np.float64),
-                "ADSBW": np.asarray(s.building_width, dtype=np.float64),
-                "ADSBL": np.asarray(s.building_length, dtype=np.float64),
-                "ADSXADJ": np.asarray(s.building_x_offset, dtype=np.float64),
-                "ADSYADJ": np.asarray(s.building_y_offset, dtype=np.float64),
-            }
-            if any(len(v) != 36 for v in bld.values()):
-                raise ValueError(f"{s.source_id}: building arrays must have 36 sectors")
-        sid = s.source_id.upper()
+    for i, (sid, (x, y, z, flat)) in enumerate(loc.items(), start=1):
+        building = None
+        if sid in bld:
+            if set(bld[sid]) != set(BUILDING_KEYS.values()) or any(
+                    len(v) != 36 for v in bld[sid].values()):
+                raise ValueError(f"{sid}: needs all five building keywords with 36 sectors each")
+            building = {k: np.array(v) for k, v in bld[sid].items()}
+        aqs, ahs, ats, avs, ads = parm[sid]
+        ats, avs, ads = _pparm(ats, avs, ads)
         qflag, qfact = emis.get(sid, (None, None))
         out.append(Source(
-            isrc=i, SRCID=sid, AXS=float(s.x_coord), AYS=float(s.y_coord),
-            AZS=float(s.base_elevation), AQS=float(s.emission_rate), AHS=float(s.stack_height),
-            ATS=float(s.stack_temp), AVS=float(s.exit_velocity), ADS=float(s.stack_diameter),
-            flat=sid in flat_ids, building=bld, QFLAG=qflag,
+            isrc=i, SRCID=sid, AXS=x, AYS=y, AZS=z, AQS=aqs, AHS=ahs, ATS=ats, AVS=avs, ADS=ads,
+            flat=flat, building=building, QFLAG=qflag,
             QFACT=None if qfact is None else np.asarray(qfact, dtype=np.float64),
             in_group=members is None or sid in members))
     return out
+
+
+def _check_against_pyaermod(deck: AERMODProject, sources: list[Source]) -> None:
+    """pyaermod parses the same deck independently; disagreement means a glue bug."""
+    theirs = deck.sources.sources
+    if [s.source_id.upper() for s in theirs] != [s.SRCID for s in sources]:
+        raise AssertionError("glue and pyaermod disagree on the source list")
+    for p, s in zip(theirs, sources):
+        if not isinstance(p, PointSource):
+            raise AssertionError(f"pyaermod does not see {s.SRCID} as a POINT source")
+        pairs = [(p.x_coord, s.AXS), (p.y_coord, s.AYS), (p.emission_rate, s.AQS),
+                 (p.stack_height, s.AHS)]
+        if p.building_height is not None or s.building is not None:
+            pairs += list(zip(p.building_height, s.building["ADSBH"]))
+        for a, b in pairs:
+            if not math.isclose(float(a), b, rel_tol=1e-12, abs_tol=1e-12):
+                raise AssertionError(f"{s.SRCID}: pyaermod {a} vs glue {b}")
 
 
 # --- control / dates ---------------------------------------------------------
@@ -448,22 +560,30 @@ def load_project(inp: Path | str) -> Project:
     for toks in so + re_:
         if toks[0].upper() == "ELEVUNIT" and toks[1].upper() != "METERS":
             raise ValueError(f"ELEVUNIT {toks[1]} not supported (METERS only)")
-    flagpole = [toks for toks in co if toks[0].upper() == "FLAGPOLE"]
-    flgpol = bool(flagpole)
-    azflag_default = float(flagpole[0][1]) if flagpole and len(flagpole[0]) > 1 else 0.0
-    elev = "ELEV" in modelopt
+    if "FLAT" not in modelopt:
+        raise ValueError("MODELOPT FLAT is required (flat terrain is the port's scope)")
+    elev = "ELEV" in modelopt                  # coset.f: FLAT plus ELEV sets FLATSRCS
+    flgpol, azflag_default = False, 0.0        # FLAGPOLE is rejected above
     group, fmt = _postfile_group(ou)
-    sources = _sources(deck, so, group)
+    sources = _sources(so, group, flatsrcs=elev)
+    _check_against_pyaermod(deck, sources)
     src_xy = {s.SRCID: (s.AXS, s.AYS) for s in sources}
     isdate, iedate = _startend(me)
-    zbase = next((float(t[1]) for t in me if t[0].upper() == "PROFBASE"), 0.0)
+    zbase = next((num(t[1]) for t in me if t[0].upper() == "PROFBASE"), 0.0)
+    # meset.f PROFBASE: under FLAT, sources (only FLAT ones when FLATSRCS) sit at ZBASE.
+    sources = [replace(s, AZS=zbase) if (s.flat or not elev) else s for s in sources]
+    receptors = expand_receptors(re_, src_xy, elev, flgpol, azflag_default)
+    if not elev:
+        n = len(receptors)
+        receptors = replace(receptors, AZELEV=np.full(n, zbase), AZHILL=np.full(n, zbase))
     return Project(
         inp=inp, deck=deck, MODELOPT=modelopt,
         POLLUT=next((t[1].upper() for t in co if t[0].upper() == "POLLUTID"), ""),
         FLAT="FLAT" in modelopt, ELEV=elev, FLGPOL=flgpol, AZFLAG_DEFAULT=azflag_default,
         ISDATE=isdate, IEDATE=iedate, ZBASE=zbase, sources=sources, group=group,
-        receptors=expand_receptors(re_, src_xy, elev, flgpol, azflag_default),
-        file_format=fmt, title=deck.control.title_one or "")
+        receptors=receptors,
+        file_format=fmt, cards={"CO": co, "SO": so, "RE": re_, "ME": me, "OU": ou},
+        title=deck.control.title_one or "")
 
 
 # --- meteorology -------------------------------------------------------------
@@ -507,6 +627,175 @@ def _profile_start(surface: dict[str, np.ndarray], profile: dict[str, np.ndarray
         raise ValueError(f"profile file has {len(starts)} hours that do not line up with "
                          f"the {len(skey)} surface records")
     return np.r_[starts, len(pkey)].astype(np.int64)
+
+
+# --- MAIN1 values SETUP assigns ----------------------------------------------
+
+def _locate(parray: tuple[float, ...], value: float) -> int:
+    """LOCATE(PARRAY, 1, len, VALUE, NDXBLW): 1-based index of the level at or below VALUE."""
+    jl, ju = 0, len(parray) + 1
+    while ju - jl > 1:
+        jm = (ju + jl) // 2
+        if value >= parray[jm - 1]:
+            jl = jm
+        else:
+            ju = jm
+    return jl
+
+
+def _julian(year: int, month: int, day: int) -> int:
+    return (date(year, month, day) - date(year, 1, 1)).days + 1
+
+
+def _station(me: list[list[str]], keyword: str) -> tuple[int, int, str]:
+    """meset.f SURFID/UAIRID: station id, year, name ('UNKNOWN' when omitted)."""
+    toks = next(t for t in me if t[0].upper() == keyword)
+    return (_nint(float(toks[1])), _nint(float(toks[2])),
+            toks[3].upper() if len(toks) > 3 else "UNKNOWN")
+
+
+def _met_file(me: list[list[str]], keyword: str) -> str:
+    toks = next(t for t in me if t[0].upper() == keyword)
+    if len(toks) > 2 and toks[2].upper() != "FREE":
+        raise ValueError(f"{keyword} format {toks[2]!r} not supported (FREE only)")
+    return toks[1]
+
+
+def setup_values(project: Project, met: Met) -> dict[str, object]:
+    """Every module variable the ported code reads that only SETUP assigns.
+
+    Keys are the Fortran names listed in harness/setup_inputs.json (minus
+    SETUP_SCRATCH); values have the Fortran shape (column-major indexing, so
+    ADSBH[k-1, isrc-1] is ADSBH(K,ISRC)); None means AERMOD leaves the array
+    unallocated, so the ported code must not touch it. tests/test_glue.py checks
+    every value against a SETUP.DMP written by ref/aermod_dump.
+    """
+    srcs, rec = project.sources, project.receptors
+    nsrc, co, me = len(srcs), project.cards["CO"], project.cards["ME"]
+    zeros = np.zeros(nsrc)
+    ave = next(t[1:] for t in co if t[0].upper() == "AVERTIME")
+    kave = [int(t) for t in ave if t.isdigit()]
+    nqf = max((EMISFACT_SIZES[s.QFLAG] for s in srcs if s.QFLAG), default=0)
+    qfact = None
+    if nqf:
+        qfact = np.zeros((nqf, nsrc))
+        for s in srcs:
+            if s.QFACT is not None:
+                qfact[:len(s.QFACT), s.isrc - 1] = s.QFACT
+    nsec = 36 if any(s.building is not None for s in srcs) else 0
+    bld = {}
+    for key in ("ADSBH", "ADSBW", "ADSBL", "ADSXADJ", "ADSYADJ"):
+        bld[key] = None
+        if nsec:
+            bld[key] = np.zeros((nsec, nsrc))
+            for s in srcs:
+                if s.building is not None:
+                    bld[key][:, s.isrc - 1] = s.building[key]
+    imstat = np.zeros(50, dtype=np.int64)
+    for t in me:
+        imstat[ME_IMSTAT[t[0].upper()] - 1] += 1
+    idsurf, _, sfname = _station(me, "SURFDATA")
+    iduair, iuyear, uaname = _station(me, "UAIRDATA")
+    header = met.sfc_headers[0] if met.sfc_headers else ""
+    isjday = 0
+    if project.ISDATE:
+        y, rest = divmod(project.ISDATE, 1000000)
+        isjday = _julian(y, rest // 10000, rest // 100 % 100)
+    modelopt = set(project.MODELOPT)
+
+    values: dict[str, object] = {
+        # sources (soset.f PPARM / SOCARD, deck order)
+        "NSRC": nsrc, "NUMSRC": nsrc,
+        "SRCID": np.array([s.SRCID for s in srcs], dtype=object),
+        "SRCTYP": np.array(["POINT"] * nsrc, dtype=object),
+        "AXS": np.array([s.AXS for s in srcs]), "AYS": np.array([s.AYS for s in srcs]),
+        "AZS": np.array([s.AZS for s in srcs]), "AQS": np.array([s.AQS for s in srcs]),
+        "AHS": np.array([s.AHS for s in srcs]), "ATS": np.array([s.ATS for s in srcs]),
+        "AVS": np.array([s.AVS for s in srcs]), "ADS": np.array([s.ADS for s in srcs]),
+        "ADSFACT": np.ones(nsrc),
+        "L_FLATSRC": np.array([s.flat for s in srcs]),
+        "NDXSTK": np.array([_locate(GRIDHT_29, s.AHS) for s in srcs], dtype=np.int64),
+        "QFLAG": np.array([s.QFLAG or "" for s in srcs], dtype=object), "QFACT": qfact,
+        "L_DAYOFWEEKOPTS": any(s.QFLAG in DAY_OF_WEEK_QFLAGS for s in srcs),
+        "NSEC": nsec, **bld,
+        "IGROUP": np.array([[1 if s.in_group else 0] for s in srcs], dtype=np.int64),
+        "NUMGRP": 1,
+        "AFTSRC": np.array(["N"] * nsrc, dtype=object),
+        "URBSRC": np.array(["N"] * nsrc, dtype=object),
+        "EVAL": np.zeros(nsrc, dtype=bool), "L_HRLYSIG": np.zeros(nsrc, dtype=bool),
+        "OSPLAT": np.zeros(nsrc, dtype=bool),
+        "INPD": np.zeros(nsrc, dtype=np.int64), "HOUREMISARRAY": np.zeros(nsrc, dtype=np.int64),
+        **{k: zeros.copy() for k in ("AAFR", "ABA", "ABH", "ABL", "ABW", "ABYPR", "AFP",
+                                     "AMFUEL", "ARPWR", "ASRCANGLE", "ASYINI", "ASZINI",
+                                     "ATHRUST", "AVAA", "HENRY", "PLATHB", "PLATWB")},
+        # receptors (reset.f)
+        "NUMREC": len(rec), "AXR": rec.AXR, "AYR": rec.AYR, "AZELEV": rec.AZELEV,
+        "AZHILL": rec.AZHILL, "AZFLAG": rec.AZFLAG,
+        # control (coset.f)
+        "POLLUT": project.POLLUT, "ELEV": project.ELEV, "L_WARNCHKD": "WARNCHKD" in modelopt,
+        "NUMAVE": len(kave), "KAVE": np.array(kave, dtype=np.int64),
+        "PERIOD": any(t.upper() == "PERIOD" for t in ave),
+        "ANNUAL": any(t.upper() == "ANNUAL" for t in ave),
+        **{k: np.zeros(len(kave), dtype=np.int64) for k in ("IDYTAB", "ITOXFL", "ITXUNT")},
+        # meteorology (meset.f, and the surface file header meset.f reads)
+        "METINP": _met_file(me, "SURFFILE"), "PROINP": _met_file(me, "PROFFILE"),
+        "METFRM": "FREE", "PROFRM": "FREE",
+        "IDSURF": idsurf, "IDUAIR": iduair, "IUYEAR": iuyear, "SFNAME": sfname,
+        "UANAME": uaname, "ZBASE": project.ZBASE, "IEDATE": project.IEDATE,
+        "ISJDAY": isjday, "IMSTAT": imstat,
+        "L_ADJUSTAR": "ADJ_U*" in header, "L_BULKRN": "BULKRN" in header,
+        # setup.f VARINI constants
+        "PI": PI, "TWOPI": 2.0 * PI, "RTOFPI": math.sqrt(PI), "SRT2PI": math.sqrt(2.0 * PI),
+        "RTOF2": math.sqrt(2.0), "RTPIBY2": math.sqrt(PI / 2.0), "RT2BYPI": math.sqrt(2.0 / PI),
+        "DTORAD": DTORAD,
+    }
+    values.update(SCOPE_FIXED)
+    missing = set(SETUP_INPUT_NAMES) - SETUP_SCRATCH - set(values)
+    if missing:
+        raise AssertionError(f"setup_values does not provide {sorted(missing)}")
+    return values
+
+
+# Values SETUP assigns that are the same for every deck load_project accepts: the
+# defaults of options outside the scope, unit numbers, and fixed tuning constants.
+# None = left unallocated (array for an out-of-scope source type or option).
+SCOPE_FIXED: dict[str, object] = {
+    **{k: None for k in ("AALPHA", "AANGLE", "APDEFF", "APDENS", "APDIAM", "APHI", "ATSTOP",
+                         "AVGRAV", "AXCNTR", "AXINIT", "AXVERT", "AYCNTR", "AYINIT", "AYVERT",
+                         "IURBGRP", "NVERTS", "URBPOP", "URBZ0", "VDEP", "WASHOUT")},
+    **{k: False for k in (
+        "ARM2", "AWMADWDBG", "DAYTAB", "DDEP", "DEBUG", "DEPOS", "DFAULT", "EVONLY",
+        "FASTAREA", "GRSM", "HOURLY", "LDGAS", "LDPART", "LUSERVD", "LWGAS", "LWPART",
+        "L_AWMA_ENTRAIN", "L_AWMA_UEFF", "L_AWMA_UTURB", "L_AWMA_UTURBHX", "L_BACKGRND",
+        "L_BGHOURLY", "L_BGSECTOR", "L_BLSOURCE", "L_EFFSIGY", "L_MAXDCONT", "L_NOXHOURLY",
+        "L_NOXSECTOR", "L_O3HOURLY", "L_O3SECTOR", "L_ORD_CAV", "L_ORD_TURB", "L_ORD_UEFF",
+        "L_PBAL", "L_RECT_BLDG", "L_SKIPMESSAGES", "L_STRMLN_BLDG", "L_USERFRANMAX",
+        "L_USERFRANMIN", "L_VECTORWS", "METEORDBG", "MONTH", "MULTYR", "MXFILE", "NO2AVE",
+        "NOBID", "NOCHKD", "NOSTD", "O3MISS", "OLM", "PLATFMDBG", "PM25AVE", "PRIMEDBG",
+        "PSDCREDIT", "PVMRM", "RSTINP", "RSTSAV", "RUNTTRM", "RUNTTRM2", "SCIM", "SCIMOUT",
+        "SCREEN", "SEASONHR", "SO2AVE", "SUMMFILE", "TXFILE", "URBAN", "URBDBUG", "WDEP")},
+    **{k: True for k in ("CLMPRO", "CONC", "L_URBANTRANSITION", "MSGPRO", "PPFILE")},
+    **{k: np.zeros(6, dtype=bool) for k in ("L_BGVALUES", "L_NOXVALUE", "L_NOX_VALS",
+                                            "L_O3VAL", "L_O3VALUES")},
+    "TURBOPTS": np.zeros(9, dtype=bool),
+    "BGSECT": np.zeros(6), "NOXSECT": np.zeros(6), "O3SECT": np.zeros(6),
+    "NOXBACK": np.full(6, -999.0), "O3BACK": np.full(6, -999.0),
+    "RL_GRIDWS": np.zeros((87, 3)), "EMIFAC": np.array([1.0e6]),    # CONC, g/s -> ug/m^3
+    "IPROCL": np.ones(366, dtype=np.int64), "ISEAHR": np.zeros(1, dtype=np.int64),
+    **{k: 0 for k in ("FULLHRQ", "IEVENT", "IPAIR", "IYR", "I_ALPHA", "NDX4ZI", "NREGINT",
+                      "NREGSTART", "NUMBLGRPS", "NUMURB", "NUMYRS", "NURB")},
+    **{k: 1 for k in ("INCRST", "NUMBGSECTS", "NUMNOXSECTS", "NUMO3SECTS", "NUMTYP")},
+    "NYEARS": 5,
+    "AWMADWDBUNT": 34, "DBGUNT": 24, "DBMUNT": 25, "IOUNIT": 8, "ISUMUNT": 28, "MFUNIT": 19,
+    "MPUNIT": 21, "PLATFMDBUNT": 36, "PRMDBUNT": 27, "URBUNT": 37, "URBUNT1": 38,
+    "URBUNT2": 40,
+    **{k: 0.0 for k in ("DENOM", "EPSEFF", "EPSEFF3", "EPSEFFD", "FRACSAT", "FRANMIN",
+                        "PLUME_SPREAD", "ROTANG", "SVAVG", "SWAVG", "UAVG", "USERVD", "ZRDEP")},
+    "BIGT": 24.0, "EXPLIM": -50.0, "FRANMAX": 1.0, "MAXDIST": 1.0e20, "SVMIN": 0.2,
+    "SWMIN": 0.02, "SZCOEF": 2.15, "WSMIN": 0.2828,
+}
+SETUP_INPUT_NAMES = tuple(v["name"] for v in json.loads(
+    (Path(__file__).resolve().parent / "setup_inputs.json").read_text()))
 
 
 # --- output ------------------------------------------------------------------
