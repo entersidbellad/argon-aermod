@@ -55,3 +55,41 @@ def test_rejects_a_useless_patch_then_keeps_the_fix(tmp_path):
     assert "first problem in AERMOD's order: PCALC XFINAL[0] date=88030101" in prompt
     assert "SUBROUTINE PCALC" in prompt and "Met for this hour" in prompt
     assert split.verify(port, tmp_path / "run") == []
+    assert "# Contract (prompts/contract.md)" in prompt and "# DEBUGOPT variables" in prompt
+    assert "# harness/glue.py" in prompt
+
+
+@pytest.mark.slow
+def test_patches_that_break_evaluation_are_rolled_back(tmp_path, monkeypatch):
+    require(oracle("AERTEST"), "run python harness/run_ref.py AERTEST")
+    require(catalog.get("AERTEST").out_dir("ref_debug") / "MODEL.DBG",
+            "run python harness/run_ref.py --debug AERTEST")
+    port = tmp_path / "aermod_py"
+    shutil.copytree(STUBS / "buggy_port" / "aermod_py", port)
+    src = (port / "__init__.py").read_text()
+    head = "=== HYPOTHESIS ===\nh\n=== FILE: aermod_py/__init__.py ===\n"
+    malformed = head + src.replace("r[:6] + (r[6] + BUG,)", "r[:6]")
+    explodes = head + src + "\n# evaluation of this patch raises\n"
+    fix = head + src.replace("BUG = 1.0", "BUG = 0.0")
+    client = SimpleNamespace(interactions=ScriptedInteractions([malformed, explodes, fix]))
+
+    real_regressions, calls = repair_loop.regressions, []
+
+    def regressions(before, after):
+        calls.append(1)
+        if len(calls) == 2:
+            raise RuntimeError("boom")
+        return real_regressions(before, after)
+
+    monkeypatch.setattr(repair_loop, "regressions", regressions)
+    after_each = []
+    res = repair_loop.repair([catalog.get("AERTEST")], client=client, run_dir=tmp_path / "run",
+                             port_dir=port, tier="B", iterations=5, who="test_repair_rollback",
+                             log=lambda msg: after_each.append((port / "__init__.py").read_text())
+                             if "reverted" in msg else None)
+
+    assert [a.accepted for a in res.attempts] == [False, False, True]
+    assert res.attempts[0].reason.startswith("no progress: first problem now crash")
+    assert res.attempts[1].reason == "evaluation failed: RuntimeError: boom"
+    assert after_each == [src, src]
+    assert res.all_pass and split.verify(port, tmp_path / "run") == []

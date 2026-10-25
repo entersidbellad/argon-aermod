@@ -52,6 +52,7 @@ import dbgparse  # noqa: E402
 import debugdiff  # noqa: E402
 import glue  # noqa: E402
 import pack  # noqa: E402
+import port  # noqa: E402
 import run_port  # noqa: E402
 import run_ref  # noqa: E402
 import split  # noqa: E402
@@ -210,7 +211,12 @@ class Diagnoser:
             return crash_problem(case, run.error, self.port_dir), None
         with open(case.out_dir(debug_who) / run_port.DEBUG_FILE, "rb") as f:
             rows = pickle.load(f)
-        report = debugdiff.diff(self.reference(case), debugdiff.port_records(rows), case.name)
+        try:
+            records = debugdiff.port_records(rows)
+        except (ValueError, TypeError) as exc:
+            return Problem(case.name, "crash", f"run_case(debug=True) on {case.name} returned "
+                           f"malformed debug rows: {exc}", sub="", rank=(-1,)), None
+        report = debugdiff.diff(self.reference(case), records, case.name)
         point = report.first_problem
         if point is None:
             return Problem(case.name, "postfile",
@@ -239,7 +245,7 @@ def fortran_source(sub: str, tier: str) -> str:
 
 
 def repair_input(problem: Problem, port_dir: Path, tier: str) -> str:
-    parts = [f"# Case {problem.case}: {problem.kind}\n\n{problem.text}"]
+    parts = [port.shared_context(), f"# Case {problem.case}: {problem.kind}\n\n{problem.text}"]
     if problem.sub:
         src = fortran_source(problem.sub, tier)
         if src:
@@ -256,7 +262,7 @@ def repair_input(problem: Problem, port_dir: Path, tier: str) -> str:
 def consult_input(problem: Problem, history: list[Attempt], port_dir: Path, tier: str) -> str:
     hist = "\n".join(f"- iteration {a.iteration}: {a.hypothesis or '(no hypothesis)'} "
                      f"-> rejected: {a.reason}" for a in history)
-    parts = [f"# Attempt history for {problem.target}\n\n{hist}",
+    parts = [port.shared_context(), f"# Attempt history for {problem.target}\n\n{hist}",
              f"# Current problem on {problem.case}\n\n{problem.text}"]
     for rel, text in python_files(port_dir).items():
         parts.append(f"# Current Python: aermod_py/{rel}\n\n```python\n{text}```")
@@ -341,21 +347,29 @@ def repair(cases: list[catalog.Case], *, client, run_dir: Path, port_dir: Path =
             attempt.reason = f"unusable reply: {exc}"
         else:
             before = snapshot(port_dir)
-            written = split.write(files, port_dir)
-            new_scores = score(cases, port_dir, who)
-            broke = regressions(scores, new_scores)
-            if broke:
-                attempt.reason = f"broke {', '.join(broke)}"
-            elif new_scores[target.name].passes:
-                attempt.accepted, attempt.reason = True, f"{target.name} passes"
-            else:
-                new_problem, _ = diag.diagnose(target, new_scores[target.name])
-                if new_problem.rank > problem.rank:
-                    attempt.accepted = True
-                    attempt.reason = f"first problem moved to {new_problem.kind} {new_problem.target}"
+            try:
+                written = split.write(files, port_dir)
+                new_scores = score(cases, port_dir, who)
+                broke = regressions(scores, new_scores)
+                if broke:
+                    attempt.reason = f"broke {', '.join(broke)}"
+                elif new_scores[target.name].passes:
+                    attempt.accepted, attempt.reason = True, f"{target.name} passes"
                 else:
-                    attempt.reason = (f"no progress: first problem now {new_problem.kind} "
-                                      f"{new_problem.target}")
+                    new_problem, _ = diag.diagnose(target, new_scores[target.name])
+                    if new_problem.rank > problem.rank:
+                        attempt.accepted = True
+                        attempt.reason = (f"first problem moved to {new_problem.kind} "
+                                          f"{new_problem.target}")
+                    else:
+                        attempt.reason = (f"no progress: first problem now {new_problem.kind} "
+                                          f"{new_problem.target}")
+            except Exception as exc:
+                attempt.accepted = False
+                attempt.reason = f"evaluation failed: {type(exc).__name__}: {exc}"
+            except BaseException:
+                restore(port_dir, before)
+                raise
             if attempt.accepted:
                 split.record(written, it_dir / "reply.txt", port_dir,
                              interaction_id=reply.id, step=mode, iteration=it)
