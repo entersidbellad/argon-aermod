@@ -28,6 +28,7 @@ from .calc2 import (
 )
 from .prise import cblpr3, cblprd, deltah, hsprim
 from .sigmas import bid, rmssig, sigy, sigz
+from .prime_base import wake_ini
 
 
 def calc(state: AermodState) -> None:
@@ -377,6 +378,35 @@ def pcalc(state: AermodState) -> None:
         if state.IFVSEC == 0:
             state.IFVSEC = 36
 
+        if state.WAKE:
+            ustack = state.US
+            ndxbh = locate(state.GRIDHT, 1, state.MXGLVL, state.DSBH)
+            # Fortran NDXBH -> idx_bh = ndxbh - 1, NDXBH+1 -> idx_bh + 1
+            idx_bh = ndxbh - 1
+            ubldg = gintrp(
+                float(state.GRIDHT[idx_bh]),
+                float(state.GRIDWS[idx_bh]),
+                float(state.GRIDHT[idx_bh + 1]),
+                float(state.GRIDWS[idx_bh + 1]),
+                state.DSBH,
+            )
+            ldbhr = state.PRIMEDBG
+            state.RURAL = True
+            wake_ini(
+                state,
+                state.KURDAT,
+                ldbhr,
+                state.PRMDBUNT,
+                state.RURAL,
+                state.DSBH,
+                state.DSBW,
+                state.DSBL,
+                state.XADJ,
+                state.YADJ,
+                ubldg,
+                ustack,
+            )
+
         if state.DEBUG:
             # WRITE(DBGUNT, 6011) DHCRIT, XFINAL, XMIXED, AFV
             state.emit_debug(state.ISRC, 0, "", "PCALC", "DHCRIT", state.DHCRIT)
@@ -460,10 +490,57 @@ def pcalc(state: AermodState) -> None:
                         float(state.AERVAL[ityp]),
                     )
 
-            # Tier A has no building downwash (WAKE is False)
-            state.GAMFACT = 0.0
-            state.HRVAL[:] = state.AERVAL[:]
-            state.PRMVAL[:] = 0.0
+            if state.WAKE and (state.STABLE or state.HS <= state.ZI):
+                xbrec = state.X - state.XADJ
+                ybrec = state.Y - state.YADJ
+                state.XDIST = state.X
+                prmcalc(state, xbrec, ybrec)
+                if state.RUNERR:
+                    return
+                gamcalc(state, xbrec, ybrec)
+                state.HRVAL[:] = (
+                    state.GAMFACT * state.PRMVAL
+                    + (1.0 - state.GAMFACT) * state.AERVAL
+                )
+                if state.PRIMEDBG:
+                    # Fortran DO ITYP = 1, NUMTYP -> ityp in range(state.NUMTYP)
+                    for ityp in range(state.NUMTYP):
+                        state.emit_debug(
+                            state.ISRC,
+                            state.IREC,
+                            "PRIME",
+                            "PCALC",
+                            "GAMFACT",
+                            state.GAMFACT,
+                        )
+                        state.emit_debug(
+                            state.ISRC,
+                            state.IREC,
+                            "PRIME",
+                            "PCALC",
+                            "AERVAL",
+                            float(state.AERVAL[ityp]),
+                        )
+                        state.emit_debug(
+                            state.ISRC,
+                            state.IREC,
+                            "PRIME",
+                            "PCALC",
+                            "PRMVAL",
+                            float(state.PRMVAL[ityp]),
+                        )
+                        state.emit_debug(
+                            state.ISRC,
+                            state.IREC,
+                            "PRIME",
+                            "PCALC",
+                            "HRVAL",
+                            float(state.HRVAL[ityp]),
+                        )
+            else:
+                state.GAMFACT = 0.0
+                state.HRVAL[:] = state.AERVAL[:]
+                state.PRMVAL[:] = 0.0
 
             # Sum HRVAL to AVEVAL and ANNVAL Arrays --- CALL SUMVAL
             if not state.EVONLY:
@@ -1527,3 +1604,6 @@ def ltopg(state: AermodState) -> int:
             lstab = 6
 
     return lstab
+
+
+from .prmcalc import gamcalc, prmcalc  # noqa: E402
