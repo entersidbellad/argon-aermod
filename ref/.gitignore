@@ -1,0 +1,10 @@
+# Ignore downloaded EPA files (too large for git)
+aermod_source_26135.zip
+aermod_testcases_26135.zip
+aermod_source/
+aermod_testcases/
+build/
+aermod
+*.o
+*.mod
+compile.log

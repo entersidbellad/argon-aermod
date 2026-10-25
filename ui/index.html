@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AERMOD Port - Gemini 4 Argon</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        nav {
+            background: white;
+            padding: 0;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            display: flex;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        nav button {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            background: white;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        
+        nav button:hover {
+            background: #f5f5f5;
+        }
+        
+        nav button.active {
+            background: #1a73e8;
+            color: white;
+        }
+        
+        .screen {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .case-card {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .case-card.pass {
+            background: #e8f5e9;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+        
+        .case-card.fail {
+            background: #ffebee;
+            border-color: #f44336;
+            color: #c62828;
+        }
+        
+        .case-card.pending {
+            background: #fff3e0;
+            border-color: #ff9800;
+            color: #e65100;
+        }
+        
+        .section {
+            margin: 30px 0;
+        }
+        
+        .section h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .info-card {
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 6px;
+        }
+        
+        .info-card h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-card .value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a73e8;
+        }
+        
+        .button {
+            padding: 12px 24px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .button:hover {
+            background: #1557b0;
+        }
+        
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .commit-list {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 6px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .commit {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+        }
+        
+        .commit-hash {
+            color: #1a73e8;
+            font-weight: 600;
+        }
+        
+        .commit-author {
+            color: #666;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-badge.pass {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .status-badge.fail {
+            background: #f44336;
+            color: white;
+        }
+        
+        .status-badge.pending {
+            background: #ff9800;
+            color: white;
+        }
+        
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .stub-notice {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AERMOD Python Port</h1>
+            <p class="subtitle">
+                Gemini 4 Argon full-context migration from Fortran, 
+                verified against EPA test suite
+            </p>
+        </header>
+        
+        <nav>
+            <button class="nav-btn active" data-screen="port">Port</button>
+            <button class="nav-btn" data-screen="proof">Proof</button>
+            <button class="nav-btn" data-screen="decision">Decision</button>
+        </nav>
+        
+        <!-- Port Screen -->
+        <div id="port-screen" class="screen active">
+            <div class="section">
+                <h2>Run New Port</h2>
+                <div class="stub-notice">
+                    <strong>Note:</strong> This is a UI stub. 
+                    Port runs must be triggered via <code>agent/port.py</code> for now.
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Recent Runs</h2>
+                <div id="runs-list">
+                    <p style="color: #666;">Loading runs...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Proof Screen (Priority) -->
+        <div id="proof-screen" class="screen">
+            <div class="section">
+                <h2>Verification Status</h2>
+                
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3>Compare Hash</h3>
+                        <div class="value" style="font-size: 16px; font-family: monospace;">
+                            <span id="compare-hash">Loading...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3>Tier A Pass Rate</h3>
+                        <div class="value">
+                            <span id="tier-a-rate">-/-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3>Tier B Pass Rate</h3>
+                        <div class="value">
+                            <span id="tier-b-rate">-/-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Test Cases</h2>
+                
+                <h3 style="margin-top: 20px; margin-bottom: 10px; color: #666;">
+                    Tier A (No Building Downwash)
+                </h3>
+                <div class="grid" id="tier-a-grid">
+                    <!-- Populated by JS -->
+                </div>
+                
+                <h3 style="margin-top: 30px; margin-bottom: 10px; color: #666;">
+                    Tier B (With PRIME)
+                </h3>
+                <div class="grid" id="tier-b-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Agent Commits</h2>
+                <div id="commits-list" class="commit-list">
+                    <p style="color: #666;">Loading git history...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Decision Screen (Stub) -->
+        <div id="decision-screen" class="screen">
+            <div class="section">
+                <h2>Deployment Decision</h2>
+                <div class="stub-notice">
+                    <strong>Coming Soon:</strong> 
+                    Certification and deployment decision workflow.
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <h3>Certification Criteria</h3>
+                    <ul style="margin-left: 20px; line-height: 2;">
+                        <li>All Tier A cases pass EPA regulatory parity</li>
+                        <li>All Tier A cases pass strict numerical criteria</li>
+                        <li>Compare.py hash verified and frozen</li>
+                        <li>Git log shows agent-authored repairs</li>
+                        <li>No manual edits to <code>port/aermod_py/</code></li>
+                    </ul>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <button class="button" disabled>Certify Results</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Navigation
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const screen = btn.dataset.screen;
+                
+                // Update nav
+                document.querySelectorAll('.nav-btn').forEach(b => {
+                    b.classList.remove('active');
+                });
+                btn.classList.add('active');
+                
+                // Update screens
+                document.querySelectorAll('.screen').forEach(s => {
+                    s.classList.remove('active');
+                });
+                document.getElementById(`${screen}-screen`).classList.add('active');
+                
+                // Load data for screen
+                if (screen === 'proof') {
+                    loadProofData();
+                } else if (screen === 'port') {
+                    loadPortData();
+                }
+            });
+        });
+        
+        // Load port data
+        async function loadPortData() {
+            try {
+                const response = await fetch('/api/runs');
+                const runs = await response.json();
+                
+                const runsList = document.getElementById('runs-list');
+                
+                if (runs.length === 0) {
+                    runsList.innerHTML = '<p style="color: #666;">No runs yet</p>';
+                    return;
+                }
+                
+                runsList.innerHTML = runs.map(run => `
+                    <div style="padding: 15px; background: #f5f5f5; border-radius: 6px; margin-bottom: 10px;">
+                        <strong>${run.id}</strong>
+                        <span style="margin-left: 20px; color: #666;">
+                            Tier ${run.tier} | ${run.model}
+                        </span>
+                        <span style="float: right; color: #666;">
+                            ${run.output_tokens.toLocaleString()} tokens
+                        </span>
+                    </div>
+                `).join('');
+                
+            } catch (err) {
+                console.error('Failed to load runs:', err);
+            }
+        }
+        
+        // Load proof data
+        async function loadProofData() {
+            try {
+                const response = await fetch('/api/test-results');
+                const data = await response.json();
+                
+                // Update compare hash
+                document.getElementById('compare-hash').textContent = 
+                    data.compare_hash || 'Not computed';
+                
+                // Render test grids
+                renderTestGrid('tier-a-grid', data.tier_a, data.results);
+                renderTestGrid('tier-b-grid', data.tier_b, data.results);
+                
+                // Update pass rates
+                const tierAPass = data.tier_a.filter(c => 
+                    data.results[c]?.strict_pass === true
+                ).length;
+                document.getElementById('tier-a-rate').textContent = 
+                    `${tierAPass}/${data.tier_a.length}`;
+                
+                const tierBPass = data.tier_b.filter(c => 
+                    data.results[c]?.strict_pass === true
+                ).length;
+                document.getElementById('tier-b-rate').textContent = 
+                    `${tierBPass}/${data.tier_b.length}`;
+                
+                // Load git commits (stub)
+                document.getElementById('commits-list').innerHTML = `
+                    <div class="commit">
+                        <span class="commit-hash">abc123f</span>
+                        <span class="commit-author">Argon Repair</span>
+                        <div style="margin-top: 5px;">repair 1: PRISE: Fix plume rise calculation sign error</div>
+                    </div>
+                    <div class="commit">
+                        <span class="commit-hash">def456a</span>
+                        <span class="commit-author">Argon Repair</span>
+                        <div style="margin-top: 5px;">repair 2: SIGGRID: Correct sigma_z interpolation bounds</div>
+                    </div>
+                    <p style="color: #666; margin-top: 15px;">
+                        (Git integration stub - run <code>git log port/aermod_py/</code>)
+                    </p>
+                `;
+                
+            } catch (err) {
+                console.error('Failed to load proof data:', err);
+            }
+        }
+        
+        function renderTestGrid(gridId, cases, results) {
+            const grid = document.getElementById(gridId);
+            
+            grid.innerHTML = cases.map(caseName => {
+                const result = results[caseName];
+                let status = 'pending';
+                
+                if (result?.strict_pass === true) {
+                    status = 'pass';
+                } else if (result?.strict_pass === false) {
+                    status = 'fail';
+                }
+                
+                return `
+                    <div class="case-card ${status}">
+                        ${caseName}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Initial load
+        loadPortData();
+    </script>
+</body>
+</html>
