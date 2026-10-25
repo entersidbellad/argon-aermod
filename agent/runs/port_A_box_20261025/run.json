@@ -1,0 +1,10 @@
+{
+ "run_id": "port_A_box_20261025",
+ "kind": "port",
+ "tier": "A",
+ "model": "gemini-4-argon",
+ "thinking": "high",
+ "agent": false,
+ "prompt_tokens": 263773,
+ "token_method": "Gemini count_tokens (gemini-4-argon)"
+}
