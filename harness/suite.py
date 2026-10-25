@@ -55,12 +55,14 @@ def vs_epa(case: catalog.Case) -> dict:
     r = paired["concentration_ref"].to_numpy()
     o = paired["concentration_cand"].to_numpy()
     d = np.abs(o - r)
-    score = compare.score_postfile_pair(case.epa_ref, case.postfile("ref"), case=case.name)
+    epa = compare.epa_compare(case.epa_ref, case.postfile("ref"), against="EPA reference POSTFILE",
+                              case=case.name, cand_df=ours)
     strict = compare.strict_compare(ref, ours)
     return {
         "case": case.name, "tier": case.tier, "n_values": int(len(r)),
         "n_differ": int((d > 0).sum()), "max_abs_diff": float(d.max()) if len(d) else 0.0,
-        "epa_slope": score.slope, "epa_pass": bool(score.passes()),
+        "epa_slope": epa.slope, "epa_slope_ols": epa.slope_ols, "epa_mean_ratio": epa.mean_ratio,
+        "epa_pass": epa.passes,
         "strict_vs_epa_pass": strict.passes, "missing_rows": ref_only + ours_only,
     }
 
@@ -98,10 +100,12 @@ def main() -> int:
 
     if args.vs_epa:
         rows = [vs_epa(c) for c in selected if c.epa_ref]
-        print(f"\n{'case':20s} tier     values   differ   max|diff|   EPA slope  EPA  strict-vs-EPA")
+        print(f"\n{'case':20s} tier     values   differ   max|diff|   "
+              f"slope origin/ols/mean-ratio    EPA  strict-vs-EPA")
         for r in rows:
             print(f"{r['case']:20s} {r['tier']:7s} {r['n_values']:8d} {r['n_differ']:8d} "
-                  f"{r['max_abs_diff']:10.5f}  {r['epa_slope']:.6f}  "
+                  f"{r['max_abs_diff']:10.5f}  {r['epa_slope']:.6f}/{r['epa_slope_ols']:.6f}/"
+                  f"{r['epa_mean_ratio']:.6f}  "
                   f"{'pass' if r['epa_pass'] else 'FAIL'}  {'pass' if r['strict_vs_epa_pass'] else 'fail'}")
         (catalog.OUT_DIR / "suite_vs_epa.json").write_text(json.dumps(rows, indent=2))
 

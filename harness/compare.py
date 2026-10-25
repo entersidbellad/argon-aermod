@@ -4,11 +4,18 @@
 Two rules, both must pass:
 
 EPA rule
-    Best-fit slope through the origin of (reference, candidate) paired on
-    (x, y, date, ave, grp), computed by ``pyaermod.regulatory_parity.
-    score_postfile_pair`` (EPA's Compare_AERMOD_test_cases.R metric), must be
-    within 1 +/- 0.001. Reference = EPA's shipped POSTFILE when the case has
-    one, otherwise our compiled binary's POSTFILE.
+    Best-fit slope of candidate vs reference within 1 +/- 0.001. Reference =
+    EPA's shipped POSTFILE when the case has one, otherwise our compiled
+    binary's POSTFILE. EPA's 26135 test-case kit states no numeric slope
+    threshold and uses "best-fit slope" for three different things, so every
+    one of them must be within tolerance:
+      * ``origin``: least squares through the origin on rows paired by
+        (x, y, date, ave, grp) -- ``pyaermod.regulatory_parity.score_postfile_pair``;
+      * ``ols``: least squares with intercept, the line Compare_AERMOD_test_cases.R
+        draws (``geom_smooth(method = "lm")``) over rows paired by (date, x, y);
+      * ``mean_ratio``: conc1mean / conc2mean (reference / candidate, each over
+        its whole file), which the kit's instructions call the
+        TestCaseDifferences_BestFitSlope.csv value.
 
 Strict rule (always against OUR compiled binary's POSTFILE, never EPA's file,
 because our gfortran build already differs from EPA's shipped files by more
@@ -53,7 +60,9 @@ PERCENTILE = 99.0
 class EpaResult:
     against: str
     n_paired: int
-    slope: float
+    slope: float                    # origin slope (pyaermod)
+    slope_ols: float
+    mean_ratio: float
     max_abs_error: float
     passes: bool
 
@@ -78,7 +87,7 @@ class StrictResult:
 
     @property
     def passes(self) -> bool:
-        return self.coverage_ok and self.zero_ok and self.p99_ok and self.h4h_ok is not False
+        return self.coverage_ok and self.zero_ok and self.p99_ok and self.h4h_ok is True
 
 
 @dataclass
@@ -195,19 +204,56 @@ def stability_split(ref: pd.DataFrame, cand: pd.DataFrame, sfc: Path | str) -> d
     return out
 
 
+def ols_slope(ref: pd.DataFrame, cand: pd.DataFrame) -> float:
+    """Slope of lm(cand ~ ref) on rows paired by (date, x, y), as Compare_AERMOD_test_cases.R."""
+    cand = cand.drop_duplicates(["date", "x", "y"])
+    m = ref.merge(cand, on=["date", "x", "y"], suffixes=("_ref", "_cand")).dropna(
+        subset=["concentration_ref", "concentration_cand"])
+    x = m["concentration_ref"].to_numpy(np.float64)
+    y = m["concentration_cand"].to_numpy(np.float64)
+    if len(x) < 2:
+        return float("nan")
+    sxx = float(np.sum((x - x.mean()) ** 2))
+    if sxx == 0.0:
+        return float("nan")
+    return float(np.sum((x - x.mean()) * (y - y.mean())) / sxx)
+
+
+def mean_ratio(ref: pd.DataFrame, cand: pd.DataFrame) -> float:
+    """conc1mean / conc2mean with conc1 = reference, conc2 = candidate (EPA's orientation)."""
+    c2 = float(cand["concentration"].mean()) if len(cand) else float("nan")
+    return float(ref["concentration"].mean()) / c2 if c2 else float("nan")
+
+
+def within(value: float, tol: float = SLOPE_TOL) -> bool:
+    return bool(np.isfinite(value) and abs(value - 1.0) <= tol)
+
+
+def epa_compare(reference: Path, candidate: Path, *, against: str, case: str = "",
+                cand_df: pd.DataFrame | None = None) -> EpaResult:
+    score = score_postfile_pair(reference, candidate, case=case)
+    ref_df = load(reference)
+    cand_df = load(candidate) if cand_df is None else cand_df
+    ols, ratio = ols_slope(ref_df, cand_df), mean_ratio(ref_df, cand_df)
+    return EpaResult(
+        against=against,
+        n_paired=score.n_paired,
+        slope=score.slope,
+        slope_ols=ols,
+        mean_ratio=ratio,
+        max_abs_error=score.max_abs_error,
+        passes=score.n_paired > 0 and within(score.slope) and within(ols) and within(ratio),
+    )
+
+
 def compare_case(candidate: Path | str, oracle: Path | str, *, epa: Path | str | None = None,
                  sfc: Path | str | None = None, case: str = "") -> CaseComparison:
     """Judge ``candidate`` against our binary's ``oracle`` (and EPA's file if given)."""
-    epa_ref = Path(epa) if epa else Path(oracle)
-    score = score_postfile_pair(epa_ref, candidate, case=case)
-    epa_result = EpaResult(
-        against="EPA reference POSTFILE" if epa else "our binary (case has no EPA POSTFILE)",
-        n_paired=score.n_paired,
-        slope=score.slope,
-        max_abs_error=score.max_abs_error,
-        passes=score.n_paired > 0 and score.passes(SLOPE_TOL),
-    )
     ref_df, cand_df = load(oracle), load(candidate)
+    epa_result = epa_compare(
+        Path(epa) if epa else Path(oracle), Path(candidate),
+        against="EPA reference POSTFILE" if epa else "our binary (case has no EPA POSTFILE)",
+        case=case, cand_df=cand_df)
     result = CaseComparison(case, epa_result, strict_compare(ref_df, cand_df))
     if sfc:
         result.by_stability = stability_split(ref_df, cand_df, sfc)
@@ -235,8 +281,10 @@ def format_row(c: CaseComparison) -> str:
     split = " ".join(
         f"{k[:4]} {v['pass_rate']*100:6.2f}%({v['n_hours']}h)" for k, v in stab.items()
     )
-    return (f"{c.case:20s} {'PASS' if c.passes else 'FAIL'}  slope {c.epa.slope:.6f} "
-            f"[{'ok' if c.epa.passes else 'x'}]  zero {s.zero_agreement*100:7.3f}%  "
+    e = c.epa
+    return (f"{c.case:20s} {'PASS' if c.passes else 'FAIL'}  slope {e.slope:.6f}/"
+            f"{e.slope_ols:.6f}/{e.mean_ratio:.6f} "
+            f"[{'ok' if e.passes else 'x'}]  zero {s.zero_agreement*100:7.3f}%  "
             f"p99 {s.p99_rel_err:.2e}  H4H fail {s.h4h_n_fail}/{s.h4h_n_receptors}  {split}")
 
 
