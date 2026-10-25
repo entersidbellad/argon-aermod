@@ -1,236 +1,95 @@
 # AERMOD Python Port
 
-**Legacy Fortran migration verified against the government's own test suite. Zero hand edits.**
+Gemini 4 Argon (`gemini-4-argon`, 1M-token context) ports a scoped slice of EPA AERMOD 26135 from Fortran to Python in one full-context pass. An automated repair loop then fixes divergences against our compiled reference binary. Every Python file under `port/aermod_py/` must come from a recorded Argon interaction; `split.py --verify` checks this.
 
-Gemini 4 Argon (1,048,576-token context) ports EPA's AERMOD air-dispersion model from Fortran to Python in one full-context pass, then an automated repair loop fixes divergences until the port matches EPA's official test cases with strict numerical criteria.
+## Scope
 
-## What This Is
-
-AERMOD is the EPA's regulatory air quality dispersion model—30 years of Fortran, ~98K lines, used nationwide for permitting. This project demonstrates:
-
-1. **Full-context porting**: Gemini 4 Argon sees all ~149K tokens of scoped physics in one pass
-2. **Automated verification**: Tested against EPA's test suite with strict numerical criteria
-3. **Automated repair**: Agent-driven repair loop fixes divergences with targeted patches
-4. **Zero hand edits**: `port/aermod_py/` is written entirely by Argon—no human code
+- POINT sources, FLAT terrain, rural, concentration, 1-hr averages.
+- **Tier A**: no building downwash. **Tier B**: adds PRIME.
+- Not ported: SETUP (input parsing) and output. The human-written `harness/glue.py` parses the deck with pyaermod, builds every SETUP-assigned value the physics reads (checked bit for bit against `SETUP.DMP` from an instrumented AERMOD build), and writes the POSTFILE.
 
 ## Quickstart
 
 ```bash
-# 1. Download and build reference AERMOD
-cd ref
-./download_aermod.sh
-./build_aermod.sh
+pip install -r requirements.txt
+make ref          # fetch EPA source + test cases (checksummed), build ref/aermod and ref/aermod_dump
+make refs dumps debug-refs   # oracles, SETUP.DMP ground truth, DEBUGOPT runs
+python pack.py    # context/tier_{A,B}.txt and context/tokens.json
+make test         # full pytest suite (make test-fast skips the slow DEBUGOPT/e2e tests)
 
-# 2. Pack Fortran source for porting
-python pack.py --tier A --count-tokens
-
-# 3. Set up Gemini API key
-export GEMINI_API_KEY=your_key_here
-
-# 4. Run the port (requires API key)
-agent/port.py --tier A --thinking high
-
-# 5. Split Argon's output into files
-./split.py agent/runs/<timestamp>/raw_output.txt
-
-# 6. Run tests
-harness/run_port.py AERTEST --verbose
-
-# 7. Compare against reference
-harness/compare.py \
-    cases/epa/AERTEST/AERTEST_EPA.OUT \
-    /tmp/aermod_port_AERTEST/POSTFILE.OUT
-
-# 8. If divergent, run repair loop
-agent/repair_loop.py --tier A --max-iterations 10
+export GEMINI_API_KEY=...
+python agent/port.py --tier B                # one pass; replies saved under agent/runs/
+python agent/repair_loop.py --tier B         # repair against the tier's training cases
+make suite-port                              # run the port on every case -> out/suite_port.json
+make verify                                  # provenance of port/aermod_py
+make serve                                   # read-only dashboard on 127.0.0.1:8000
 ```
 
-## Verification Rules
+`python agent/port.py --tier B --dry-run` writes the prompt and counts tokens without calling the API.
 
-All ports must pass:
+## Verification rules (`harness/compare.py`, frozen; `make freeze` prints its sha256)
 
-### 1. EPA Regulatory Parity
-Best-fit slope through origin within **1 ± 0.001** (via `pyaermod.regulatory_parity.score_postfile_pair`)
+Both rules must pass.
 
-### 2. Strict Numerical Criteria
-- Zero/nonzero agreement ≥ **99.9%**
-- P99 relative error ≤ **1e-4** on values ≥ 1% of case max
-- Per-receptor H4H design value difference ≤ **1e-4**
+**EPA rule.** Best-fit slope within 1 ± 0.001, against EPA's shipped POSTFILE, or our binary's for the two cases with no EPA file (`aertest_nobldg`, `testpm10_stack2`). EPA's 26135 kit gives no numeric threshold and uses "best-fit slope" for three different quantities, so all three must be in tolerance:
+- the through-origin slope (`pyaermod.regulatory_parity.score_postfile_pair`);
+- the OLS line `Compare_AERMOD_test_cases.R` draws;
+- the mean ratio the kit's instructions call the BestFitSlope value.
 
-### 3. Comparison Baseline
-All strict comparisons are against **our compiled binary**, not EPA's shipped reference files, because two builds already differ at 1e-4 precision (CAPPED_STACK1C0: 362/27,648 values; TESTPM10: 1,243/1,577,664 values).
+**Strict rule**, always against our compiled binary:
+- every row present in both files;
+- zero/nonzero agreement ≥ 99.9%;
+- p99 relative error ≤ 1e-4 over values ≥ 1% of the case max;
+- per-receptor H4H design value within 1e-4 relative.
 
-See `harness/compare.py` for implementation.
+Our gfortran build against EPA's shipped files (`harness/suite.py --vs-epa`): identical on every case except CAPPED_STACK1C0 (362 of 27,648 values differ, max 6.67 µg/m³, slopes 0.99999) and TESTPM10 (1,243 of 1,577,664, max 0.026). Ref-vs-ref through `compare.py` passes 11/11.
 
-## Port Scope
+## Cases (`harness/cases.py`)
 
-**Physics ported**:
-- Point sources only (SRCTYP = POINT)
-- Flat terrain (FLAT option)
-- Rural mode
-- Concentration output only (not deposition)
-- 1-hour averages (AVERTIME 1)
+| Tier | Cases |
+|---|---|
+| A | aertest_nobldg, CAPPED_STACK2, CAPPED_STACK2C0, CAPPED_STACK2CE, HRDOW_STACK1, FLATELEV_FLAT_STK |
+| B (adds) | AERTEST, CAPPED_STACK1C0, ALLSRCS_STACKDW |
+| Holdout | TESTPM10, testpm10_stack2 (never shown to the repair loop) |
 
-**Tier A**: No building downwash (~111K tokens)  
-**Tier B**: Adds PRIME building downwash algorithm (~149K tokens)
+`harness/fuzz.py` generates random in-scope decks on real met and checks each against the binary, the SETUP dump and the POSTFILE round trip (and the port, with `--port`).
 
-**Not ported**: Input parsing, output formatting (use `pyaermod` instead)
+## Token counts (tiktoken o200k proxy, not Gemini's tokenizer)
 
-## Test Cases
+| | Fortran pack | Full port prompt |
+|---|---|---|
+| Tier A | 211,866 | 252,583 |
+| Tier B | 283,216 (168,261 without comments; 162 units) | 323,933 |
 
-### Tier A (No Building Downwash)
-- `aertest_nobldg` (derived from AERTEST with buildings removed)
-- `CAPPED_STACK2`, `CAPPED_STACK2C0`, `CAPPED_STACK2CE`
-- `HRDOW_STACK1`
-- `FLATELEV_FLAT_STK`
+The chunked baseline (`agent/baselines/chunked.py`, 128K cap) needs 12 requests for tier B.
 
-### Tier B (With PRIME)
-- `AERTEST` (hero case: aertest_01H)
-- `CAPPED_STACK1C0`
-- `ALLSRCS_STACKDW`
-
-### Holdout
-- `TESTPM10` (5-year Salem met, not used in repair loop)
-- Derived no-PRIME companion (stack 2 only)
-
-Plus fuzz-generated random decks (oracle = our compiled binary).
-
-## Project Structure
-
-```
-ref/                      # Reference AERMOD build
-  download_aermod.sh      # Download EPA source & test cases
-  build_aermod.sh         # Compile with gfortran
-  aermod                  # Compiled binary (symlink)
-
-cases/
-  epa/                    # EPA reference test cases
-  derived/                # Modified test cases (e.g., aertest_nobldg)
-  holdout/                # Holdout cases (never in repair loop)
-
-harness/                  # Test harness
-  run_ref.py              # Run reference binary
-  run_port.py             # Run Python port
-  compare.py              # Compare outputs (EPA + strict criteria)
-  debugdiff.py            # Find first divergent debug variable
-  fuzz.py                 # Generate random test cases
-
-context/                  # Packed Fortran for Argon
-  tier_A_packed.txt       # Tier A Fortran (~111K tokens)
-  tier_B_packed.txt       # Tier B with PRIME (~149K tokens)
-
-prompts/                  # Prompts for Argon
-  contract.md             # Port contract specification
-  port.md                 # One-pass port prompt
-  repair.md               # Targeted repair prompt
-  consult.md              # Full-context escalation prompt
-  chunked_port.md         # Baseline: chunked approach
-
-agent/                    # Agent scripts
-  port.py                 # One-pass Gemini 4 Argon port
-  repair_loop.py          # Automated repair loop
-  baselines/
-    chunked.py            # Baseline: file-at-a-time approach
-
-port/aermod_py/           # Generated Python port
-  README.md               # (This directory is Argon-only)
-  # DO NOT hand-edit any code here
-
-ui/                       # Minimal web UI
-  index.html              # Port/Proof/Decision screens
-
-pack.py                   # Pack Fortran source
-split.py                  # Split Argon output into files
-server.py                 # Minimal FastAPI server
-```
-
-## Port Contract
-
-From `prompts/contract.md`:
+## Port contract (`prompts/contract.md`)
 
 ```python
-def run_case(
-    project: Project,
-    met: Dict[str, Path],
-    sources: Optional[List[Source]] = None,
-    debug: bool = False
-) -> Result:
-    """
-    Returns:
-        Result dict with:
-            - conc: ndarray shape (hours, receptors) in μg/m³
-            - hours, receptors: int
-            - intermediates: dict (if debug=True)
-    """
+run_case(project: glue.Project, met: glue.Met, setup: dict, *, debug=False) -> glue.Result
 ```
 
-Key requirements:
-- Vectorized over receptors, explicit hour loop
-- Float64 for DOUBLE PRECISION
-- Comment every 1-to-0-based index change
-- Preserve Fortran constants, branch order, algorithm structure verbatim
-- Each function docstring names its Fortran subroutine source
-- `debug=True` returns intermediates matching DEBUGOPT variable names
-- NumPy via `xp` namespace for future JAX compatibility
+`Result(dates, conc[hour, receptor], debug)`. With `debug=True`, `debug` is a list of `(KURDAT, ISRC, IREC, COMP, SUB, VAR, value)` rows named after AERMOD's DEBUGOPT output. The 454 valid names in `prompts/debug_vars.md` are generated by `harness/dbgcatalog.py` from real DEBUGOPT runs; `harness/debugdiff.py` reports the first divergent record against the reference.
 
-## Repair Loop Strategy
+## Repair loop (`agent/repair_loop.py`)
 
-When tests fail:
+1. Score the training cases and find the first problem: a crash, or the first divergent DEBUGOPT record.
+2. Send Argon the record, the met for that hour, the Fortran unit and the Python files translating it.
+3. Patches may touch at most 2 files.
+4. A patch is kept only if nothing regresses and the target passes or its first problem moves later. Otherwise it is reverted.
+5. After 3 rejections on the same target, escalate to a full-context consult.
 
-1. Run failing case with `debug=True` (ref + port)
-2. Find first divergent variable via `debugdiff.py`
-3. Generate failure packet (<= 30K tokens):
-   - Case, hour, met summary (L, u*, w*, zi)
-   - Ref vs port values, relative difference
-   - Fortran source for divergent subroutine
-   - Python function implementation
-4. Call Gemini 4 Argon with `repair.md` prompt
-5. Apply patch (at most 2 functions)
-6. Re-run all tier A/B cases
-7. **Keep patch only if no regressions**
-8. Commit as agent-authored: `repair N: <subroutine>: <hypothesis>`
-9. Escalate to full-context consult after 3 failures on same variable
-10. Budget: 10 iterations or 60 minutes per tier
+Kept patches are recorded in `files.json` next to the reply. Each iteration is logged under `agent/runs/<run>/iter_NNN/`.
 
-## Dependencies
+## Layout
 
-```bash
-# Required
-pip install numpy 'google-generativeai>=2.3.0' tiktoken
-
-# For input parsing and regulatory parity checks
-pip install pyaermod==2.2.0
-
-# For server (optional)
-pip install fastapi uvicorn
-
-# System
-sudo apt install gfortran  # or equivalent for your platform
 ```
-
-## Token Counts
-
-Run `pack.py --count-tokens` to see actual token counts. Expected (o200k proxy):
-
-- **Tier A** (no PRIME): ~111K tokens
-- **Tier B** (with PRIME): ~149K tokens
-
-Gemini 4 Argon has 1,048,576-token context, so both fit comfortably with room for contract and prompts.
-
-## Verification Hash
-
-```bash
-make freeze
+ref/        fetch.py, build.sh, build_dump.sh (EPA download + gfortran builds)
+cases/      reduced decks per case (committed)
+harness/    glue, run_ref, run_port, compare (frozen), suite, debugdiff, dbgparse, dbgcatalog, fuzz, setup_inputs
+prompts/    contract, port, repair, consult, chunked_port, debug_vars (generated)
+agent/      argon (Interactions API client), port, repair_loop, baselines/chunked
+port/aermod_py/   Argon output only (plus a human README)
+tests/      pytest; stub_ports/ hold replay, zero and buggy fake ports
+server.py, ui/    read-only dashboard
 ```
-
-Prints the SHA256 of `harness/compare.py` so verification criteria can be proven immutable during testing.
-
-## License
-
-MIT
-
-## Credits
-
-- EPA AERMOD: https://www.epa.gov/scram/air-quality-dispersion-modeling-preferred-and-recommended-models
-- Gemini 4 Argon: Google DeepMind
-- pyaermod: https://pypi.org/project/pyaermod/

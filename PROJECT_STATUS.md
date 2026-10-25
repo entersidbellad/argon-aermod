@@ -1,151 +1,37 @@
-# Project Status Summary
+# Project status
 
-## Completed Components
+## Verified on this branch
 
-### ✅ Reference Build System
-- `ref/download_aermod.sh` - Downloads EPA AERMOD 26135 source and test cases
-- `ref/build_aermod.sh` - Builds with gfortran
-- `ref/.gitignore` - Excludes large EPA files from git
-- Test: Scripts execute successfully
+- **Reference build.** `ref/build.sh` builds AERMOD 26135 with gfortran from EPA's checksummed source. `ref/build_dump.sh` adds a `SETUP.DMP` writer before HRLOOP.
+- **Oracles.** All 11 oracle POSTFILEs match `cases/oracle_checksums.sha256`. Ref-vs-ref passes 11/11 through `compare.py`.
+- **Our binary vs EPA's files.** Identical except CAPPED_STACK1C0 (362 of 27,648 values differ) and TESTPM10 (1,243 of 1,577,664). Both still pass the EPA slope rule.
+- **compare.py.** The EPA rule was checked against `Compare_AERMOD_test_cases.R` and the kit's instructions. Each criterion of both rules is tested in `tests/test_compare.py`.
+- **glue.** On all 11 cases, the 253 SETUP inputs equal `SETUP.DMP` bit for bit and the POSTFILE writer round-trips AERMOD's output byte for byte. 92 fuzz decks also pass the setup-dump and round-trip checks.
+- **DEBUGOPT catalogue.**
+  - The 454 names come from DEBUGOPT runs of five cases, and `dbgcatalog.py` reproduces the committed file.
+  - The contract's example names are tested to be real.
+  - debugdiff matches all 2.59M AERTEST records on replay and pins an injected fault at its first occurrence.
+- **Run harness.**
+  - The replay stub port passes 11/11.
+  - The buggy stub fails every criterion.
+  - Stale `.pyc` files can no longer mask edits.
+- **Repair loop.** It runs end to end with a scripted fake model: a no-op patch is rejected, a real fix is kept, and provenance verifies.
+- **Provenance.** `port/aermod_py` holds only its README. `split.py --verify` accepts only replies backed by a completed, saved interaction.
+- **Tests.** `pytest`: 100+ tests pass with the artefacts present. On a fresh clone, `-m "not slow"` passes 40 tests and skips the rest, each with a reason.
 
-### ✅ Test Harness
-- `harness/run_ref.py` - Runs reference binary with optional debug mode
-- `harness/run_port.py` - Runs Python port (stub, ready for implementation)
-- `harness/compare.py` - EPA regulatory + strict numerical comparison
-  - **Hash: 7c3d847d020392731d90024b7d77e42396307446e2fb26cfa7f6b1bbf91b5d07**
-- `harness/debugdiff.py` - Finds first divergent debug variable
-- `harness/fuzz.py` - Random test case generator
-- Test: All scripts execute, help text works, 12/12 unit tests pass
+## Token counts (tiktoken o200k proxy)
 
-### ✅ Context Packing
-- `pack.py` - Packs Fortran with subroutine index, counts tokens
-- `split.py` - Splits Argon output by file markers
-- Test: Both scripts execute successfully
+- Tier A: Fortran pack 211,866 tokens; full port prompt 252,583.
+- Tier B: Fortran pack 283,216 tokens (168,261 code only, 162 units); full port prompt 323,933.
 
-### ✅ Prompts
-- `prompts/contract.md` - Complete port contract specification
-- `prompts/port.md` - One-pass port prompt
-- `prompts/repair.md` - Targeted repair prompt (template with {variables})
-- `prompts/consult.md` - Full-context escalation prompt
-- `prompts/chunked_port.md` - Baseline chunked strategy
-- Test: All prompts written and documented
+## Not verified
 
-### ✅ Agent Scripts
-- `agent/port.py` - One-pass Gemini 4 Argon port (ready for API key)
-- `agent/repair_loop.py` - Automated repair loop with regression checking
-- `agent/baselines/chunked.py` - Baseline chunked approach
-- Test: All scripts execute with --help, ready for GEMINI_API_KEY
-
-### ✅ Test Cases
-- `cases/epa/` - Directory structure for EPA reference cases
-- `cases/derived/` - Structure + README for derived cases (aertest_nobldg)
-- `cases/holdout/` - Structure for holdout cases (TESTPM10)
-- `cases/setup_derived.sh` - Setup script with documentation
-- Test: Directory structure created, README explains generation
-
-### ✅ UI & Server
-- `ui/index.html` - Minimal 3-screen UI (Port, Proof, Decision)
-- `server.py` - FastAPI REST API for runs/tests/certification
-- Test: Both files created, server.py executes with --help (requires fastapi)
-
-### ✅ Port Directory
-- `port/aermod_py/README.md` - Explains Argon-only policy
-- Test: README clearly states no hand-edits allowed
-
-### ✅ Documentation
-- `README.md` - Complete project documentation with quickstart
-- `Makefile` - freeze target prints compare.py hash
-- `requirements.txt` - All dependencies listed
-- `.gitignore` - Project-specific ignores for EPA files, runs, etc.
-- `.github/workflows/ci.yml` - CI configuration (builds ref, runs tests)
-- Test: README comprehensive, make freeze works, requirements.txt complete
-
-### ✅ Tests
-- `tests/test_harness.py` - Unit tests for compare, splitter, packer
-- Test: **12/12 tests pass**
-
-## Not Yet Testable (Requires External Resources)
-
-### 🔒 Reference Binary Build
-- Status: Scripts ready, requires gfortran + EPA download (~200MB)
-- Blocker: gfortran not installed in environment
-- Next: User runs `ref/download_aermod.sh` && `ref/build_aermod.sh`
-
-### 🔒 Token Counting
-- Status: pack.py ready with --count-tokens flag
-- Blocker: No GEMINI_API_KEY set (fallback to tiktoken proxy works)
-- Next: User sets GEMINI_API_KEY, runs `pack.py --tier A --count-tokens`
-
-### 🔒 Test Case Execution
-- Status: run_ref.py ready, cases structure set up
-- Blocker: No compiled binary, no downloaded test cases
-- Next: After ref build completes, run `harness/run_ref.py AERTEST`
-
-### 🔒 Ref-vs-Ref Comparison
-- Status: compare.py ready
-- Blocker: No test outputs yet
-- Next: Generate ref outputs, compare against EPA files
-
-## What Cannot Be Verified Yet
-
-1. **Reference binary builds** - Need gfortran and EPA download
-2. **AERTEST runs** - Need binary and test case files
-3. **Compare.py on real data** - Need actual POSTFILE outputs
-4. **Pack.py token counts** - Can estimate with tiktoken, need Gemini for exact
-5. **Derived case generation** - Need EPA cases first
-
-## What Was Successfully Verified
-
-1. ✅ All Python scripts execute without syntax errors
-2. ✅ All scripts show proper --help text
-3. ✅ Unit tests pass (12/12)
-4. ✅ Makefile freeze target works
-5. ✅ Compare.py hash is frozen
-6. ✅ Directory structure is complete
-7. ✅ Documentation is comprehensive
-8. ✅ Git structure is correct (branch, .gitignore)
-
-## Token Count Estimates
-
-Using tiktoken o200k proxy (rough estimate):
-
-**Tier A files** (modules.f, aermod.f, metext.f, iblval.f, siggrid.f, tempgrid.f, windgrid.f, calc1.f, calc2.f, prise.f, sigmas.f):
-- Estimated: ~111K tokens (based on prior measurements)
-- Measured: Awaiting pack.py run with source files
-
-**Tier B additional** (prime.f):
-- Total estimated: ~149K tokens
-- Measured: Awaiting pack.py run with source files
-
-## Gemini 4 Argon Readiness
-
-The project is **ready for porting** once:
-1. User sets `GEMINI_API_KEY` environment variable
-2. User runs `ref/download_aermod.sh` to get source
-3. User runs `pack.py --tier A --count-tokens` to verify token count
-4. User runs `agent/port.py --tier A` to generate port
-
-All scaffolding is in place. Zero hand-edits to `port/aermod_py/` allowed.
-
-## CI Readiness
-
-GitHub Actions CI is configured to:
-1. Install gfortran
-2. Download and build AERMOD reference
-3. Cache the binary
-4. Run unit tests (pytest)
-5. Verify compare.py hash
-
-CI will pass once merged to main (may need runners with sufficient storage for EPA downloads).
-
-## Summary
-
-**All scaffolding is complete.** The project is ready for:
-- EPA source download
-- Reference binary compilation
-- Token counting and context packing
-- Gemini 4 Argon porting (once API key is set)
-- Automated repair loop
-- Full verification against EPA test suite
-
-**Zero hand-written port code exists.** The `port/aermod_py/` directory contains only a README explaining the Argon-only policy.
+- **Argon has never been called** (no API key here). The Interactions API usage was checked by introspecting google-genai 2.33.0, not by a live call. The Antigravity agent path is untested.
+- The token counts use a proxy, not Gemini's tokenizer.
+- **EPA rule threshold.** The 1 ± 0.001 slope tolerance is pyaermod's default; EPA's kit states no threshold.
+- No R cross-check was run. The slope definitions were read from the R script, not executed.
+- HRDOW_STACK1, FLATELEV_FLAT_STK and the holdout have no DEBUGOPT audit.
+- Met parsing assumes Python `float()` matches gfortran list-directed reads (true on all cases tested).
+- The fixed-scope setup values hold only for the options the glue accepts; other options are rejected, not handled.
+- The chunked baseline has only been dry-run tested.
+- The CI workflow has not run on GitHub yet.

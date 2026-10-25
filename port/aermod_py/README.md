@@ -1,50 +1,22 @@
-# AERMOD Python Port
+# port/aermod_py
 
-**This directory is written entirely by Gemini 4 Argon. Do not hand-edit any Python code here.**
+**Every Python file here is written by Gemini 4 Argon. Do not hand-edit.**
 
-The Python implementation of AERMOD's physics is generated in a single full-context pass by Gemini 4 Argon (model ID: `gemini-4-argon`), which processes the scoped Fortran source files and produces a verified Python port.
+Files arrive only through `split.py`, called by `agent/port.py`, `agent/repair_loop.py` or the chunked baseline. Each write is recorded in `files.json` beside the saved reply under `agent/runs/`. `python split.py --verify`, which also runs in the tests and CI, fails if any file here is not byte-identical to what a completed, recorded Argon interaction split into. This README is the only human-owned file.
 
-## Generation Process
+## Contract (full text: `prompts/contract.md`)
 
-1. The Fortran source is packed into a single prompt with module index (see `../context/`)
-2. Gemini 4 Argon generates all Python modules in one pass with 1M+ token context
-3. The output is split by file markers into this directory structure
-4. A repair loop (`../agent/repair_loop.py`) fixes discrepancies against EPA test cases
-5. The port is verified against reference outputs using strict numerical criteria
+```python
+run_case(project: glue.Project, met: glue.Met, setup: dict, *, debug=False) -> glue.Result
+```
 
-## Port Contract
+- `Result(dates, conc[hour, receptor], debug)`: float64 and finite. The dates must equal `glue.expected_dates`.
+- `debug=True` returns `(KURDAT, ISRC, IREC, COMP, SUB, VAR, value)` rows named after AERMOD's DEBUGOPT output (`prompts/debug_vars.md`).
+- Translation rules:
+  - float64 for DOUBLE PRECISION;
+  - a comment at every 1-to-0-based index change;
+  - module and SAVE state as dataclasses;
+  - each function's docstring names its Fortran unit;
+  - `import numpy as xp`.
 
-- Entry point: `run_case(project, met, sources=None, debug=False) -> Result`
-- Returns: `Result` with `conc[hour, receptor]` in μg/m³
-- Vectorized over receptors with explicit hour loop
-- Float64 for DOUBLE PRECISION equivalents
-- 1-to-0-based indexing changes explicitly commented
-- Module/SAVE state as explicit dataclasses
-- Each function docstring names its source Fortran subroutine
-- `debug=True` returns intermediates matching DEBUGOPT variable names
-- NumPy via `xp` namespace for future JAX compatibility
-
-## Scope
-
-**Tier A (No Building Downwash):**
-- Point sources only
-- Flat terrain
-- Rural mode
-- Concentration output only
-- 1-hour averages
-- Default physics with FLAT
-
-**Tier B (Adds PRIME):**
-- All Tier A features
-- Building downwash via PRIME algorithm
-
-## Verification
-
-All ports must pass:
-1. EPA regulatory parity (best-fit slope 1 ± 0.001)
-2. Strict numerical criteria:
-   - Zero/nonzero agreement ≥ 99.9%
-   - P99 relative error ≤ 1e-4 on values ≥ 1% of case max
-   - Per-receptor H4H design value within 1e-4
-
-See `../harness/compare.py` for implementation details.
+Scope, cases and the pass rules are in the top-level `README.md`. The pass rules are implemented in `harness/compare.py`.
