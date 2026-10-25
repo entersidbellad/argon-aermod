@@ -3,3 +3,5 @@ aermod_source/
 epa_testcases/
 build/
 aermod
+aermod_dump
+build_dump/
