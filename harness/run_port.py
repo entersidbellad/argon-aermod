@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import pickle
+import shutil
 import sys
 import time
 import traceback
@@ -53,11 +54,17 @@ def load_port(package_dir: Path = PORT_DIR):
     package, parent = package_dir.name, str(package_dir.parent)
     for name in [m for m in sys.modules if m == package or m.startswith(package + ".")]:
         del sys.modules[name]
+    # A rewritten file can keep its size and mtime second, which would revive a stale .pyc.
+    for cache in package_dir.rglob("__pycache__"):
+        shutil.rmtree(cache)
     sys.path.insert(0, parent)
+    dont_write = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
     try:
         importlib.invalidate_caches()
         module = importlib.import_module(package)
     finally:
+        sys.dont_write_bytecode = dont_write
         sys.path.remove(parent)
     if Path(module.__file__).resolve().parent != package_dir:
         raise ImportError(f"imported {module.__file__}, not {package_dir}")
