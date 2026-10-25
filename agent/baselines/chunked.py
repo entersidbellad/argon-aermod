@@ -6,7 +6,8 @@
 
 Same model, contract and harness as agent/port.py, but no request sees the
 whole Fortran. Every request carries the contract, harness/glue.py, the SETUP
-input names and the DEBUGOPT catalogue. The first request ports modules.f into
+input names, the DEBUGOPT catalogue and the map of which file every unit of
+every request is written to. The first request ports modules.f into
 state.py; each later one adds an interface summary of the Python written so
 far (module-level names, dataclass fields, function signatures and docstrings)
 and as many program units as fit, callees before callers, so HRLOOP comes last.
@@ -39,14 +40,15 @@ FILE_ORDER = ["prime.f", "sigmas.f", "prise.f", "windgrid.f", "tempgrid.f", "sig
               "iblval.f", "metext.f", "calc2.f", "calc1.f", "aermod.f"]
 
 
-def fixed_parts() -> str:
-    return "\n\n".join([
-        "# Contract (prompts/contract.md)\n\n" + (PROMPTS / "contract.md").read_text(),
-        "# harness/glue.py (import it; do not port it)\n\n```python\n"
-        + (ROOT / "harness" / "glue.py").read_text() + "```",
-        "# SETUP inputs: the keys of `setup`\n\n" + port.setup_table(),
-        "# DEBUGOPT variables\n\n" + (PROMPTS / "debug_vars.md").read_text(),
-    ])
+def file_map(plan: list[list[pack.Unit]]) -> str:
+    """Where every unit of every request lands, so a request can import units not yet written."""
+    lines = ["Import each unit from the file listed here, even if a later request writes it.",
+             "MODULE state is in aermod_py/state.py, PARAMETERs in aermod_py/constants.py,",
+             "and aermod_py/__init__.py exports run_case.", ""]
+    for step, units in enumerate(plan, 1):
+        target = "state.py" if step == 1 else module_name(units, step)
+        lines += [f"{u.name} -> aermod_py/{target} (request {step})" for u in units]
+    return "\n".join(lines)
 
 
 def interface(pkg: Path) -> str:
@@ -106,7 +108,8 @@ def chunk_input(units: list[pack.Unit], fixed: str, summary: str, step: int, tot
                "(fields named as in the Fortran) and aermod_py/constants.py for PARAMETERs."
                if step == 1 else
                f"Write them to aermod_py/{module_name(units, step)}. Call the Python already "
-               "written (interface above) rather than redefining it. "
+               "written (interface above) rather than redefining it, and import units a later "
+               "request writes from the file the unit map gives. "
                + ("HRLOOP is here: also write aermod_py/__init__.py exporting run_case."
                   if any(u.name == "HRLOOP" for u in units) else "")))
     return (f"{fixed}\n\n# Python written so far\n\n{summary or '(none)'}\n\n"
@@ -127,9 +130,15 @@ def main() -> int:
     run_dir = out_root / f"run_{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}"
     counter = pack.TokenCounter()
     system = (PROMPTS / "chunked_port.md").read_text()
-    fixed = fixed_parts()
-    budget = CAP - counter(system) - counter(fixed) - args.summary_reserve - 1_000
+    shared = port.shared_context()
+    # The file map depends on the plan, so budget for it from a first plan, then re-plan.
+    budget = CAP - counter(system) - counter(shared) - args.summary_reserve - 1_000
+    draft_map = file_map(chunks(args.tier, budget, counter))
+    budget -= counter(draft_map) + 2_000
     plan = chunks(args.tier, budget, counter)
+    fixed = f"{shared}\n\n# Unit to file map (all requests)\n\n{file_map(plan)}"
+    if counter(fixed) > counter(shared) + counter(draft_map) + 2_000:
+        raise SystemExit("file map grew past its budget; rerun with a larger --summary-reserve")
     print(f"tier {args.tier}: {len(plan)} requests, Fortran budget {budget:,} tokens each "
           f"({counter.method})")
     for i, units in enumerate(plan, 1):
