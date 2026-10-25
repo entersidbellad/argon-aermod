@@ -51,9 +51,16 @@ def test_glue_attributes_named_in_the_contract_exist():
 
 
 def test_full_prompt_has_every_part():
-    if not (ROOT / "context" / "tier_B.txt").exists():
-        pytest.skip("context/tier_B.txt missing; run python pack.py")
+    if not (ROOT / "context" / "tier_B_code.txt").exists():
+        pytest.skip("context/tier_B_code.txt missing; run python pack.py")
     text = port.build_input("B")
     for part in ("Contract", "harness/glue.py", "SETUP inputs", "DEBUGOPT variables", "Fortran, tier B"):
         assert part in text
     assert "SUBROUTINE HRLOOP" in text and "| `AXS` |" in text
+    assert "comment lines removed" in text
+    assert "comment lines removed" not in port.build_input("B", with_comments=True)
+
+
+@pytest.mark.parametrize("max_out, times", [(None, 1), (65_536, 1), (65_537, 2), (262_144, 4)])
+def test_input_billing_multiplier(max_out, times):
+    assert port.input_multiplier(max_out) == times

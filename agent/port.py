@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,6 +34,9 @@ import split  # noqa: E402
 PROMPTS = ROOT / "prompts"
 RUNS = ROOT / "agent" / "runs"
 SETUP_INPUTS = ROOT / "harness" / "setup_inputs.json"
+# Background interactions emit at most this many output tokens per step; each further
+# step re-sends (and bills) the whole input (observed on the tier A run).
+CONTINUATION_TOKENS = 65_536
 FORTRAN_TYPES = {"D": "DOUBLE PRECISION", "I": "INTEGER", "L": "LOGICAL", "C": "CHARACTER"}
 
 
@@ -59,8 +63,19 @@ def shared_context() -> str:
     return "\n\n".join(f"# {title}\n\n{text}" for title, text in shared_parts())
 
 
-def build_input(tier: str) -> str:
-    fortran = pack.CONTEXT / f"tier_{tier}.txt"
+def fortran_pack(tier: str, with_comments: bool = False) -> Path:
+    return pack.CONTEXT / f"tier_{tier}.txt" if with_comments else pack.code_path(tier)
+
+
+def input_multiplier(max_output_tokens: int | None) -> int:
+    """How many times background mode bills the full input: once per output continuation."""
+    if not max_output_tokens or max_output_tokens <= CONTINUATION_TOKENS:
+        return 1
+    return math.ceil(max_output_tokens / CONTINUATION_TOKENS)
+
+
+def build_input(tier: str, with_comments: bool = False) -> str:
+    fortran = fortran_pack(tier, with_comments)
     if not fortran.exists():
         raise SystemExit(f"{fortran} missing; run python pack.py --tier {tier}")
     parts = shared_parts() + [(f"Fortran, tier {tier}", fortran.read_text())]
@@ -72,7 +87,10 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--tier", choices=["A", "B"], default="B")
     ap.add_argument("--thinking", choices=argon.THINKING_LEVELS, default="high")
-    ap.add_argument("--max-output-tokens", type=int, default=None)
+    ap.add_argument("--max-output-tokens", type=int, default=None,
+                    help=f"above {CONTINUATION_TOKENS:,} the full input is re-billed per continuation")
+    ap.add_argument("--with-comments", action="store_true",
+                    help="send the commented Fortran pack (default: comment-stripped, much smaller)")
     ap.add_argument("--agent", action="store_true",
                     help="run through the Antigravity agent (untested against the service)")
     ap.add_argument("--run-id", help="default: port_<tier>_<UTC timestamp>")
@@ -83,14 +101,25 @@ def main() -> int:
     run_dir = RUNS / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     system = (PROMPTS / "port.md").read_text()
-    prompt = build_input(args.tier)
+    prompt = build_input(args.tier, args.with_comments)
     (run_dir / "prompt.txt").write_text(system + "\n\n" + prompt)
     counter = pack.TokenCounter()
     tokens = counter(system + prompt)
+    multiplier = input_multiplier(args.max_output_tokens)
     meta = {"run_id": run_id, "kind": "port", "tier": args.tier, "model": argon.MODEL, "thinking": args.thinking,
-            "agent": args.agent, "prompt_tokens": tokens, "token_method": counter.method}
+            "agent": args.agent, "prompt_tokens": tokens, "token_method": counter.method,
+            "fortran_pack": fortran_pack(args.tier, args.with_comments).name,
+            "max_output_tokens": args.max_output_tokens,
+            "expected_input_multiplier": multiplier,
+            "expected_billed_input_tokens": tokens * multiplier}
     (run_dir / "run.json").write_text(json.dumps(meta, indent=1) + "\n")
-    print(f"{run_id}: prompt {tokens:,} tokens ({counter.method})")
+    print(f"{run_id}: prompt {tokens:,} tokens ({counter.method}), "
+          f"Fortran from {meta['fortran_pack']}")
+    if multiplier > 1:
+        print(f"warning: --max-output-tokens {args.max_output_tokens:,} exceeds "
+              f"{CONTINUATION_TOKENS:,}; background mode re-sends the whole input on each of up to "
+              f"{multiplier} continuation steps, so expect up to {multiplier}x input billing "
+              f"(~{tokens * multiplier:,} input tokens instead of {tokens:,})", file=sys.stderr)
     if args.dry_run:
         return 0
 

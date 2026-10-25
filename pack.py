@@ -11,7 +11,8 @@ platform downwash, EVALFILE/events, hourly emission files, averaging and
 output). Tier A also cuts the PRIME entry points.
 
 Comments are kept by default; both counts (with comments, code only) are
-reported. Writes context/tier_<T>.txt (gitignored: it is EPA source) and
+reported. Writes context/tier_<T>.txt and context/tier_<T>_code.txt (comment
+and blank lines removed; gitignored: it is EPA source) and
 context/index_tier_<T>.json + context/tokens.json (committed). Token counts
 use Gemini count_tokens when GEMINI_API_KEY is set, else tiktoken o200k_base.
 """
@@ -205,6 +206,11 @@ def fortran_unit(name: str, tier: str = "B") -> str:
     return "\n".join(lines[rec["start"] - 1:rec["end"]])
 
 
+def code_path(tier: str) -> Path:
+    """The comment-stripped pack, written on every run (agent/port.py's default input)."""
+    return CONTEXT / f"tier_{tier}_code.txt"
+
+
 def pack(tier: str, counter: TokenCounter | None = None, strip_comments: bool = False) -> dict:
     units, _ = select_units(tier)
     counter = counter or TokenCounter()
@@ -220,6 +226,7 @@ def pack(tier: str, counter: TokenCounter | None = None, strip_comments: bool = 
         json.dumps([asdict(u) for u in units], indent=1) + "\n")
     with_comments = text if not strip_comments else render(tier, units)
     code_only = text if strip_comments else render(tier, units, strip_comments=True)
+    code_path(tier).write_text(code_only)
     return {
         "tier": tier,
         "method": counter.method,
@@ -247,7 +254,8 @@ def main() -> int:
     for t, r in report.items():
         print(f"tier {t}: {r['tokens_with_comments']:,} tokens with comments, "
               f"{r['tokens_code_only']:,} code only; {r['units']} units, {r['lines']:,} lines; "
-              f"packed {r['packed']} -> context/tier_{t}.txt")
+              f"packed {r['packed']} -> context/tier_{t}.txt, code only -> "
+              f"{code_path(t).relative_to(ROOT)}")
         for f, n in r["per_file_tokens_with_comments"].items():
             print(f"    {f:12s} {n:8,}")
     tokens_path = CONTEXT / "tokens.json"
