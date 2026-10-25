@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 import split
@@ -33,21 +35,44 @@ def test_no_markers_and_duplicates_are_errors():
         split.parse("=== FILE: a.py ===\nA\n=== FILE: aermod_py/a.py ===\nB\n")
 
 
-def test_verify_traces_files_to_recorded_replies_and_catches_hand_edits(tmp_path):
+REPLY = ("=== FILE: aermod_py/__init__.py ===\nfrom .core import run_case\n"
+         "=== FILE: aermod_py/core.py ===\ndef run_case(): pass\n")
+
+
+def port_from_reply(tmp_path, *, saved_id="int-1", status="completed", recorded_id="int-1"):
     pkg, runs = tmp_path / "aermod_py", tmp_path / "runs"
     pkg.mkdir()
     (pkg / "README.md").write_text("human\n")
     reply = runs / "port_1" / "reply.txt"
     reply.parent.mkdir(parents=True)
-    reply.write_text("=== FILE: aermod_py/__init__.py ===\nfrom .core import run_case\n"
-                     "=== FILE: aermod_py/core.py ===\ndef run_case(): pass\n")
-    split.record(split.write(split.parse(reply.read_text()), pkg), reply, pkg, step="port")
+    reply.write_text(REPLY)
+    if saved_id is not None:
+        reply.with_suffix(".json").write_text(json.dumps({"id": saved_id, "status": status}))
+    meta = {"interaction_id": recorded_id} if recorded_id else {}
+    split.record(split.write(split.parse(REPLY), pkg), reply, pkg, step="port", **meta)
+    return pkg, runs
+
+
+def test_verify_traces_files_to_recorded_replies_and_catches_hand_edits(tmp_path):
+    pkg, runs = port_from_reply(tmp_path)
     assert split.verify(pkg, runs) == []
 
     (pkg / "core.py").write_text("def run_case(): return 1\n")
     (pkg / "extra.py").write_text("X = 1\n")
     problems = split.verify(pkg, runs)
     assert len(problems) == 2 and all("not produced" in p for p in problems)
+
+
+@pytest.mark.parametrize("kwargs, why", [
+    ({"recorded_id": None}, "no interaction id"),
+    ({"saved_id": None}, "no reply.json"),
+    ({"saved_id": "int-2"}, "does not record"),
+    ({"status": "failed"}, "does not record"),
+])
+def test_replies_without_a_completed_interaction_vouch_for_nothing(tmp_path, kwargs, why):
+    pkg, runs = port_from_reply(tmp_path, **kwargs)
+    problems = split.verify(pkg, runs)
+    assert len(problems) == 2 and all(why in p for p in problems)
 
 
 def test_clear_keeps_the_readme(tmp_path):

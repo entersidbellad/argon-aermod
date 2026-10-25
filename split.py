@@ -10,6 +10,7 @@ code fence wrapping a file's content is removed.
 Provenance: ``record`` writes files.json next to the saved model reply (under
 agent/runs/), and ``verify`` checks that every file in port/aermod_py except
 the README is byte-identical to what splitting some recorded reply produces,
+and that the reply belongs to a completed Argon interaction saved by agent/,
 which is how the tests prove no Python under port/ was written by hand.
 """
 
@@ -107,25 +108,51 @@ def record(written: list[Path], reply: Path, out_dir: Path = PORT_DIR, **meta) -
     return manifest
 
 
+def _interaction_problem(entry: dict, reply: Path) -> str | None:
+    """Why a manifest entry is not backed by a completed, saved Argon interaction."""
+    if not entry.get("interaction_id"):
+        return f"{reply.name} has no interaction id (split by hand, not by agent/)"
+    meta_path = reply.with_suffix(".json")
+    if not meta_path.is_file():
+        return f"{reply.name} has no {meta_path.name} from argon.Reply.save"
+    meta = json.loads(meta_path.read_text())
+    if meta.get("id") != entry["interaction_id"] or meta.get("status") != "completed":
+        return f"{meta_path.name} does not record completed interaction {entry['interaction_id']}"
+    return None
+
+
 def verify(port_dir: Path = PORT_DIR, runs_dir: Path = RUNS_DIR) -> list[str]:
-    """Problems with port_dir's provenance; empty means every file came from a recorded reply."""
+    """Problems with port_dir's provenance; empty means every file came from a recorded reply.
+
+    A reply counts only if its manifest entry names an interaction id that the
+    reply's saved metadata (``<stem>.json``) records as completed, so running
+    this script by hand on some text file never vouches for its output.
+    """
     recorded: dict[tuple[str, str], Path] = {}
+    rejected: dict[tuple[str, str], str] = {}
     for manifest in sorted(runs_dir.rglob(MANIFEST)):
         for entry in json.loads(manifest.read_text()):
+            reply = manifest.parent / entry["reply"]
+            why = _interaction_problem(entry, reply)
             for rel, digest in entry["files"].items():
-                recorded.setdefault((rel, digest), manifest.parent / entry["reply"])
+                if why is None:
+                    recorded.setdefault((rel, digest), reply)
+                else:
+                    rejected.setdefault((rel, digest), why)
     problems = []
     for path in sorted(p for p in port_dir.rglob("*") if p.is_file()):
         rel = str(path.relative_to(port_dir))
         if rel in PROTECTED or "__pycache__" in path.parts:
             continue
-        reply = recorded.get((rel, sha256(path)))
+        key = (rel, sha256(path))
+        reply = recorded.get(key)
         if reply is None:
-            problems.append(f"{rel}: not produced by any recorded model reply")
+            why = rejected.get(key)
+            problems.append(f"{rel}: " + (why or "not produced by any recorded model reply"))
             continue
         produced = dict((str(r), body) for r, body in parse(reply.read_text()))
         if produced.get(rel) != path.read_text():
-            problems.append(f"{rel}: differs from what {reply.relative_to(ROOT)} splits into")
+            problems.append(f"{rel}: differs from what {reply.relative_to(runs_dir)} splits into")
     return problems
 
 
@@ -141,6 +168,9 @@ def main() -> int:
         problems = verify(args.out_dir)
         for p in problems:
             print(f"split.py: {p}", file=sys.stderr)
+        if not problems:
+            n = sum(1 for p in args.out_dir.rglob("*.py") if "__pycache__" not in p.parts)
+            print(f"{args.out_dir}: {n} Python files, all from recorded Argon interactions")
         return 1 if problems else 0
     if args.input is None:
         ap.error("give the model output file, or --verify")
