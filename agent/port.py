@@ -79,7 +79,7 @@ def main() -> int:
     (run_dir / "prompt.txt").write_text(system + "\n\n" + prompt)
     counter = pack.TokenCounter()
     tokens = counter(system + prompt)
-    meta = {"run_id": run_id, "tier": args.tier, "model": argon.MODEL, "thinking": args.thinking,
+    meta = {"run_id": run_id, "kind": "port", "tier": args.tier, "model": argon.MODEL, "thinking": args.thinking,
             "agent": args.agent, "prompt_tokens": tokens, "token_method": counter.method}
     (run_dir / "run.json").write_text(json.dumps(meta, indent=1) + "\n")
     print(f"{run_id}: prompt {tokens:,} tokens ({counter.method})")

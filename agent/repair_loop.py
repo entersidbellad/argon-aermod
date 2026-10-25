@@ -398,6 +398,11 @@ def main() -> int:
         ap.error("holdout cases are never used for repair")
     holdout = [c for c in catalog.CASES if c.tier == "holdout"]
     run_id = args.run_id or f"repair_{args.tier}_{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}"
+    (RUNS / run_id).mkdir(parents=True, exist_ok=True)
+    meta = {"run_id": run_id, "kind": "repair", "tier": args.tier, "model": argon.MODEL,
+            "thinking": args.thinking, "iterations": args.iterations,
+            "cases": [c.name for c in training]}
+    (RUNS / run_id / "run.json").write_text(json.dumps(meta, indent=1) + "\n")
     result = repair(training, client=argon.make_client(), run_dir=RUNS / run_id,
                     port_dir=args.port_dir, tier=args.tier, iterations=args.iterations,
                     thinking=args.thinking, holdout=holdout)
