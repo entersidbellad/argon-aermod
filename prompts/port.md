@@ -1,103 +1,40 @@
-# Port AERMOD to Python
+# Port AERMOD to Python in one pass
 
-You are porting EPA's AERMOD air dispersion model from Fortran to Python in a single pass.
+You are translating the in-scope physics of EPA AERMOD 26135 (Fortran) into a
+complete Python package, `aermod_py`, in a single response.
 
-## Context
+The input that follows has five parts:
 
-Below you will find:
-1. A subroutine index for navigation
-2. The complete Fortran source code for the in-scope physics
+1. **Contract** (`prompts/contract.md`): the entry point, what each input
+   holds, the translation rules, the debug rows, and how the port is judged.
+   It is binding.
+2. **`harness/glue.py`**: human-written code that replaces AERMOD's SETUP
+   phase and its output writers. Import it (`import glue`). Don't copy or
+   re-implement it, and don't port SETUP.
+3. **SETUP inputs**: every module variable your code reads but never assigns,
+   with its Fortran type and rank. `run_case` receives all of them in `setup`.
+4. **DEBUGOPT variables**: the only names allowed in debug rows, generated
+   from real AERMOD debug output.
+5. **Fortran**: a subroutine index, then the source of every program unit
+   reachable from HRLOOP in this tier's scope, with `modules.f` in full.
+   Calls to units whose source is not in the pack (ERRHDL, averaging, output)
+   are out of scope: an ERRHDL call becomes nothing for warnings and
+   informational messages, and `raise RuntimeError(...)` for fatal ('E') errors.
 
-Your task: Generate a complete, working Python implementation that matches the Fortran behavior exactly.
+Work through HRLOOP in call order and translate every reachable unit. Keep the
+Fortran's structure, constants and order of operations. Correctness on the
+first run matters more than brevity. Watch especially for:
 
-## Contract
+- 1-based to 0-based indexing (`DO I=1,N` is `range(N)`; `A(I:J)` includes J);
+- integer vs real arithmetic (`NINT`, `INT`, `MOD`, integer division);
+- which variable a SAVEd or MODULE value carries from one call or hour to the
+  next;
+- branches that depend on stability (`UNSTAB`/`STABLE`), plume state
+  (`PPF`, `HSP`, penetration) or PRIME (`WAKE`) flags.
 
-Read `contract.md` for the complete interface specification. Key points:
-
-- Entry point: `run_case(project, met, sources=None, debug=False) -> Result`
-- Vectorized over receptors, explicit hour loop
-- Float64 for DOUBLE PRECISION
-- Comment every 1-to-0-based index change
-- Preserve constants, branch order, algorithm structure verbatim
-- Each function docstring names its Fortran subroutine source
-- Debug mode returns intermediates matching DEBUGOPT variable names
-- Use `import numpy as xp` for future JAX compatibility
-
-## Scope
-
-**Physics**: Point sources, flat terrain, rural, concentration only, 1-hour averages
-
-**Tier A** (this port): No building downwash  
-**Tier B** (if PRIME is included): Add building downwash
-
-## Input Parsing
-
-Do NOT port AERMOD's input parsing or output formatting. Use pyaermod:
-
-```python
-from pyaermod import input_reader
-from pyaermod.met_readers import read_surface_file, read_profile_file
-
-# Project and sources come from pyaermod.input_reader.parse_inp()
-# Met data from pyaermod.met_readers
-```
-
-Your port handles only the physics: met interpolation → concentration calculation.
-
-## Output Format
-
-Structure your output with file markers:
-
-```
-=== FILE: aermod_py/__init__.py ===
-<content>
-
-=== FILE: aermod_py/core.py ===
-<content>
-
-=== FILE: aermod_py/meteorology.py ===
-<content>
-```
-
-Suggested structure:
-- `__init__.py`: exports run_case
-- `core.py`: main run_case function, hourly loop
-- `meteorology.py`: METEXT, IBLVAL, SIGGRID, TEMPGRID, WINDGRID
-- `plume_rise.py`: PRISE
-- `dispersion.py`: PCALC, sigma calculations
-- `sigmas.py`: sigma_y, sigma_z formulas
-- `state.py`: dataclasses for module/SAVE state
-- `constants.py`: physical constants
-
-## Verification Strategy
-
-Your port will be tested against EPA test cases:
-- AERTEST (hero case with building downwash)
-- CAPPED_STACK2, HRDOW_STACK1, FLATELEV_FLAT_STK
-- Must pass strict numerical criteria (see contract.md)
-
-A repair loop will fix discrepancies by:
-1. Running reference vs port with debug=True
-2. Finding first divergent variable (debugdiff.py)
-3. Generating targeted patches with the divergent subroutine's Fortran
-4. Verifying no regressions
-
-Write code that is correct the first time. Pay special attention to:
-- Array index conversions (Fortran 1-based → Python 0-based)
-- Loop bounds (DO I=1,N → range(N) not range(N+1))
-- Array slicing (A(I:J) in Fortran is inclusive of J)
-- Logical operators (Fortran .AND. → Python `and`)
-- Exponentiation (Fortran ** → Python **)
-- Intrinsic functions (SQRT, EXP, LOG, SIN, COS → xp.sqrt, etc.)
-
-## DEBUGOPT Variables
-
-Run with `CO DEBUGOPT MODEL METEOR PRIME` to see intermediate variable names.
-
-You MUST inspect actual DEBUGOPT output to get the exact variable names.
-
-When debug=True, return these variables in the `intermediates` dict with names exactly as printed.
-
-## Ready?
-
-The Fortran source follows below. Generate the complete Python port.
+Respond with the package only: a sequence of
+`=== FILE: aermod_py/<name>.py ===` blocks, starting with `__init__.py`. Put no
+prose between files. Any `.py` layout under `aermod_py/` is fine; prefer one
+module per Fortran file (`hrloop.py`, `metext.py`, `iblval.py`, `calc1.py`,
+`calc2.py`, `prise.py`, `sigmas.py`, `prime.py`, ...) plus `state.py` for the
+module-variable dataclasses.

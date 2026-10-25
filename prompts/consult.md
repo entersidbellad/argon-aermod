@@ -1,41 +1,28 @@
-# Consult: Persistent Divergence
+# Consult: a divergence targeted repairs have not fixed
 
-The variable `{variable_name}` has diverged 3 times despite targeted patches.
+Targeted repairs of the AERMOD Python port (`aermod_py`) have failed several
+times on the same Fortran variable. Each attempt changed at most two files and
+was rejected because it either broke a case that passed or did not move the
+first divergence. The input gives you the history of those attempts (each
+hypothesis and why it was rejected), the current divergence, the complete
+current package, and the complete packed Fortran for the tier, so you can
+follow the data flow across units.
 
-## Divergence History
+1. Trace the diverging variable back through every Fortran unit that
+   contributes to it, and compare each step with the Python.
+2. Identify the root cause; it may be upstream of the unit that printed the
+   value, or a MODULE/SAVE value carried between calls or hours.
+3. Fix it. You may change any number of files, but only for this cause.
 
-{divergence_history}
+Keep the contract's rules (`prompts/contract.md`). Return each changed file
+complete. The same acceptance test applies: no passing case may fail, and the
+first divergence must move later or disappear.
 
-## Full Context
-
-Below is the complete packed Fortran source for your reference.
-
-Your task: 
-1. Analyze why this variable keeps diverging
-2. Identify the root cause (may involve multiple subroutines)
-3. Generate a comprehensive fix
-
-The full Python port is available. Consider:
-- Data flow leading to this variable
-- Upstream calculations that feed into it
-- Interactions between modules
-- Subtle numeric or logical differences
-
-## Output Format
+Respond in exactly this format:
 
 ```
 === ANALYSIS ===
-<multi-paragraph root cause analysis>
-
-=== FILE: aermod_py/module1.py ===
-<corrected file>
-
-=== FILE: aermod_py/module2.py ===
-<corrected file>
+<root-cause analysis: which values, which units, why the earlier patches failed>
+=== FILE: aermod_py/<name>.py ===
+<complete file>
 ```
-
-You may patch multiple files if needed, but keep changes focused on the issue.
-
----
-
-{packed_fortran_context}

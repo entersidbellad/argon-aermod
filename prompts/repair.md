@@ -1,77 +1,40 @@
-# Repair AERMOD Port Divergence
+# Repair one divergence in the AERMOD Python port
 
-A divergence was found between the reference AERMOD and the Python port.
+You wrote `aermod_py`, a Python translation of AERMOD 26135's physics, under
+the contract in `prompts/contract.md`. The repair loop ran it on a test case and
+found where it first leaves AERMOD. The input gives you:
 
-## Failure Context
+- the case and hour, and the first problem in AERMOD's order: either the
+  first debug value that differs from AERMOD by more than one unit in AERMOD's
+  last printed digit (names as in `prompts/debug_vars.md`: Fortran subroutine,
+  pass `PAN`/`PLM`/`PRIME`, variable, source and receptor index), the first
+  debug row the port failed to emit, or the traceback if the port crashed;
+- the met values for that hour;
+- the Fortran source of the unit that printed the value;
+- the current Python files that translate that unit.
 
-**Case**: {case_name}  
-**Hour**: {hour}  
-**First Divergent Variable**: {variable_name}
+Find the single most likely cause and fix it with a minimal patch. Every value
+AERMOD printed before this one matched, so the error is most likely in the
+computation between the last matching value and this one, in the unit shown.
+(Not every intermediate is printed, so it can also sit in a unit that unit
+calls.)
 
-### Meteorology for This Hour
+Rules:
 
-- Monin-Obukhov Length (L): {L:.2f} m  
-- Friction velocity (u*): {ustar:.3f} m/s  
-- Convective velocity (w*): {wstar:.3f} m/s  
-- Mixing height (zi): {zi:.1f} m  
-- Stability: {stability}
+- Change at most two files, and only what the fix needs. Keep the contract's
+  translation rules (float64, constants and operation order as in the
+  Fortran, docstrings naming the Fortran unit, no module-level state).
+- Return each changed file complete, not as a diff.
+- Do not add special cases for the test case, hour or receptor.
 
-### Variable Values
+The patch is kept only if no case that passed before fails afterwards and
+this case's first problem moves later in AERMOD's order (or disappears).
 
-**Reference**: {ref_value:.10e}  
-**Port**: {port_value:.10e}  
-**Relative Difference**: {rel_diff:.2e}
-
-## Fortran Source for Divergent Subroutine
-
-The variable `{variable_name}` is computed in:
-
-```fortran
-{fortran_source}
-```
-
-## Current Python Implementation
-
-```python
-{python_source}
-```
-
-## Your Task
-
-Generate ONE hypothesis for why the port diverges and a targeted patch.
-
-**Constraints**:
-- Touch at most TWO functions in your patch
-- Do not refactor unrelated code
-- Preserve the overall structure
-- Match Fortran's numeric behavior exactly
-
-**Common Issues**:
-- Index off-by-one (Fortran 1-based vs Python 0-based)
-- Loop bounds incorrect (DO I=1,N vs range(N+1))
-- Array slicing (Fortran inclusive upper bound)
-- Sign error in formula
-- Missing case in conditional logic
-- Wrong intrinsic function (LOG vs LOG10)
-- Operator precedence difference
-
-## Output Format
+Respond in exactly this format:
 
 ```
 === HYPOTHESIS ===
-<one-sentence hypothesis>
-
-=== FILE: aermod_py/module.py ===
-<complete corrected file>
+<one or two sentences: what is wrong and why>
+=== FILE: aermod_py/<name>.py ===
+<complete file>
 ```
-
-If you need to patch two files, include both with FILE markers.
-
-## Test Impact
-
-After your patch:
-- All tier A/B test cases will be re-run
-- Patch is KEPT only if there are NO regressions
-- If the same variable diverges 3 times, escalation to full-context consult
-
-Focus on the specific subroutine that computes `{variable_name}`. Make surgical changes.

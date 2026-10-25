@@ -26,6 +26,9 @@ import sys
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+import tiktoken
+from google import genai
+
 ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "ref" / "aermod_source" / "aermod_source_v26135"
 CONTEXT = ROOT / "context"
@@ -161,11 +164,9 @@ class TokenCounter:
         self.method = "tiktoken o200k_base (proxy)"
         self._client = None
         if os.environ.get("GEMINI_API_KEY"):
-            from google import genai
             self._client = genai.Client()
             self.method = f"Gemini count_tokens ({MODEL})"
         else:
-            import tiktoken
             self._enc = tiktoken.get_encoding("o200k_base")
 
     def __call__(self, text: str) -> int:
