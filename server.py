@@ -32,6 +32,7 @@ from fastapi.staticfiles import StaticFiles
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "harness"))
 import cases as catalog  # noqa: E402
+import run_port  # noqa: E402
 import split  # noqa: E402
 
 UI_DIR = ROOT / "ui"
@@ -89,6 +90,11 @@ def compare_hash() -> str:
     return hashlib.sha256(COMPARE.read_bytes()).hexdigest()
 
 
+def port_hash() -> str | None:
+    """Digest of port/aermod_py as harness/run_port.py stamps it, or None with no port."""
+    return run_port.package_sha256(PORT_DIR) if (PORT_DIR / "__init__.py").is_file() else None
+
+
 @app.get("/api/runs")
 def list_runs() -> list[dict]:
     if not RUNS_DIR.is_dir():
@@ -118,6 +124,8 @@ def test_results(who: str = "port") -> dict:
             "error": r.get("error"),
         }
     current = compare_hash()
+    port_now = port_hash()
+    scored_port = (suite or {}).get("port_sha256")
     return {
         "who": who,
         "suite_found": suite is not None,
@@ -125,6 +133,9 @@ def test_results(who: str = "port") -> dict:
         "compare_hash": current,
         "suite_compare_hash": (suite or {}).get("compare_sha256"),
         "hash_matches": suite is not None and suite.get("compare_sha256") == current,
+        "port_hash": port_now,
+        "suite_port_hash": scored_port,
+        "port_matches": port_now is not None and scored_port == port_now,
         "tier_a": [c.name for c in catalog.tier_cases("A")],
         "tier_b": [c.name for c in catalog.CASES if c.tier == "B"],
         "holdout": [c.name for c in catalog.CASES if c.tier == "holdout"],
@@ -174,6 +185,9 @@ def certify() -> dict:
         ("compare_frozen", results["hash_matches"],
          f"suite scored with {results['suite_compare_hash']}, compare.py is now "
          f"{results['compare_hash']}"),
+        ("scored_this_port", results["port_matches"],
+         f"suite scored port {results['suite_port_hash']}, port/aermod_py is now "
+         f"{results['port_hash']}"),
         ("tier_a_epa", *all_pass(results["tier_a"], "epa_pass")),
         ("tier_a_strict", *all_pass(results["tier_a"], "strict_pass")),
         ("port_exists", bool(prov["python_files"]),

@@ -456,6 +456,11 @@
                     : data.hash_matches
                         ? `Suite from ${data.suite_time} was scored with this compare.py.`
                         : `STALE: suite from ${data.suite_time} was scored with ${data.suite_compare_hash}.`;
+                if (data.suite_found && !data.port_matches) {
+                    document.getElementById('hash-status').textContent +=
+                        ` STALE PORT: scored ${data.suite_port_hash ?? 'no single port version'}, ` +
+                        `port/aermod_py is now ${data.port_hash ?? 'empty'}.`;
+                }
 
                 renderTestGrid('tier-a-grid', data.tier_a, data.results);
                 renderTestGrid('tier-b-grid', data.tier_b, data.results);

@@ -6,7 +6,8 @@ For each case: stage case.inp and its met/include files into out/<who>/<case>/
 
     aermod_py.run_case(project, met, setup, debug=...) -> glue.Result
 
-check the result's shape and dates, and write postfile.pst in AERMOD's format.
+check the result's shape and dates, and write postfile.pst in AERMOD's format
+plus port.sha256, the digest of the package that produced it.
 With ``--debug`` the port's debug rows are pickled to port_debug.pkl for
 harness/debugdiff.py. Failures write the traceback to error.txt and are
 reported per case; the exit status is non-zero if any case failed.
@@ -15,6 +16,7 @@ reported per case; the exit status is non-zero if any case failed.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib
 import pickle
 import shutil
@@ -35,6 +37,18 @@ import run_ref  # noqa: E402
 PORT_DIR = catalog.ROOT / "port" / "aermod_py"
 DEBUG_FILE = "port_debug.pkl"
 ERROR_FILE = "error.txt"
+PORT_HASH_FILE = "port.sha256"
+
+
+def package_sha256(package_dir: Path = PORT_DIR) -> str:
+    """One digest over the path and bytes of every .py file in the package."""
+    package_dir = Path(package_dir).resolve()
+    h = hashlib.sha256()
+    for path in sorted(package_dir.rglob("*.py")):
+        if "__pycache__" not in path.parts:
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            h.update(f"{path.relative_to(package_dir).as_posix()}\0{digest}\n".encode())
+    return h.hexdigest()
 
 
 @dataclass
@@ -105,9 +119,11 @@ def run_staged(inp: Path, *, debug: bool = False, package_dir: Path = PORT_DIR,
             project = glue.load_project(inp)
         met = glue.load_met(project, workdir)
         setup = glue.setup_values(project, met)
+        version = package_sha256(package_dir)
         port = load_port(package_dir)
         result = check_result(port.run_case(project, met, setup, debug=debug), project, met)
         glue.write_postfile(workdir / catalog.POSTFILE_NAME, project, result.dates, result.conc)
+        (workdir / PORT_HASH_FILE).write_text(version + "\n")
         if debug:
             with open(workdir / DEBUG_FILE, "wb") as f:
                 pickle.dump(result.debug, f)

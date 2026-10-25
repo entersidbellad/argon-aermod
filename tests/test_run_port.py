@@ -33,6 +33,19 @@ def test_debug_rows_are_pickled():
     assert (run.workdir / run_port.DEBUG_FILE).exists()
 
 
+def test_outputs_are_stamped_with_the_package_version(tmp_path):
+    require(oracle("CAPPED_STACK2"), "run python harness/run_ref.py CAPPED_STACK2")
+    pkg = tmp_path / "zero_port"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_bytes((STUBS / "zero_port" / "__init__.py").read_bytes())
+    before = run_port.package_sha256(pkg)
+    run = run_port.run_case(catalog.get("CAPPED_STACK2"), who="test_port_stamp", package_dir=pkg)
+    assert run.ok, run.error
+    assert (run.workdir / run_port.PORT_HASH_FILE).read_text().strip() == before
+    (pkg / "extra.py").write_text("X = 1\n")
+    assert run_port.package_sha256(pkg) != before
+
+
 def make_port(tmp_path, body: str):
     pkg = tmp_path / "aermod_py"
     pkg.mkdir(exist_ok=True)

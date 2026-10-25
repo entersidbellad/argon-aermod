@@ -8,6 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import server
+import split
 
 
 @pytest.fixture
@@ -55,9 +56,10 @@ def test_no_endpoint_starts_anything(client):
     assert client.post("/api/certify").status_code in (404, 405)
 
 
-def suite(results, compare_sha256):
+def suite(results, compare_sha256, port_sha256=None):
     server.OUT_DIR.joinpath("suite_port.json").write_text(json.dumps(
-        {"who": "port", "time": "t", "compare_sha256": compare_sha256, "results": results}))
+        {"who": "port", "time": "t", "compare_sha256": compare_sha256,
+         "port_sha256": port_sha256, "results": results}))
 
 
 def passing(case):
@@ -92,3 +94,30 @@ def test_certify_needs_every_criterion(client):
 
 def test_provenance_of_the_real_port_dir_is_clean():
     assert TestClient(server.app).get("/api/provenance").json()["problems"] == []
+
+
+def port_from_argon(run_id, body):
+    """Install a package exactly as agent/port.py would, provenance included."""
+    run_dir = server.RUNS_DIR / run_id
+    run_dir.mkdir()
+    reply = run_dir / "reply.txt"
+    reply.write_text(f"=== FILE: aermod_py/__init__.py ===\n{body}")
+    (run_dir / "reply.json").write_text(json.dumps({"id": run_id, "status": "completed",
+                                                    "usage": {}}))
+    split.clear(server.PORT_DIR)
+    written = split.write(split.parse(reply.read_text()), server.PORT_DIR)
+    split.record(written, reply, server.PORT_DIR, interaction_id=run_id, step="port")
+
+
+def test_certification_is_tied_to_the_port_version_that_was_scored(client):
+    port_from_argon("port_1", "def run_case(*a, **k): pass\n")
+    tier_a = client.get("/api/test-results").json()["tier_a"]
+    suite([passing(c) for c in tier_a], server.compare_hash(), server.port_hash())
+    assert client.get("/api/certify").json()["certified"] is True
+
+    port_from_argon("port_2", "def run_case(*a, **k): return None\n")
+    cert = client.get("/api/certify").json()
+    by_name = {c["name"]: c["ok"] for c in cert["criteria"]}
+    assert by_name["provenance"] and by_name["compare_frozen"]
+    assert not by_name["scored_this_port"] and not cert["certified"]
+    assert client.get("/api/test-results").json()["port_matches"] is False

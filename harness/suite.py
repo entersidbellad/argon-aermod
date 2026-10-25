@@ -25,6 +25,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import cases as catalog  # noqa: E402
 import compare  # noqa: E402
+import run_port  # noqa: E402
 import run_ref  # noqa: E402
 
 CHECKSUMS = catalog.CASES_DIR / "oracle_checksums.sha256"
@@ -124,11 +125,16 @@ def main() -> int:
                                        sfc=catalog.EPA_DIR / case.manifest()["met"][0],
                                        case=case.name)
             print(compare.format_row(res))
-            results.append({"tier": case.tier, **res.to_dict()})
+            stamp = case.out_dir(args.who) / run_port.PORT_HASH_FILE
+            results.append({"tier": case.tier, **res.to_dict(),
+                            "port_sha256": stamp.read_text().strip() if stamp.exists() else None})
+        versions = {r.get("port_sha256") for r in results}
         report = {
             "who": args.who,
             "time": time.strftime("%Y-%m-%dT%H:%M:%S"),
             "compare_sha256": hashlib.sha256(Path(compare.__file__).read_bytes()).hexdigest(),
+            # One package version for every case, or None (mixed, missing, or not a port).
+            "port_sha256": versions.pop() if len(versions) == 1 else None,
             "results": results,
         }
         (catalog.OUT_DIR / f"suite_{args.who}.json").write_text(json.dumps(report, indent=2))
