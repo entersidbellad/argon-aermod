@@ -1,0 +1,23 @@
+{
+  "name": "AERTEST",
+  "tier": "B",
+  "kind": "epa",
+  "group": "ALL",
+  "deck": "inputs/aertest.inp",
+  "deck_sha256": "0add223e06514731123a2fcb80a93b41df2464c714225ff36c367daefd1f308d",
+  "epa_postfile": "postfiles/AERTEST_01H.PST",
+  "oracle": "our compiled binary (ref/aermod) run on case.inp",
+  "met": [
+    "meteorology/aermet2.sfc",
+    "meteorology/aermet2.pfl"
+  ],
+  "includes": [],
+  "sources": [
+    "STACK1"
+  ],
+  "removed": {
+    "sources": [],
+    "keywords": {}
+  },
+  "notes": "Hero case (aertest_01H)."
+}

@@ -1,0 +1,46 @@
+CO STARTING
+   TITLEONE  PM-10 Test Case for the AERMOD Model using single met file
+   TITLETWO  Five years of met data from Salem, OR
+   MODELOPT  CONC  FLAT
+   AVERTIME  1  24  PERIOD
+   POLLUTID  PM10
+   RUNORNOT RUN
+** EVENTFIL  testpm10_evt.inp  DETAIL
+   ERRORFIL  errors.out
+CO FINISHED
+
+SO STARTING
+
+** Point Source       QS      HS     TS    VS    DS
+** Parameters:       ----    ----   ----  ----   ---
+
+
+   LOCATION  STACK2  POINT  0.0   0.0   0.0
+
+** Point Source       QS      HS     TS    VS    DS
+** Parameters:       ----    ----   ----  ----   ---
+   SRCPARAM  STACK2  100.0   65.00  425.  15.0   5.
+
+   SRCGROUP  ALL
+SO FINISHED
+
+RE STARTING
+   GRIDPOLR  POL1  STA
+             POL1  ORIG  0.0  0.0
+             POL1  DIST  200.  1000.
+             POL1  GDIR  18    10.   20.
+             POL1  END
+RE FINISHED
+
+ME STARTING
+   SURFFILE  salem_86-90_adju.sfc
+   PROFFILE  salem_86-90_adju.pfl
+   SURFDATA  24232  1986  SALEM
+   UAIRDATA  24232  1986  SALEM
+   PROFBASE  0.0
+ME FINISHED
+
+OU STARTING
+   RECTABLE  ALLAVE  FIRST
+   POSTFILE  1  ALL  PLOT  postfile.pst
+OU FINISHED

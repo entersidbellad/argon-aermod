@@ -1,0 +1,30 @@
+{
+  "name": "HRDOW_STACK1",
+  "tier": "A",
+  "kind": "epa",
+  "group": "STACK1",
+  "deck": "inputs/hrdow.inp",
+  "deck_sha256": "bd914ef4c531d5fbd646aa802451aa70036f8b4d58fa804350be1d8ee51b62da",
+  "epa_postfile": "postfiles/HRDOW_STACK1_01H.PST",
+  "oracle": "our compiled binary (ref/aermod) run on case.inp",
+  "met": [
+    "meteorology/houston_adju.sfc",
+    "meteorology/houston_adju.pfl"
+  ],
+  "includes": [],
+  "sources": [
+    "STACK1",
+    "STACK2",
+    "STACK3",
+    "STACK4",
+    "STACK5",
+    "STACK6"
+  ],
+  "removed": {
+    "sources": [],
+    "keywords": {
+      "SRCGROUP": 5
+    }
+  },
+  "notes": "Exercises EMISFACT HRDOW emission factors."
+}
