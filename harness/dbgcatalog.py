@@ -61,6 +61,8 @@ def markdown(entries: list[dict], case_names: list[str]) -> str:
     by_file: dict[str, list[dict]] = defaultdict(list)
     for e in entries:
         by_file[e["file"]].append(e)
+    dotted = next(e["var"] for e in entries if "." in e["var"])
+    operator = next(e["var"] for e in entries if any(c in e["var"] for c in "*/+-"))
     out = [
         "# DEBUGOPT variables (generated)",
         "",
@@ -69,8 +71,8 @@ def markdown(entries: list[dict], case_names: list[str]) -> str:
         "",
         "Each row is one name `harness/dbgparse.py` reads from the Fortran WRITE statement",
         "in subroutine `sub`. `comp` is `PAN` (meander/pancake pass), `PLM` (coherent plume",
-        "pass), `PRIME`, or empty. Names with a dot (`GAUSSIAN.SY`) are a column of a",
-        "DEBOUT plume table row; names with an operator (`QTK*(1-PPF)`) are the printed",
+        f"pass), `PRIME`, or empty. Names with a dot (`{dotted}`) are a column of a",
+        f"DEBOUT plume table row; names with an operator (`{operator}`) are the printed",
         "expression.",
         "",
     ]

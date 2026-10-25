@@ -5,7 +5,7 @@ printed it, and tagged with that statement's subroutine, so a divergence can be
 mapped straight to Fortran source. The labels and WRITE lists were read from
 AERMOD 26135 (calc1.f DEBOUT/PCALC/PSRDEB/AER_PCHI/PRMCALC, calc2.f MEANDR,
 iblval.f IBLVAL, prise.f DELTAH, metext.f METDEB, prime.f) and checked against
-real AERTEST output by tests/test_dbgparse.py.
+real AERTEST output by tests/test_debug.py.
 
 Key of a record: (date, isrc, irec, comp, sub, var, k)
   date  YYMMDDHH as int

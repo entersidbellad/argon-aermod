@@ -5,8 +5,8 @@ our compiled AERMOD 26135 on aertest_nobldg, CAPPED_STACK2CE, AERTEST, CAPPED_ST
 
 Each row is one name `harness/dbgparse.py` reads from the Fortran WRITE statement
 in subroutine `sub`. `comp` is `PAN` (meander/pancake pass), `PLM` (coherent plume
-pass), `PRIME`, or empty. Names with a dot (`GAUSSIAN.SY`) are a column of a
-DEBOUT plume table row; names with an operator (`QTK*(1-PPF)`) are the printed
+pass), `PRIME`, or empty. Names with a dot (`DIRECT1.HED1`) are a column of a
+DEBOUT plume table row; names with an operator (`CLIFT*EMIFAC`) are the printed
 expression.
 
 ## METEOR.DBG
