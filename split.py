@@ -170,7 +170,8 @@ def main() -> int:
             print(f"split.py: {p}", file=sys.stderr)
         if not problems:
             n = sum(1 for p in args.out_dir.rglob("*.py") if "__pycache__" not in p.parts)
-            print(f"{args.out_dir}: {n} Python files, all from recorded Argon interactions")
+            print(f"{args.out_dir}: " + (f"{n} Python files, all from recorded Argon interactions"
+                                         if n else "no Python files yet"))
         return 1 if problems else 0
     if args.input is None:
         ap.error("give the model output file, or --verify")
