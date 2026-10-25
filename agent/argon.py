@@ -96,7 +96,8 @@ def ask(client, *, input: str, system_instruction: str, thinking_level: str = "h
         max_output_tokens: int | None = None, temperature: float | None = None,
         previous_interaction_id: str | None = None, agent: bool = False,
         max_total_tokens: int | None = None, poll_seconds: float = 15.0,
-        timeout_seconds: float = 6 * 3600.0) -> Reply:
+        timeout_seconds: float = 6 * 3600.0, on_created=None,
+        resume_id: str | None = None) -> Reply:
     """Create one interaction, wait for it to finish, and return its text."""
     if thinking_level not in THINKING_LEVELS:
         raise ValueError(f"thinking_level must be one of {THINKING_LEVELS}")
@@ -118,7 +119,13 @@ def ask(client, *, input: str, system_instruction: str, thinking_level: str = "h
         body.update(model=MODEL, generation_config=gen)
 
     t0 = time.monotonic()
-    interaction = client.interactions.create(**body)
+    if resume_id:
+        # Re-attach to an interaction created earlier (e.g. by an interrupted run): no new billing.
+        interaction = client.interactions.get(id=resume_id)
+    else:
+        interaction = client.interactions.create(**body)
+    if on_created is not None:
+        on_created(interaction.id)
     while interaction.status in PENDING:
         if time.monotonic() - t0 > timeout_seconds:
             raise ArgonError(f"interaction {interaction.id} still {interaction.status} "

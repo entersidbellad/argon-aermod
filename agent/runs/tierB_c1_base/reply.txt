@@ -1,0 +1,1160 @@
+=== HYPOTHESIS ===
+Add `aermod_py/prime_state.py` defining `PrimeState` and the PRIME module PARAMETER constants, and `aermod_py/prime_base.py` porting the 26 foundational PRIME subroutines and functions from `prime.f` (Chunk 1 of 5).
+
+=== FILE: aermod_py/prime_state.py ===
+"""PRIME building downwash module state (modules.f: PRIME_PARAMS, PRIME_NUMPARM,
+PRIME_DFSN, PRIME_WAKEDAT, PRIME_AMBIENT, PRIME_PLU, PRM2_WAKEDAT).
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+import inspect
+from typing import TYPE_CHECKING
+
+import numpy as xp
+
+if TYPE_CHECKING:
+    from .state import AermodState
+
+# MODULE PRIME_PARAMS
+IO5: int = 7
+IO6: int = 8
+
+# MODULE PRIME_NUMPARM
+MXNW: int = 5000
+MXENT: int = 10
+MXENTP1: int = MXENT + 1
+
+# MODULE PRIME_WAKEDAT
+MXNTR: int = 50
+
+# MODULE PRIME_AMBIENT
+MXNZ: int = 100
+MXNZP1: int = MXNZ + 1
+
+# MODULE PRM2_WAKEDAT
+P2MXNTR: int = 50
+
+
+@dataclass
+class PrimeState:
+    """Explicit state holding PRIME module variables and SAVEd locals.
+
+    Note: SAVEd local variables of PRIME units are stored here with fields
+    named ``<unit>_<var>``; later chunks add fields using the same naming rule.
+    """
+
+    # MODULE PRIME_NUMPARM
+    nstep: int = 0
+    nent: int = 0
+    gravi: float = 0.0
+    rgas: float = 0.0
+    zmin: float = 0.0
+    ds: float = 0.0
+    slast: float = 0.0
+    rp: float = 0.0
+    alphap: xp.ndarray = field(default_factory=lambda: xp.zeros(MXENT, dtype=xp.float64))
+    betap: xp.ndarray = field(default_factory=lambda: xp.zeros(MXENT, dtype=xp.float64))
+    xcat: xp.ndarray = field(default_factory=lambda: xp.zeros(MXENTP1, dtype=xp.float64))
+
+    # MODULE PRIME_DFSN
+    afac: float = 0.0
+    xbyrmax: float = 0.0
+    wiz0: float = 0.0
+    wiy0: float = 0.0
+    wfz: float = 0.0
+    wfy: float = 0.0
+    dua_ua: float = 0.0
+    xdecay: float = 0.0
+    xdecayi: float = 0.0
+
+    # MODULE PRIME_WAKEDAT
+    lrurl: bool = False
+    nwak: int = 0
+    ncav: int = 0
+    hb: float = 0.0
+    wb: float = 0.0
+    xlb: float = 0.0
+    rb: float = 0.0
+    hr: float = 0.0
+    xlr: float = 0.0
+    xlc: float = 0.0
+    xbadj: float = 0.0
+    ybadj: float = 0.0
+    ub: float = 0.0
+    urh: float = 0.0
+    xwak: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNTR, dtype=xp.float64))
+    szwak: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNTR, dtype=xp.float64))
+    sywak: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNTR, dtype=xp.float64))
+    drwak: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNTR, dtype=xp.float64))
+    xcav: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNTR, dtype=xp.float64))
+    szcav: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNTR, dtype=xp.float64))
+    sycav: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNTR, dtype=xp.float64))
+    fqcav: float = 0.0
+    vsigy: float = 0.0
+    vsigz: float = 0.0
+    vsigyc: float = 0.0
+    vsigzc: float = 0.0
+    zint: float = 0.0
+    third: float = 0.0
+
+    # MODULE PRIME_AMBIENT
+    nza: int = 0
+    uamb: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNZ, dtype=xp.float64))
+    ramb: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNZ, dtype=xp.float64))
+    dedz: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNZP1, dtype=xp.float64))
+    tamb: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNZ, dtype=xp.float64))
+    zfacea: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNZP1, dtype=xp.float64))
+    zgpta: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNZ, dtype=xp.float64))
+    tamb0: float = 0.0
+    ramb0: float = 0.0
+    adia: float = 0.0
+    ptgrad0: float = 0.0
+
+    # MODULE PRIME_PLU
+    s: float = 0.0
+    x: float = 0.0
+    y: float = 0.0
+    z: float = 0.0
+    r: float = 0.0
+    u: float = 0.0
+    v: float = 0.0
+    w: float = 0.0
+    usc: float = 0.0
+    phi: float = 0.0
+    den: float = 0.0
+    tp: float = 0.0
+
+    # MODULE PRM2_WAKEDAT
+    zeff_prm2: float = 0.0
+    u30: float = 0.0
+    sv30: float = 0.0
+    sw30: float = 0.0
+    xtr_sav: xp.ndarray = field(default_factory=lambda: xp.zeros(P2MXNTR, dtype=xp.float64))
+    ztr_sav: xp.ndarray = field(default_factory=lambda: xp.zeros(P2MXNTR, dtype=xp.float64))
+    ueff_save: float = 0.0
+    sweff_save: float = 0.0
+    sveff_save: float = 0.0
+    dfsn2call: bool = False
+
+    # DATA-initialized / SAVEd locals for prime_base units (<unit>_<var>)
+    fnerf_a: xp.ndarray = field(
+        default_factory=lambda: xp.array(
+            [
+                0.0000430638,
+                0.0002765672,
+                0.0001520143,
+                0.0092705272,
+                0.0422820123,
+                0.0705230784,
+            ],
+            dtype=xp.float64,
+        )
+    )
+    fnerf_xcut: float = 3.919206
+    fnerfc_a: xp.ndarray = field(
+        default_factory=lambda: xp.array(
+            [
+                0.0000430638,
+                0.0002765672,
+                0.0001520143,
+                0.0092705272,
+                0.0422820123,
+                0.0705230784,
+            ],
+            dtype=xp.float64,
+        )
+    )
+    fnerfc_xcutl: float = -3.919206
+    fnerfc_xcuth: float = 13.306
+    fnerfc_rtpii: float = 0.564189583547756
+    rate_alpha0: float = 0.11
+    rate_beta0: float = 0.6
+
+    def emit_debug(
+        self,
+        state: AermodState,
+        sub: str,
+        var: str,
+        value: float,
+        irec: int = 0,
+    ) -> None:
+        """Emit one PRIME debug row via state.emit_debug."""
+        fn = state.emit_debug
+        params = inspect.signature(fn).parameters
+        mapping = {
+            "kurdat": int(state.KURDAT),
+            "isrc": int(state.ISRC),
+            "irec": int(irec),
+            "comp": "PRIME",
+            "sub": sub,
+            "var": var,
+            "name": var,
+            "value": float(value),
+            "val": float(value),
+        }
+        kwargs = {k: mapping[k] for k in params if k in mapping}
+        if "irec" not in params and hasattr(state, "IREC"):
+            old_irec = state.IREC
+            state.IREC = int(irec)
+            try:
+                fn(**kwargs)
+            finally:
+                state.IREC = old_irec
+        else:
+            fn(**kwargs)
+=== FILE: aermod_py/prime_base.py ===
+"""Foundational PRIME subroutines and functions (prime.f)."""
+
+from __future__ import annotations
+
+import math
+from typing import TYPE_CHECKING
+
+import numpy as xp
+
+from .iblval import locate
+from .metext import gintrp
+from .prime_state import MXNZ, MXNZP1
+
+if TYPE_CHECKING:
+    from .state import AermodState
+
+
+def prime1(state: AermodState) -> None:
+    """SUBROUTINE PRIME1 (prime.f)."""
+    p = state.prime
+    p.afac = 1.3
+    p.xbyrmax = 15.0
+    p.wiz0 = 0.06
+    if state.L_ORD_TURB:
+        p.wiz0 = 0.07
+    p.wiy0 = 0.08
+    p.wfz = 1.7
+    p.wfy = 1.7
+    p.dua_ua = 0.7
+    p.xdecay = 2.0 / 3.0
+    p.xdecayi = 1.5
+
+
+def numpr1(state: AermodState) -> None:
+    """SUBROUTINE NUMPR1 (prime.f)."""
+    p = state.prime
+    p.gravi = 9.80616
+    p.rgas = 287.026
+    p.zmin = 0.001
+    p.ds = 1.0
+    p.nstep = 1
+    p.slast = 5000.0
+    p.rp = 9.1e-11
+    p.nent = 0
+    # Fortran 1-based index 1 -> 0
+    p.alphap[0] = 0.11
+    if not state.L_AWMA_ENTRAIN:
+        p.betap[0] = 0.6
+    else:
+        p.betap[0] = float(getattr(state, "AWMA_BETA_ENTRAINCOEFF", 0.6))
+    # Fortran 1-based indices 1, 2 -> 0, 1
+    p.xcat[0] = -9.0e9
+    p.xcat[1] = 9.0e9
+    p.adia = 0.00977
+    p.ptgrad0 = 0.0
+    p.nza = 45
+    nzap1 = p.nza + 1
+    if p.nza > MXNZ:
+        raise RuntimeError(
+            f"ERROR in SUBR. NUMPR1 -- NZA is too large -- NZA = {p.nza} MXNZ = {MXNZ}"
+        )
+    if nzap1 > MXNZP1:
+        raise RuntimeError(
+            f"ERROR in SUBR. NUMPR1 -- NZAP1 is too large -- NZAP1 = {nzap1} MXNZP1 = {MXNZP1}"
+        )
+    dz = 10.0
+    nn = 1
+    # Fortran zgpta(nn) -> zgpta[nn - 1]
+    p.zgpta[nn - 1] = dz
+    # Fortran DO i = 2, 20
+    for _i in range(2, 21):
+        nn = nn + 1
+        p.zgpta[nn - 1] = p.zgpta[nn - 2] + dz
+    dz = 50.0
+    # Fortran DO i = 21, 26
+    for _i in range(21, 27):
+        nn = nn + 1
+        p.zgpta[nn - 1] = p.zgpta[nn - 2] + dz
+    dz = 100.0
+    # Fortran DO i = 27, 41
+    for _i in range(27, 42):
+        nn = nn + 1
+        p.zgpta[nn - 1] = p.zgpta[nn - 2] + dz
+    dz = 500.0
+    # Fortran DO i = 42, 45
+    for _i in range(42, 46):
+        nn = nn + 1
+        p.zgpta[nn - 1] = p.zgpta[nn - 2] + dz
+    # Fortran zfacea(1) -> zfacea[0]
+    p.zfacea[0] = 0.0
+    # Fortran DO i = 2, nza -> index i - 1
+    for i in range(2, p.nza + 1):
+        p.zfacea[i - 1] = 0.5 * (p.zgpta[i - 1] + p.zgpta[i - 2])
+    # Fortran zfacea(nzap1) -> zfacea[nzap1 - 1]
+    p.zfacea[nzap1 - 1] = p.zgpta[p.nza - 1] + 0.5 * (
+        p.zgpta[p.nza - 1] - p.zgpta[p.nza - 2]
+    )
+
+
+def wake_ini(
+    state: AermodState,
+    kurdat: int,
+    ldbhr: bool,
+    dbgunt: int,
+    rural: bool,
+    dsbh: float,
+    dsbw: float,
+    dsbl: float,
+    xadj: float,
+    yadj: float,
+    ubldg: float,
+    ustack: float,
+) -> None:
+    """SUBROUTINE WAKE_INI (prime.f)."""
+    zero = 0.0
+    p = state.prime
+    p.third = 1.0 / 3.0
+    p.lrurl = rural
+    p.hb = dsbh
+    p.wb = dsbw
+    p.xlb = dsbl
+    p.xbadj = xadj
+    p.ybadj = yadj
+    p.ub = ubldg
+    p.urh = ustack
+    wake_scales(state, kurdat, ldbhr, dbgunt)
+    p.nwak = 1
+    # Fortran 1-based index 1 -> 0
+    p.xwak[0] = zero
+    p.szwak[0] = zero
+    p.sywak[0] = zero
+    p.drwak[0] = zero
+
+
+def wake_scales(
+    state: AermodState,
+    kurdat: int,
+    ldbhr: bool,
+    dbgunt: int,
+) -> None:
+    """SUBROUTINE WAKE_SCALES (prime.f)."""
+    p = state.prime
+    twoby3 = 2.0 * p.third
+    if p.hb <= 0.0:
+        p.rb = 0.0
+        p.hb = 0.0
+        p.xlr = 0.0
+        p.xlc = 0.0
+    else:
+        rw = p.wb / p.hb
+        rl = p.xlb / p.hb
+        if rl < 0.3:
+            rl = 0.3
+        if rl > 3.0:
+            rl = 3.0
+        hh = p.hb
+        ww = p.wb
+        if hh > 8.0 * ww:
+            hh = 8.0 * ww
+        if ww > 8.0 * hh:
+            ww = 8.0 * hh
+        p.rb = (min(hh, ww) ** twoby3) * (max(hh, ww) ** p.third)
+        p.xlc = 0.9 * p.rb
+        explh = 0.3
+        if rw < 1.0:
+            explh = max(0.0, 0.3 * (rw - 0.33) / 0.67)
+        p.xlr = 1.8 * p.wb / (rl ** explh * (1.0 + 0.24 * rw))
+        p.hr = p.hb + 0.22 * p.rb
+    if ldbhr:
+        p.emit_debug(state, "WAKE_SCALES", "HB", p.hb, irec=0)
+        p.emit_debug(state, "WAKE_SCALES", "WB", p.wb, irec=0)
+        p.emit_debug(state, "WAKE_SCALES", "XLB", p.xlb, irec=0)
+        p.emit_debug(state, "WAKE_SCALES", "RB", p.rb, irec=0)
+        p.emit_debug(state, "WAKE_SCALES", "HR", p.hr, irec=0)
+        p.emit_debug(state, "WAKE_SCALES", "XLR", p.xlr, irec=0)
+        p.emit_debug(state, "WAKE_SCALES", "XLC", p.xlc, irec=0)
+
+
+def wake_dim(
+    state: AermodState,
+    x: float,
+    h: float,
+    w: float,
+    r: float,
+) -> tuple[float, float]:
+    """SUBROUTINE WAKE_DIM (prime.f). Returns (hwake, wwake)."""
+    cwkht = 1.2
+    half = 0.5
+    zero = 0.0
+    third = 1.0 / 3.0
+    xbyr = x / r
+    xbyr3rd = xbyr ** third if xbyr > zero else zero
+    xpbyr = -((h / (cwkht * r)) ** 3)
+    dxbyr = xbyr - xpbyr
+    hwake = zero
+    if xbyr > zero:
+        hwake = cwkht * r * dxbyr ** third
+    wwake = zero
+    if xbyr > zero:
+        wwake = half * w + (third * r) * xbyr3rd
+    return hwake, wwake
+
+
+def position(
+    state: AermodState,
+    x: float,
+    y: float,
+    z: float,
+) -> int:
+    """SUBROUTINE POSITION (prime.f). Returns ipositn."""
+    zero = 0.0
+    half = 0.5
+    skin = 0.99998
+    p = state.prime
+    iposy = 4
+    iposz = 4
+    ipositn = 4
+    if p.hb <= zero:
+        return ipositn
+    if x <= zero:
+        return ipositn
+    ypos = abs(y)
+    rby2 = half * p.rb
+    rby3 = p.third * p.rb
+    wby2 = half * p.wb
+    xtest = x / p.xlb
+    ytest = ypos / wby2
+    ztest = z / p.hb
+    if xtest < skin and ztest < skin and ytest < skin:
+        ipositn = 1
+        return ipositn
+    if p.xlc < p.xlb:
+        if x < p.xlb:
+            zcav = p.hb
+            if z <= zcav:
+                iposz = 2
+        elif x < (p.xlb + p.xlr):
+            zcav = p.hb * math.sqrt(1.0 - ((x - p.xlb) / p.xlr) ** 2)
+            if z <= zcav:
+                iposz = 2
+    else:
+        if x <= rby2:
+            zcav = p.hr + 4.0 * (x - rby2) ** 2 * (p.hb - p.hr) / (p.rb ** 2)
+            if z <= zcav:
+                iposz = 2
+        elif x < (p.xlb + p.xlr):
+            zcav = p.hr * math.sqrt(1.0 - ((x - rby2) / (p.xlb + p.xlr - rby2)) ** 2)
+            if z <= zcav:
+                iposz = 2
+    if x <= p.rb:
+        ycav = (wby2 + rby3) - (x - p.rb) ** 2 / (3.0 * p.rb)
+        if ypos <= ycav:
+            iposy = 2
+    elif x < (p.xlb + p.xlr):
+        ycav = (wby2 + rby3) * math.sqrt(
+            1.0 - ((x - p.rb) / (p.xlb + p.xlr - p.rb)) ** 2
+        )
+        if ypos <= ycav:
+            iposy = 2
+    if iposz == 2 and iposy == 2:
+        ipositn = 2
+    if ipositn == 4:
+        zwake, ywake = wake_dim(state, x, p.hb, p.wb, p.rb)
+        if z <= zwake and ypos <= ywake:
+            ipositn = 3
+    return ipositn
+
+
+def cavity_ht(
+    state: AermodState,
+    h: float,
+    w: float,
+    l: float,
+    r: float,
+    lc: float,
+    lr: float,
+    hr: float,
+    x: float,
+) -> tuple[float, float]:
+    """SUBROUTINE CAVITY_HT (prime.f). Returns (zcav, ycav)."""
+    zcav = 0.0
+    ycav = 0.0
+    if x >= (l + lr):
+        return zcav, ycav
+    elif x < 0.0:
+        return zcav, ycav
+    if x >= 0.0 and x <= r:
+        ycav = (w / 2.0 + r / 3.0) - (x - r) ** 2 / (3.0 * r)
+    elif x > r and x <= (l + lr):
+        ycav = (w / 2.0 + r / 3.0) * math.sqrt(1.0 - ((x - r) / (l + lr - r)) ** 2)
+    if lc < l:
+        if x >= 0.0 and x <= l:
+            zcav = h
+        elif x >= l and x <= (l + lr):
+            zcav = h * math.sqrt(1.0 - ((x - l) / lr) ** 2)
+    else:
+        if x >= 0.0 and x <= 0.5 * r:
+            zcav = hr + 4.0 * (x - 0.5 * r) ** 2 * (h - hr) / (r ** 2)
+        elif x > 0.5 * r and x <= (l + lr):
+            zcav = hr * math.sqrt(1.0 - ((x - 0.5 * r) / (l + lr - 0.5 * r)) ** 2)
+    return zcav, ycav
+
+
+def szsfclpr(
+    state: AermodState,
+    xarg: float,
+    zarg: float,
+) -> None:
+    """SUBROUTINE SZSFCLPR (prime.f)."""
+    if state.UNSTAB and zarg < 0.1 * state.ZI:
+        state.SZSURF = (
+            state.BSUBC
+            * (1.0 - 10.0 * (zarg / state.ZI))
+            * (state.USTAR / state.UEFF)
+            * (state.USTAR / state.UEFF)
+            * (xarg * xarg / abs(state.OBULEN))
+        )
+    elif state.STABLE:
+        state.SZSURF = (
+            (state.RTOF2 / state.RTOFPI)
+            * state.USTAR
+            * (xarg / state.UEFF)
+            * (1.0 + 0.7 * xarg / state.OBULEN) ** (-state.THIRD)
+        )
+    else:
+        state.SZSURF = 0.0
+
+
+def sigypr(
+    state: AermodState,
+    xarg: float,
+    zarg: float,
+) -> float:
+    """SUBROUTINE SIGYPR (prime.f). Returns syout."""
+    if state.STABLE:
+        svovru = max(state.SVUMIN, state.SVEFF / state.UEFF)
+        tyeff = (state.ZIMECH / (156.0 * state.SVEFF)) * (max(zarg, 0.46) / 0.46)
+        state.SYAMB = (svovru * xarg) / (
+            1.0 + xarg / (2.0 * state.UEFF * tyeff)
+        ) ** 0.3
+    elif state.UNSTAB:
+        svovru = max(state.SVUMIN, state.SVEFF / state.UEFF)
+        xnodim = svovru * xarg / state.ZI
+        denomi = max(zarg, 0.46)
+        betalph = max(78.0 * (0.46 / denomi), 0.7)
+        state.SYAMB = (svovru * xarg) / (1.0 + betalph * xnodim) ** 0.3
+    syout = state.SYAMB
+    return syout
+
+
+def sigzpr(
+    state: AermodState,
+    xarg: float,
+    zarg: float,
+) -> float:
+    """SUBROUTINE SIGZPR (prime.f). Returns szout."""
+    szout = 0.0
+    if state.STABLE:
+        ttravl = xarg / state.UEFF
+        ndxzhe = locate(state.GRIDHT, 1, state.MXGLVL, zarg)
+        if ndxzhe >= 1:
+            # Fortran 1-based NDXZHE -> 0-based ndxzhe - 1
+            ptp = gintrp(
+                float(state.GRIDHT[ndxzhe - 1]),
+                float(state.GRIDPT[ndxzhe - 1]),
+                float(state.GRIDHT[ndxzhe]),
+                float(state.GRIDPT[ndxzhe]),
+                zarg,
+            )
+        else:
+            # Fortran GRIDPT(1) -> GRIDPT[0]
+            ptp = float(state.GRIDPT[0])
+        bvfrq = math.sqrt(state.G * state.TGEFF / ptp)
+        if bvfrq < 1.0e-10:
+            bvfrq = 1.0e-10
+        ztmp = max(zarg, 1.0e-4)
+        if state.URBSTAB:
+            state.SZAMB = (
+                state.SWEFF
+                * ttravl
+                / math.sqrt(1.0 + state.SWEFF * ttravl * (1.0 / (0.72 * ztmp)))
+            )
+        else:
+            state.SZAMB = (
+                state.SWEFF
+                * ttravl
+                / math.sqrt(
+                    1.0
+                    + state.SWEFF
+                    * ttravl
+                    * (1.0 / (0.72 * ztmp) + bvfrq / (0.54 * state.SWEFF))
+                )
+            )
+        if zarg < state.ZI:
+            szsfclpr(state, xarg, zarg)
+            sigf = min(zarg / state.ZI, 1.0)
+            state.SZAS = (1.0 - sigf) * state.SZSURF + sigf * state.SZAMB
+        else:
+            state.SZAS = state.SZAMB
+        szout = state.SZAS
+    elif state.UNSTAB:
+        if zarg >= 0.1 * state.ZI:
+            alphab = 1.0
+        else:
+            alphab = 0.6 + 0.4 * (zarg / (0.1 * state.ZI))
+        szad = alphab * state.SWEFF * xarg / state.UEFF
+        szsfclpr(state, xarg, zarg)
+        szout = math.sqrt(szad * szad + state.SZSURF * state.SZSURF)
+    return szout
+
+
+def wake_xsig(
+    state: AermodState,
+    x: float,
+    hstk: float,
+    rise: float,
+    nobid: bool,
+) -> tuple[float, float, float, float]:
+    """SUBROUTINE WAKE_XSIG (prime.f). Returns (sz, sy, szc, syc)."""
+    p = state.prime
+    if x <= 0.0:
+        sz = 0.0
+        sy = 0.0
+    elif p.nwak <= 1:
+        sz = sigzpr(state, x, hstk + rise)
+        sy = sigypr(state, x, hstk + rise)
+        if not nobid:
+            bidsq = (rise / 3.5) ** 2
+            sz = math.sqrt(sz ** 2 + bidsq)
+            sy = math.sqrt(sy ** 2 + bidsq)
+    elif x < p.xwak[0]:  # Fortran xwak(1)
+        sz = sigzpr(state, x, hstk + rise)
+        sy = sigypr(state, x, hstk + rise)
+        if not nobid:
+            bidsq = (rise / 3.5) ** 2
+            sz = math.sqrt(sz ** 2 + bidsq)
+            sy = math.sqrt(sy ** 2 + bidsq)
+    elif x > p.xwak[p.nwak - 1]:  # Fortran xwak(nwak)
+        sz = sigzpr(state, x, hstk + rise)
+        sy = sigypr(state, x, hstk + rise)
+        sz = math.sqrt(sz * sz + p.vsigz * p.vsigz)
+        sy = math.sqrt(sy * sy + p.vsigy * p.vsigy)
+    else:
+        nwkm1 = p.nwak - 1
+        # Fortran szwak(1), sywak(1) -> index 0
+        sz = float(p.szwak[0])
+        sy = float(p.sywak[0])
+        # Fortran DO i = nwkm1, 1, -1 -> 1-based i
+        for i in range(nwkm1, 0, -1):
+            if x >= p.xwak[i - 1]:
+                ip1 = i + 1
+                fac = (p.xwak[ip1 - 1] - x) / (p.xwak[ip1 - 1] - p.xwak[i - 1])
+                sz = float(p.szwak[ip1 - 1] - (p.szwak[ip1 - 1] - p.szwak[i - 1]) * fac)
+                sy = float(p.sywak[ip1 - 1] - (p.sywak[ip1 - 1] - p.sywak[i - 1]) * fac)
+                break
+    # Label 50
+    if p.ncav <= 1:
+        # Fortran szcav(1), sycav(1) -> index 0
+        szc = float(p.szcav[0])
+        syc = float(p.sycav[0])
+    elif x < p.xcav[0]:  # Fortran xcav(1)
+        szc = float(p.szcav[0])
+        syc = float(p.sycav[0])
+    elif x > p.xcav[p.ncav - 1]:  # Fortran xcav(ncav)
+        szc = sigzpr(state, x, 0.0)
+        syc = sigypr(state, x, 0.0)
+        szc = math.sqrt(szc * szc + p.vsigzc * p.vsigzc)
+        syc = math.sqrt(syc * syc + p.vsigyc * p.vsigyc)
+    else:
+        ncvm1 = p.ncav - 1
+        szc = float(p.szcav[0])
+        syc = float(p.sycav[0])
+        # Fortran DO i = ncvm1, 1, -1 -> 1-based i
+        for i in range(ncvm1, 0, -1):
+            if x >= p.xcav[i - 1]:
+                ip1 = i + 1
+                fac = (p.xcav[ip1 - 1] - x) / (p.xcav[ip1 - 1] - p.xcav[i - 1])
+                szc = float(
+                    p.szcav[ip1 - 1] - (p.szcav[ip1 - 1] - p.szcav[i - 1]) * fac
+                )
+                syc = float(
+                    p.sycav[ip1 - 1] - (p.sycav[ip1 - 1] - p.sycav[i - 1]) * fac
+                )
+                return sz, sy, szc, syc
+    return sz, sy, szc, syc
+
+
+def fnerf(state: AermodState, xx: float) -> float:
+    """DOUBLE PRECISION FUNCTION FNERF (prime.f)."""
+    a1 = 0.0000430638
+    a2 = 0.0002765672
+    a3 = 0.0001520143
+    a4 = 0.0092705272
+    a5 = 0.0422820123
+    a6 = 0.0705230784
+    xcut = 3.919206
+    x = abs(xx)
+    if x > xcut:
+        t16 = 0.0
+    else:
+        t = (((((((((a1 * x + a2) * x) + a3) * x) + a4) * x) + a5) * x) + a6) * x
+        t = 1.0 / (t + 1.0)
+        t16 = t * t * t * t
+        t16 = t16 * t16 * t16 * t16
+    if xx > 0.0:
+        res = 1.0 - t16
+    else:
+        res = t16 - 1.0
+    return res
+
+
+def fnerfc(state: AermodState, xx: float) -> float:
+    """DOUBLE PRECISION FUNCTION FNERFC (prime.f)."""
+    a1 = 0.0000430638
+    a2 = 0.0002765672
+    a3 = 0.0001520143
+    a4 = 0.0092705272
+    a5 = 0.0422820123
+    a6 = 0.0705230784
+    xcutl = -3.919206
+    xcuth = 13.306
+    rtpii = 0.564189583547756
+    if xx > xcuth:
+        res = 0.0
+    elif xx < xcutl:
+        res = 2.0
+    elif xx > 2.79:
+        x = abs(xx)
+        z = 1.0 / x
+        res = (
+            rtpii
+            * z
+            * math.exp(-x * x)
+            * (1.0 - 0.5 * z * z * (1.0 - 1.5 * z * z))
+        )
+    else:
+        x = abs(xx)
+        t = (((((((((a1 * x + a2) * x) + a3) * x) + a4) * x) + a5) * x) + a6) * x
+        t = 1.0 / (t + 1.0)
+        t16 = t * t * t * t
+        t16 = t16 * t16 * t16 * t16
+        if xx > 0.0:
+            res = t16
+        else:
+            res = 2.0 - t16
+    return res
+
+
+def erfdif(state: AermodState, x1: float, x2: float) -> float:
+    """DOUBLE PRECISION FUNCTION ERFDIF (prime.f)."""
+    res = 0.0
+    if x1 == x2:
+        return res
+    if (x1 * x2) <= 0.0:
+        res = fnerf(state, x1) - fnerf(state, x2)
+        return res
+    xtest = abs(x2)
+    if abs(x1) < xtest:
+        xtest = abs(x1)
+    if xtest >= 9.15:
+        return res
+    if xtest < 0.47:
+        res = fnerf(state, x1) - fnerf(state, x2)
+        return res
+    isign = 1
+    xx1 = x1
+    xx2 = x2
+    if not (x1 > 0.0):
+        isign = -1
+        xx1 = -xx1
+        xx2 = -xx2
+    erfcx1 = 0.0
+    erfcx2 = 0.0
+    if xx1 < 9.15:
+        erfcx1 = fnerfc(state, xx1)
+    if xx2 < 9.15:
+        erfcx2 = fnerfc(state, xx2)
+    res = float(isign) * (erfcx2 - erfcx1)
+    if erfcx2 == erfcx1:
+        res = 0.0
+    return res
+
+
+def frgauss(
+    state: AermodState,
+    hcntr: float,
+    sigma: float,
+    h1: float,
+    h2: float,
+) -> float:
+    """SUBROUTINE FRGAUSS (prime.f). Returns fract."""
+    sqrt2 = 1.41421356237310
+    small = 1.0e-5
+    s = sqrt2 * max(sigma, small)
+    z1 = (h1 - hcntr) / s
+    z2 = (h2 - hcntr) / s
+    fract = 0.5 * abs(erfdif(state, z1, z2))
+    return fract
+
+
+def numgrad(
+    state: AermodState,
+    x: float,
+    xtr: xp.ndarray,
+    ztr: xp.ndarray,
+    ntr: int,
+) -> float:
+    """SUBROUTINE NUMGRAD (prime.f). Returns zeff."""
+    # Fortran xtr(ntr), ztr(ntr) -> index ntr - 1
+    if x >= xtr[ntr - 1]:
+        zeff = float(ztr[ntr - 1])
+    else:
+        ntrm1 = ntr - 1
+        # Fortran ztr(1) -> ztr[0]
+        zeff = float(ztr[0])
+        # Fortran DO i = ntrm1, 1, -1 -> 1-based i
+        for i in range(ntrm1, 0, -1):
+            if x >= xtr[i - 1]:
+                ip1 = i + 1
+                zeff = float(
+                    ztr[ip1 - 1]
+                    - (ztr[ip1 - 1] - ztr[i - 1])
+                    * (xtr[ip1 - 1] - x)
+                    / (xtr[ip1 - 1] - xtr[i - 1])
+                )
+                return zeff
+    return zeff
+
+
+def wake_drdx(state: AermodState, x: float) -> float:
+    """SUBROUTINE WAKE_DRDX (prime.f). Returns drdx."""
+    p = state.prime
+    # Fortran xwak(nwak) -> xwak[p.nwak - 1], xwak(1) -> xwak[0]
+    if x > p.xwak[p.nwak - 1] or x < p.xwak[0]:
+        drdx = 0.0
+    elif p.nwak <= 1:
+        drdx = 0.0
+    else:
+        nwkm1 = p.nwak - 1
+        # Fortran drwak(1) -> drwak[0]
+        drdx = float(p.drwak[0])
+        # Fortran DO i = nwkm1, 1, -1 -> 1-based i
+        for i in range(nwkm1, 0, -1):
+            if x >= p.xwak[i - 1]:
+                ip1 = i + 1
+                drdx = float(
+                    p.drwak[ip1 - 1]
+                    - (p.drwak[ip1 - 1] - p.drwak[i - 1])
+                    * (p.xwak[ip1 - 1] - x)
+                    / (p.xwak[ip1 - 1] - p.xwak[i - 1])
+                )
+                return drdx
+    return drdx
+
+
+def wake_xa(
+    state: AermodState,
+    l: float,
+    rinp: float,
+) -> tuple[float, float]:
+    """SUBROUTINE WAKE_XA (prime.f). Returns (xaz, xay)."""
+    one = 1.0
+    p = state.prime
+    ambiz = state.SWEFF / state.UEFF
+    ambiy = state.SVEFF / state.UEFF
+    fariz = min(p.wiz0, ambiz)
+    fariy = min(p.wiy0, ambiy)
+    farizt = max(ambiz, p.afac * fariz)
+    fariyt = max(ambiy, p.afac * fariy)
+    x0byr = l / rinp - one
+    xaz = x0byr + (
+        p.dua_ua + (p.wfz * p.wiz0 - fariz * (one - p.dua_ua)) / (farizt - fariz)
+    ) ** p.xdecayi
+    xay = x0byr + (
+        p.dua_ua + (p.wfy * p.wiy0 - fariy * (one - p.dua_ua)) / (fariyt - fariy)
+    ) ** p.xdecayi
+    xbyr = l / rinp + p.xbyrmax
+    xaz = rinp * min(xbyr, xaz)
+    xay = rinp * min(xbyr, xay)
+    if state.PRIMEDBG:
+        p.emit_debug(state, "NUMRISE", "AMBIZ", ambiz, irec=0)
+        p.emit_debug(state, "NUMRISE", "AMBIY", ambiy, irec=0)
+        p.emit_debug(state, "NUMRISE", "FARIZT", farizt, irec=0)
+        p.emit_debug(state, "NUMRISE", "FARIYT", fariyt, irec=0)
+        p.emit_debug(state, "NUMRISE", "XAZ", xaz, irec=0)
+        p.emit_debug(state, "NUMRISE", "XAY", xay, irec=0)
+    return xaz, xay
+
+
+def wake_xa2(
+    state: AermodState,
+    l: float,
+    rinp: float,
+) -> tuple[float, float]:
+    """SUBROUTINE WAKE_XA2 (prime.f). Returns (xaz, xay)."""
+    one = 1.0
+    p = state.prime
+    ambiz = state.SWEFF / state.UEFF
+    ambiy = state.SVEFF / state.UEFF
+    fariz = min(p.wiz0, ambiz)
+    fariy = min(p.wiy0, ambiy)
+    farizt = max(ambiz, p.afac * fariz)
+    fariyt = max(ambiy, p.afac * fariy)
+    x0byr = l / rinp - one
+    xaz = x0byr + (
+        p.dua_ua + (p.wfz * p.wiz0 - fariz * (one - p.dua_ua)) / (farizt - fariz)
+    ) ** p.xdecayi
+    xay = x0byr + (
+        p.dua_ua + (p.wfy * p.wiy0 - fariy * (one - p.dua_ua)) / (fariyt - fariy)
+    ) ** p.xdecayi
+    xaz = rinp * xaz
+    xay = rinp * xay
+    return xaz, xay
+
+
+def wake_cav0(
+    state: AermodState,
+    sycapt: float,
+) -> tuple[float, float]:
+    """SUBROUTINE WAKE_CAV0 (prime.f). Returns (szcav0, sycav0)."""
+    rt2pi = 2.50662827463100
+    rt2bypi = 0.797884560802866
+    p = state.prime
+    wcapt = min(rt2pi * sycapt, p.wb)
+    wscale = min(p.wb, 3.0 * p.hb)
+    wscale = max(wscale, p.third * p.hb)
+    wscale = max(wscale, wcapt)
+    sycav0 = wscale / rt2pi
+    if p.xlc < p.xlb:
+        hcav = p.hb
+    else:
+        hcav = p.hr
+    uratio = p.ub / p.urh
+    szcav0 = rt2bypi * uratio * hcav * p.third
+    return szcav0, sycav0
+
+
+def zmet(
+    state: AermodState,
+    z: float,
+) -> tuple[float, float, float, float, float]:
+    """SUBROUTINE ZMET (prime.f). Returns (ua, ra, tap, dudz, dpdz)."""
+    p = state.prime
+    ndxblz = locate(state.GRIDHT, 1, state.MXGLVL, z)
+    if ndxblz >= 1:
+        # Fortran 1-based NDXBLZ -> 0-based ndxblz - 1
+        i0 = ndxblz - 1
+        i1 = ndxblz
+        h0 = float(state.GRIDHT[i0])
+        h1 = float(state.GRIDHT[i1])
+        svatz = gintrp(h0, float(state.GRIDSV[i0]), h1, float(state.GRIDSV[i1]), z)
+        swatz = gintrp(h0, float(state.GRIDSW[i0]), h1, float(state.GRIDSW[i1]), z)
+        uatz = gintrp(h0, float(state.GRIDWS[i0]), h1, float(state.GRIDWS[i1]), z)
+        dpdz = gintrp(h0, float(state.GRIDTG[i0]), h1, float(state.GRIDTG[i1]), z)
+        ptz = gintrp(h0, float(state.GRIDPT[i0]), h1, float(state.GRIDPT[i1]), z)
+        ra = gintrp(h0, float(state.GRIDRHO[i0]), h1, float(state.GRIDRHO[i1]), z)
+        delz = h1 - h0
+        dudz = (float(state.GRIDWS[i1]) - float(state.GRIDWS[i0])) / delz
+    else:
+        # Fortran 1-based index 1 -> 0
+        svatz = float(state.GRIDSV[0])
+        swatz = float(state.GRIDSW[0])
+        uatz = float(state.GRIDWS[0])
+        dpdz = float(state.GRIDTG[0])
+        ptz = float(state.GRIDPT[0])
+        ra = float(state.GRIDRHO[0])
+        with xp.errstate(divide="ignore", invalid="ignore"):
+            dudz = float(xp.float64(state.GRIDWS[0]) / xp.float64(state.GRIDHT[0]))
+    tap = ptz - p.adia * (z + state.ZBASE)
+    swatz = max(swatz, state.SWMIN)
+    svatz = max(svatz, state.SVMIN, state.SVUMIN * uatz)
+    if state.L_VECTORWS:
+        ua = math.sqrt(uatz * uatz + 2.0 * svatz * svatz)
+    ua = max(uatz, state.WSMIN)
+    return ua, ra, tap, dudz, dpdz
+
+
+def zstream(
+    state: AermodState,
+    h: float,
+    w: float,
+    l: float,
+    r: float,
+    lr: float,
+    hr: float,
+    x: float,
+    y: float,
+    z: float,
+) -> float:
+    """SUBROUTINE ZSTREAM (prime.f). Returns dzdx."""
+    if h <= 0.0:
+        dzdx = 0.0
+        return dzdx
+    dzdx2 = 0.0
+    hbyw = h / w
+    ypos = abs(y)
+    onebyr = 1.0 / r
+    wby2 = 0.5 * w
+    rby2 = 0.5 * r
+    zg = 0.0
+    expzg = 0.3
+    if hbyw >= 2.0:
+        expzg = expzg * (0.5 * hbyw) ** 2
+    if x < -r:
+        zslope = 0.0
+        dzdx2 = 0.0
+    elif x < 0.0:
+        zslope = 2.0 * (hr - h) * (x + r) * onebyr ** 2
+        if z > h:
+            dzdx2 = zslope / ((z - h + r) * onebyr) ** 3
+        elif r <= h and z <= 0.67 * h:
+            dzdx2 = 0.0
+        elif r <= h and z > 0.67 * h:
+            dzdx2 = zslope
+        elif r > h and z <= 0.67 * (2.0 * h - r):
+            dzdx2 = 0.0
+        elif r > h and z > 0.67 * (2.0 * h - r):
+            dzdx2 = zslope
+    elif x <= rby2:
+        zslope = (-(hr - h) * 4.0 * onebyr) * (2.0 * x * onebyr - 1.0)
+        if z <= h:
+            dzdx2 = zslope
+        else:
+            dzdx2 = zslope / ((z - h + r) * onebyr) ** 3
+    elif x <= l + lr:
+        zslope = (hr - h) * (r - 2.0 * x) / ((l - rby2 + lr) ** 2)
+        if z > h:
+            dzdx2 = zslope / ((z - h + r) * onebyr)
+        elif z <= zg:
+            dzdx2 = 0.0
+        else:
+            dzdx2 = zslope * ((z - zg) / (h - zg)) ** expzg
+    else:
+        zslopelr = -2.0 * (hr - h) / (l - rby2 + lr)
+        zslope = zslopelr / ((x - (l + lr - r)) * onebyr)
+        if z > h:
+            dzdx2 = zslope / ((z - h + r) * onebyr)
+        elif z <= zg:
+            dzdx2 = 0.0
+        else:
+            dzdx2 = zslope * ((z - zg) / (h - zg)) ** expzg
+    if ypos > (wby2 + r / 3.0):
+        dzdx = 0.0
+    elif ypos <= wby2:
+        dzdx = dzdx2
+    else:
+        yscale = 1.0 + (3.0 * onebyr) * (wby2 - ypos)
+        dzdx = dzdx2 * yscale
+    return dzdx
+
+
+def rate(
+    state: AermodState,
+    ua: float,
+    dudz: float,
+    ra: float,
+    dpdz: float,
+    ta: float,
+    drdxa: float,
+    rhs: xp.ndarray,
+) -> float:
+    """SUBROUTINE RATE (prime.f). Mutates rhs(7) in place; returns drdxa."""
+    p = state.prime
+    alpha0 = p.rate_alpha0
+    beta0 = p.rate_beta0
+    alpha = alpha0
+    if not state.L_AWMA_ENTRAIN:
+        beta = beta0
+    else:
+        beta = float(getattr(state, "AWMA_BETA_ENTRAINCOEFF", beta0))
+    if p.nent > 0:
+        # Fortran xcat(1) -> xcat[0]
+        if not (p.x < p.xcat[0]):
+            nentp1 = p.nent + 1
+            # Fortran DO i = 2, nentp1 -> 1-based i
+            for i in range(2, nentp1 + 1):
+                if p.x <= p.xcat[i - 1]:
+                    # Fortran alphap(i-1), betap(i-1) -> index i - 2
+                    alpha = float(p.alphap[i - 2])
+                    beta = float(p.betap[i - 2])
+                    break
+            else:
+                drdxa = 0.0
+    # Fortran RHS(1..7) -> rhs[0..6]
+    rhs[0] = (2.0 * p.r * ra) * (
+        alpha * abs(p.usc - ua * p.u / p.usc) + beta * abs(ua * math.sin(p.phi))
+    )
+    rhs1a = (2.0 * p.r * ra) * ua * drdxa
+    rhs[0] = max(float(rhs[0]), rhs1a)
+    rhs[1] = -(p.r * p.r * p.den * p.w) * dudz
+    rhs[2] = p.gravi * p.r * p.r * (ra - p.den)
+    rhs[3] = -(p.r * p.r * p.den * p.w) * dpdz - p.rp * p.r * (p.tp ** 4 - ta ** 4)
+    rhs[4] = p.w / p.usc
+    rhs[5] = p.u / p.usc
+    rhs[6] = p.v / p.usc
+    return drdxa
+
+
+def lump(
+    state: AermodState,
+    ua: float,
+    ta: float,
+    f: xp.ndarray,
+) -> xp.ndarray:
+    """SUBROUTINE LUMP (prime.f). Mutates f(7) in place and returns f."""
+    p = state.prime
+    # Fortran F(1..7) -> f[0..6]
+    f[0] = p.den * p.usc * p.r * p.r
+    f[1] = f[0] * (p.u - ua)
+    f[2] = f[0] * p.w
+    f[3] = f[0] * (p.tp - ta)
+    f[4] = p.z
+    f[5] = p.x
+    f[6] = p.y
+    return f
+
+
+def marching(
+    state: AermodState,
+    fold: xp.ndarray,
+    fnew: xp.ndarray,
+    rhs: xp.ndarray,
+    ds: float,
+) -> xp.ndarray:
+    """SUBROUTINE MARCHING (prime.f). Mutates fnew(7) in place and returns fnew."""
+    # Fortran DO I = 1, 7 -> index i - 1
+    for i in range(1, 8):
+        fnew[i - 1] = fold[i - 1] + rhs[i - 1] * ds
+    return fnew
+
+
+def unlump(
+    state: AermodState,
+    ua: float,
+    ta: float,
+    ra: float,
+    f: xp.ndarray,
+) -> None:
+    """SUBROUTINE UNLUMP (prime.f)."""
+    p = state.prime
+    # Fortran F(1..7) -> f[0..6]
+    f1 = float(f[0])
+    p.u = ua + float(f[1]) / f1
+    p.w = float(f[2]) / f1
+    p.usc = math.sqrt(p.u * p.u + p.w * p.w)
+    p.tp = ta + float(f[3]) / f1
+    p.tp = max(p.tp, ta - 10.0)
+    p.den = (ra * ta) / p.tp
+    p.r = math.sqrt(f1 / (p.usc * p.den))
+    p.phi = math.atan(p.w / p.u)
+    p.z = float(f[4])
+    p.x = float(f[5])
+    p.y = float(f[6])

@@ -145,10 +145,16 @@ def main() -> int:
     ap.add_argument("--spent-usd", type=float, default=0.0)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--no-tier-a-check", action="store_true")
+    ap.add_argument("--resume-id", help="fetch this already-created interaction instead of "
+                    "sending the prompt again (pending.json records it)")
     args = ap.parse_args()
 
     port_dir = split.PORT_DIR
     run_dir = RUNS / args.run_id
+    pending = run_dir / "pending.json"
+    if not args.resume_id and pending.exists():
+        args.resume_id = json.loads(pending.read_text())["interaction_id"]
+        print(f"resuming interaction {args.resume_id} from {pending}")
     if (run_dir / "reply.txt").exists():
         raise SystemExit(f"{run_dir} already has a reply; use a new --run-id")
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -175,7 +181,7 @@ def main() -> int:
           flush=True)
     if args.dry_run:
         return 0
-    if args.spent_usd + worst > args.budget_usd:
+    if args.spent_usd + worst > args.budget_usd and not args.resume_id:
         print(f"BUDGET: ${args.spent_usd:.2f} spent + worst ${worst:.2f} > ${args.budget_usd:.2f}")
         return 3
 
@@ -185,7 +191,9 @@ def main() -> int:
 
     try:
         reply = argon.ask(client, input=prompt, system_instruction=system,
-                          thinking_level=args.thinking, max_output_tokens=args.max_output_tokens)
+                          thinking_level=args.thinking, max_output_tokens=args.max_output_tokens,
+                          resume_id=args.resume_id,
+                          on_created=lambda i: pending.write_text(json.dumps({"interaction_id": i}) + "\n"))
     except argon.ArgonError as exc:
         cost = 0.0
         if exc.reply is not None:
