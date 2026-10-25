@@ -4,7 +4,8 @@
 Scope (see prompts/contract.md): modules.f whole (module state); every other
 file (aermod.f, metext, iblval, siggrid, tempgrid, windgrid, calc1, calc2,
 prise, sigmas, and prime.f for tier B) reduced to the program units reachable
-from HRLOOP through CALL statements and function references, minus the
+from HRLOOP (plus the PRIME1/NUMPR1 initialisers for tier B) through CALL
+statements and function references, minus the
 branches in EXCLUDE_* (other source types, NO2 chemistry, deposition,
 platform downwash, EVALFILE/events, hourly emission files, averaging and
 output). Tier A also cuts the PRIME entry points.
@@ -34,7 +35,9 @@ WHOLE_FILES = ["modules.f"]
 REDUCED_FILES = ["aermod.f", "metext.f", "iblval.f", "siggrid.f", "tempgrid.f", "windgrid.f",
                  "calc1.f", "calc2.f", "prise.f", "sigmas.f"]
 TIER_B_FILES = ["prime.f"]
-ROOTS = ["HRLOOP"]
+# NUMPR1/PRIME1 are called from the main program before HRLOOP and only set PRIME
+# module constants; without them the port cannot know those values.
+ROOTS = ["HRLOOP", "NUMPR1", "PRIME1"]
 
 EXCLUDE_COMMON = {
     # other source types and their dispatch
