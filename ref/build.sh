@@ -10,7 +10,7 @@ SRC="${HERE}/aermod_source/aermod_source_v26135"
 OUT="${HERE}/build"
 FLAGS=${AERMOD_FFLAGS:-"-fbounds-check -Wuninitialized -O2"}
 
-[ -f "${SRC}/gfortran-aermod.bat" ] || { echo "missing ${SRC}; run ref/fetch.sh first" >&2; exit 1; }
+[ -f "${SRC}/gfortran-aermod.bat" ] || { echo "missing ${SRC}; run python3 ref/fetch.py first" >&2; exit 1; }
 command -v gfortran >/dev/null || { echo "gfortran not found (apt-get install gfortran)" >&2; exit 1; }
 
 mapfile -t FILES < <(tr -d '\r' < "${SRC}/gfortran-aermod.bat" \
