@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
 """Split Argon's output on ``=== FILE: path ===`` markers into port/aermod_py/.
 
-Paths are taken relative to port/aermod_py (a leading ``port/aermod_py/`` is
-dropped). Anything that would land outside that directory, is not a ``.py``
+Paths are taken relative to port/aermod_py (a leading ``port/aermod_py/`` or
+``aermod_py/``, the form prompts/contract.md asks for, is dropped). Anything that would land outside that directory, is not a ``.py``
 file, or would replace the human-written README is refused, so model output
 can never touch the harness (in particular the frozen compare.py). A markdown
 code fence wrapping a file's content is removed.
+
+Provenance: ``record`` writes files.json next to the saved model reply (under
+agent/runs/), and ``verify`` checks that every file in port/aermod_py except
+the README is byte-identical to what splitting some recorded reply produces,
+which is how the tests prove no Python under port/ was written by hand.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import re
 import sys
 from pathlib import Path, PurePosixPath
@@ -19,8 +26,10 @@ ROOT = Path(__file__).resolve().parent
 PORT_DIR = ROOT / "port" / "aermod_py"
 MARKER = re.compile(r"^===\s*FILE:\s*(.+?)\s*===\s*$", re.MULTILINE)
 FENCE = re.compile(r"\A```[\w+-]*[ \t]*\n(.*?)\n?```[ \t]*\Z", re.DOTALL)
-PREFIX = PurePosixPath("port/aermod_py")
+PREFIXES = (("port", "aermod_py"), ("aermod_py",))
 PROTECTED = {"README.md"}
+RUNS_DIR = ROOT / "agent" / "runs"
+MANIFEST = "files.json"
 
 
 class SplitError(ValueError):
@@ -31,8 +40,10 @@ def normalize(raw: str) -> PurePosixPath:
     path = PurePosixPath(raw.strip().strip("`").replace("\\", "/"))
     if path.is_absolute() or ".." in path.parts or not path.parts:
         raise SplitError(f"refusing path outside port/aermod_py: {raw!r}")
-    if path.parts[:2] == PREFIX.parts:
-        path = PurePosixPath(*path.parts[2:])
+    for prefix in PREFIXES:
+        if path.parts[:len(prefix)] == prefix:
+            path = PurePosixPath(*path.parts[len(prefix):])
+            break
     if not path.parts or path.suffix != ".py":
         raise SplitError(f"only .py files may be written, got {raw!r}")
     if str(path) in PROTECTED:
@@ -73,12 +84,66 @@ def write(files: list[tuple[PurePosixPath, str]], out_dir: Path = PORT_DIR) -> l
     return written
 
 
+def clear(out_dir: Path = PORT_DIR) -> None:
+    """Remove everything under out_dir except the human-owned files, before a fresh port."""
+    for path in sorted(out_dir.rglob("*"), key=lambda p: len(p.parts), reverse=True):
+        if path.relative_to(out_dir).as_posix() in PROTECTED:
+            continue
+        path.rmdir() if path.is_dir() else path.unlink()
+
+
+def sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def record(written: list[Path], reply: Path, out_dir: Path = PORT_DIR, **meta) -> Path:
+    """Write files.json beside ``reply``: which files splitting it produced, with hashes."""
+    out_dir = out_dir.resolve()
+    manifest = reply.parent / MANIFEST
+    entries = json.loads(manifest.read_text()) if manifest.exists() else []
+    entries.append({"reply": reply.name, **meta,
+                    "files": {str(p.resolve().relative_to(out_dir)): sha256(p) for p in written}})
+    manifest.write_text(json.dumps(entries, indent=1) + "\n")
+    return manifest
+
+
+def verify(port_dir: Path = PORT_DIR, runs_dir: Path = RUNS_DIR) -> list[str]:
+    """Problems with port_dir's provenance; empty means every file came from a recorded reply."""
+    recorded: dict[tuple[str, str], Path] = {}
+    for manifest in sorted(runs_dir.rglob(MANIFEST)):
+        for entry in json.loads(manifest.read_text()):
+            for rel, digest in entry["files"].items():
+                recorded.setdefault((rel, digest), manifest.parent / entry["reply"])
+    problems = []
+    for path in sorted(p for p in port_dir.rglob("*") if p.is_file()):
+        rel = str(path.relative_to(port_dir))
+        if rel in PROTECTED or "__pycache__" in path.parts:
+            continue
+        reply = recorded.get((rel, sha256(path)))
+        if reply is None:
+            problems.append(f"{rel}: not produced by any recorded model reply")
+            continue
+        produced = dict((str(r), body) for r, body in parse(reply.read_text()))
+        if produced.get(rel) != path.read_text():
+            problems.append(f"{rel}: differs from what {reply.relative_to(ROOT)} splits into")
+    return problems
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("input", type=Path, help="raw model output")
+    ap.add_argument("input", type=Path, nargs="?", help="raw model output")
     ap.add_argument("--out-dir", type=Path, default=PORT_DIR)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--verify", action="store_true",
+                    help="check every file in --out-dir came from a recorded reply")
     args = ap.parse_args()
+    if args.verify:
+        problems = verify(args.out_dir)
+        for p in problems:
+            print(f"split.py: {p}", file=sys.stderr)
+        return 1 if problems else 0
+    if args.input is None:
+        ap.error("give the model output file, or --verify")
     try:
         files = parse(args.input.read_text())
     except SplitError as exc:
@@ -87,7 +152,7 @@ def main() -> int:
     for rel, content in files:
         print(f"{'would write' if args.dry_run else 'wrote'} {rel} ({content.count(chr(10))} lines)")
     if not args.dry_run:
-        write(files, args.out_dir)
+        record(write(files, args.out_dir), args.input.resolve(), args.out_dir)
     return 0
 
 
