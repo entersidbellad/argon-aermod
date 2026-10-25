@@ -44,7 +44,7 @@ def port_records(rows: list[tuple]) -> list[dbgparse.Record]:
     for i, row in enumerate(rows):
         if len(row) != 7:
             raise ValueError(f"debug row {i} has {len(row)} fields, expected "
-                             "(KURDAT, ISRC, IREC, comp, sub, var, value): {row!r}")
+                             f"(KURDAT, ISRC, IREC, comp, sub, var, value): {row!r}")
         date, isrc, irec, comp, sub, var, value = row
         raw.append((int(date), int(isrc), int(irec), str(comp), str(sub), str(var),
                     float(value), 0.0))
