@@ -1,233 +1,146 @@
 #!/usr/bin/env python3
-"""Run AERMOD reference binary on test cases."""
+"""Run the compiled AERMOD reference binary on a case.
+
+Each run stages case.inp plus its met/include files into out/<who>/<case>/ and
+writes postfile.pst there. ``--debug`` adds ``CO DEBUGOPT MODEL METEOR [PRIME]``
+so AERMOD also writes its intermediate-value debug files (PRIME only when the
+deck has building data, since AERMOD rejects it otherwise).
+"""
+
+from __future__ import annotations
 
 import argparse
 import os
 import shutil
 import subprocess
 import sys
+import time
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import cases as catalog  # noqa: E402
+
+DEFAULT_BINARY = catalog.ROOT / "ref" / "aermod"
+SUCCESS_BANNER = "AERMOD Finishes Successfully"
+BUILDING_KEYWORDS = ("BUILDHGT", "BUILDWID", "BUILDLEN", "XBADJ", "YBADJ")
 
 
-class AERMODRunner:
-    """Runs the AERMOD reference binary."""
-    
-    def __init__(self, binary_path: Optional[Path] = None):
-        if binary_path is None:
-            # Try to find the binary
-            script_dir = Path(__file__).parent
-            binary_path = script_dir.parent / "ref" / "aermod"
-        
-        self.binary_path = Path(binary_path)
-        if not self.binary_path.exists():
-            raise FileNotFoundError(
-                f"AERMOD binary not found at {self.binary_path}\n"
-                f"Run ref/build_aermod.sh first"
-            )
-    
-    def run_case(
-        self,
-        case_dir: Path,
-        output_dir: Optional[Path] = None,
-        debug: bool = False,
-        verbose: bool = False
-    ) -> subprocess.CompletedProcess:
-        """
-        Run AERMOD on a test case.
-        
-        Args:
-            case_dir: Directory containing .inp file and met files
-            output_dir: Where to write outputs (default: case_dir)
-            debug: Enable DEBUGOPT output (MODEL METEOR PRIME)
-            verbose: Print command and output
-            
-        Returns:
-            CompletedProcess with return code and output
-        """
-        case_dir = Path(case_dir)
-        if not case_dir.is_dir():
-            raise ValueError(f"Case directory not found: {case_dir}")
-        
-        # Find the .inp file
-        inp_files = list(case_dir.glob("*.inp"))
-        if not inp_files:
-            raise ValueError(f"No .inp file found in {case_dir}")
-        if len(inp_files) > 1:
-            raise ValueError(f"Multiple .inp files found in {case_dir}: {inp_files}")
-        
-        inp_file = inp_files[0]
-        
-        # Set up output directory
-        if output_dir is None:
-            output_dir = case_dir
-        else:
-            output_dir = Path(output_dir)
-            output_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Create working directory with case files
-        work_dir = output_dir / "aermod_run"
-        if work_dir.exists():
-            shutil.rmtree(work_dir)
-        work_dir.mkdir(parents=True)
-        
-        # Copy input file and met files to work directory
-        shutil.copy2(inp_file, work_dir / inp_file.name)
-        for met_file in case_dir.glob("*.sfc"):
-            shutil.copy2(met_file, work_dir / met_file.name)
-        for met_file in case_dir.glob("*.pfl"):
-            shutil.copy2(met_file, work_dir / met_file.name)
-        
-        # Modify input file to enable debug output if requested
-        work_inp = work_dir / inp_file.name
-        if debug:
-            self._enable_debug(work_inp)
-        
-        # Run AERMOD
-        cmd = [str(self.binary_path), str(work_inp.name)]
-        
-        if verbose:
-            print(f"Running: {' '.join(cmd)}")
-            print(f"Working directory: {work_dir}")
-        
-        result = subprocess.run(
-            cmd,
-            cwd=work_dir,
-            capture_output=True,
-            text=True
+@dataclass
+class RefRun:
+    workdir: Path
+    postfile: Path
+    seconds: float
+    debug_files: list[Path]
+
+
+def has_buildings(inp_text: str) -> bool:
+    return any(
+        tok in BUILDING_KEYWORDS
+        for line in inp_text.upper().splitlines()
+        if not line.lstrip().startswith("**")
+        for tok in line.split()[:2]
+    )
+
+
+def debug_options(inp_text: str) -> list[str]:
+    return ["MODEL", "METEOR"] + (["PRIME"] if has_buildings(inp_text) else [])
+
+
+def add_debugopt(inp_text: str) -> str:
+    """Insert one DEBUGOPT record right after CO STARTING."""
+    lines = inp_text.splitlines()
+    for i, line in enumerate(lines):
+        if line.split()[:2] == ["CO", "STARTING"]:
+            lines.insert(i + 1, "   DEBUGOPT  " + "  ".join(debug_options(inp_text)))
+            return "\n".join(lines) + "\n"
+    raise ValueError("deck has no 'CO STARTING' record")
+
+
+def run_deck(
+    inp_text: str,
+    staged: list[Path],
+    workdir: Path,
+    *,
+    debug: bool = False,
+    binary: Path = DEFAULT_BINARY,
+    postfile_name: str = catalog.POSTFILE_NAME,
+) -> RefRun:
+    """Run AERMOD on deck text with the given files symlinked beside it."""
+    binary = Path(binary).resolve()
+    if not binary.exists():
+        raise FileNotFoundError(f"{binary} missing; run ref/fetch.py and ref/build.sh")
+    if workdir.exists():
+        shutil.rmtree(workdir)
+    workdir.mkdir(parents=True)
+    for f in staged:
+        if not f.exists():
+            raise FileNotFoundError(f"{f} missing; run ref/fetch.py")
+        os.symlink(f.resolve(), workdir / f.name)
+    (workdir / "case.inp").write_text(add_debugopt(inp_text) if debug else inp_text)
+
+    t0 = time.monotonic()
+    proc = subprocess.run(
+        [str(binary), "case.inp", "case.out"], cwd=workdir,
+        capture_output=True, text=True, errors="replace",
+    )
+    seconds = time.monotonic() - t0
+    (workdir / "stdout.txt").write_text(proc.stdout + proc.stderr)
+    out_text = (workdir / "case.out").read_text(errors="replace") if (workdir / "case.out").exists() else ""
+    postfile = workdir / postfile_name
+    if proc.returncode != 0 or SUCCESS_BANNER not in out_text + proc.stdout or not postfile.exists():
+        errors = (workdir / "errors.out").read_text(errors="replace") if (workdir / "errors.out").exists() else ""
+        raise RuntimeError(
+            f"AERMOD failed in {workdir} (exit {proc.returncode}).\n"
+            f"--- stdout tail ---\n{proc.stdout[-1500:]}\n--- errors.out ---\n{errors[-1500:]}"
         )
-        
-        if verbose:
-            print(f"Return code: {result.returncode}")
-            if result.stdout:
-                print("STDOUT:")
-                print(result.stdout)
-            if result.stderr:
-                print("STDERR:")
-                print(result.stderr)
-        
-        # Copy outputs back to output_dir
-        for out_file in work_dir.glob("*.OUT"):
-            shutil.copy2(out_file, output_dir / out_file.name)
-        for out_file in work_dir.glob("*.out"):
-            shutil.copy2(out_file, output_dir / out_file.name)
-        
-        return result
-    
-    def _enable_debug(self, inp_file: Path) -> None:
-        """
-        Add DEBUGOPT keywords to input file for intermediate output.
-        
-        Adds: CO DEBUGOPT MODEL METEOR PRIME
-        """
-        with open(inp_file, 'r') as f:
-            lines = f.readlines()
-        
-        # Find the CO STARTING section
-        co_start_idx = None
-        for i, line in enumerate(lines):
-            if line.strip().startswith('CO STARTING'):
-                co_start_idx = i
-                break
-        
-        if co_start_idx is None:
-            print("Warning: Could not find CO STARTING, debug output may not work")
-            return
-        
-        # Insert DEBUGOPT lines after CO STARTING
-        debug_lines = [
-            "CO DEBUGOPT MODEL\n",
-            "CO DEBUGOPT METEOR\n",
-            "CO DEBUGOPT PRIME\n",
-        ]
-        
-        # Check if debug options already present
-        has_debug = any('DEBUGOPT' in line for line in lines)
-        if not has_debug:
-            for i, debug_line in enumerate(debug_lines):
-                lines.insert(co_start_idx + 1 + i, debug_line)
-        
-        with open(inp_file, 'w') as f:
-            f.writelines(lines)
+    debug_files = sorted(p for p in workdir.iterdir() if p.suffix.lower() == ".dbg")
+    return RefRun(workdir, postfile, seconds, debug_files)
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description='Run AERMOD reference binary on test cases'
-    )
-    parser.add_argument(
-        'case',
-        type=Path,
-        help='Path to case directory or case name in cases/'
-    )
-    parser.add_argument(
-        '--binary',
-        type=Path,
-        help='Path to AERMOD binary (default: ../ref/aermod)'
-    )
-    parser.add_argument(
-        '--output',
-        type=Path,
-        help='Output directory (default: case directory)'
-    )
-    parser.add_argument(
-        '--debug',
-        action='store_true',
-        help='Enable DEBUGOPT output (MODEL METEOR PRIME)'
-    )
-    parser.add_argument(
-        '-v', '--verbose',
-        action='store_true',
-        help='Verbose output'
-    )
-    
-    args = parser.parse_args()
-    
-    # Resolve case path
-    case_path = args.case
-    if not case_path.is_absolute():
-        # Try to find in cases/ subdirectories
-        script_dir = Path(__file__).parent
-        cases_dir = script_dir.parent / "cases"
-        
-        for subdir in ['epa', 'derived', 'holdout']:
-            candidate = cases_dir / subdir / case_path
-            if candidate.is_dir():
-                case_path = candidate
-                break
-        else:
-            # Try as relative path
-            case_path = case_path.resolve()
-    
-    if not case_path.is_dir():
-        print(f"Error: Case directory not found: {case_path}", file=sys.stderr)
-        return 1
-    
-    try:
-        runner = AERMODRunner(args.binary)
-        result = runner.run_case(
-            case_path,
-            output_dir=args.output,
-            debug=args.debug,
-            verbose=args.verbose
-        )
-        
-        if result.returncode == 0:
-            print(f"✓ AERMOD completed successfully for {case_path.name}")
-            if args.output:
-                print(f"  Outputs written to: {args.output}")
-            else:
-                print(f"  Outputs written to: {case_path}")
-        else:
-            print(f"✗ AERMOD failed with return code {result.returncode}", file=sys.stderr)
-            return result.returncode
-            
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
-    
-    return 0
+def case_files(case: catalog.Case) -> list[Path]:
+    manifest = case.manifest()
+    return [catalog.EPA_DIR / rel for rel in manifest["met"] + manifest["includes"]]
 
 
-if __name__ == '__main__':
+def run_case(case: catalog.Case, *, debug: bool = False, who: str | None = None,
+             binary: Path = DEFAULT_BINARY) -> RefRun:
+    who = who or ("ref_debug" if debug else "ref")
+    return run_deck(case.inp.read_text(), case_files(case), case.out_dir(who),
+                    debug=debug, binary=binary)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("cases", nargs="*", help="case names (see harness/cases.py)")
+    ap.add_argument("--tier", choices=["A", "B"], help="all cases of a tier (B includes A)")
+    ap.add_argument("--all", action="store_true", help="every case, including the holdout")
+    ap.add_argument("--debug", action="store_true", help="add CO DEBUGOPT MODEL METEOR [PRIME]")
+    ap.add_argument("--who", help="output subdirectory under out/ (default ref or ref_debug)")
+    ap.add_argument("--binary", type=Path, default=DEFAULT_BINARY)
+    args = ap.parse_args()
+
+    if args.all:
+        selected = list(catalog.CASES)
+    elif args.tier:
+        selected = catalog.tier_cases(args.tier)
+    else:
+        selected = [catalog.get(n) for n in args.cases]
+    if not selected:
+        ap.error("name at least one case, or use --tier/--all")
+
+    failed = 0
+    for case in selected:
+        try:
+            run = run_case(case, debug=args.debug, who=args.who, binary=args.binary)
+        except (RuntimeError, FileNotFoundError) as exc:
+            failed += 1
+            print(f"FAIL {case.name}: {exc}", file=sys.stderr)
+            continue
+        extra = f", debug: {', '.join(p.name for p in run.debug_files)}" if args.debug else ""
+        print(f"ok   {case.name:20s} {run.seconds:7.1f}s  {run.postfile.relative_to(catalog.ROOT)}{extra}")
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
     sys.exit(main())

@@ -1,424 +1,275 @@
 #!/usr/bin/env python3
-"""
-Compare AERMOD outputs with EPA regulatory and strict criteria.
+"""Judge a candidate POSTFILE. This file is frozen: ``make freeze`` prints its sha256.
 
-Implements two validation levels:
-1. EPA regulatory parity: best-fit slope through origin within 1 ± 0.001
-2. Strict numerical criteria for port validation
+Two rules, both must pass:
+
+EPA rule
+    Best-fit slope through the origin of (reference, candidate) paired on
+    (x, y, date, ave, grp), computed by ``pyaermod.regulatory_parity.
+    score_postfile_pair`` (EPA's Compare_AERMOD_test_cases.R metric), must be
+    within 1 +/- 0.001. Reference = EPA's shipped POSTFILE when the case has
+    one, otherwise our compiled binary's POSTFILE.
+
+Strict rule (always against OUR compiled binary's POSTFILE, never EPA's file,
+because our gfortran build already differs from EPA's shipped files by more
+than 1e-4 on some cases)
+    * every (x, y, date, ave, grp) row appears in both files;
+    * zero/nonzero agreement >= 99.9% of paired values;
+    * p99 of |cand - ref| / ref <= 1e-4 over values with ref >= 1% of case max;
+    * per-receptor H4H design value within 1e-4 relative, for every receptor.
+      The design value is ``pyaermod.design_values.so2_1hr_design_value``: the
+      99th-percentile daily-max 1-hr value (4th-highest daily max in a full
+      year; the highest daily max for records shorter than ~100 days).
+
+Pass rates are also reported split by stable (L > 0) and convective (L < 0)
+hours, using the Monin-Obukhov length from the case's AERMET .sfc file.
 """
+
+from __future__ import annotations
 
 import argparse
+import json
 import sys
-from dataclasses import dataclass
+import warnings
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 import numpy as np
+import pandas as pd
+from pyaermod.design_values import so2_1hr_design_value
+from pyaermod.postfile import read_postfile
+from pyaermod.regulatory_parity import DEFAULT_SLOPE_TOLERANCE, score_postfile_pair
+
+KEYS = ["x", "y", "date", "ave", "grp"]
+SLOPE_TOL = DEFAULT_SLOPE_TOLERANCE      # 0.001
+ZERO_AGREEMENT_MIN = 0.999
+REL_TOL = 1e-4
+SIGNIFICANT_FRACTION = 0.01
+PERCENTILE = 99.0
 
 
 @dataclass
-class ComparisonResult:
-    """Results of comparing two AERMOD outputs."""
-    
-    case_name: str
-    
-    # EPA regulatory criteria
-    epa_slope: float
-    epa_pass: bool
-    
-    # Strict criteria
-    total_values: int
-    zero_nonzero_agreement: float
-    p99_relative_error: float
-    max_design_value_diff: float
-    strict_pass: bool
-    
-    # Stability split
-    stable_hours: int
-    convective_hours: int
-    stable_pass: bool
-    convective_pass: bool
-    
-    # Metadata
-    ref_max: float
-    test_max: float
+class EpaResult:
+    against: str
+    n_paired: int
+    slope: float
+    max_abs_error: float
+    passes: bool
 
 
-def load_postfile(path: Path) -> np.ndarray:
-    """
-    Load AERMOD POSTFILE output.
-    
-    Returns:
-        Array of shape (hours, receptors) with concentrations in ug/m3
-    """
-    # This is a simplified parser
-    # Real implementation would use pyaermod's postfile reader
-    
-    try:
-        from pyaermod.postfile import read_postfile
-        data = read_postfile(path)
-        return data['conc']
-    except ImportError:
-        # Fallback: simple text parser
-        values = []
-        with open(path, 'r') as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith('**') or line.startswith('*'):
-                    continue
-                parts = line.split()
-                if len(parts) >= 3:
-                    try:
-                        # Assume format: hour receptor value
-                        value = float(parts[2])
-                        values.append(value)
-                    except ValueError:
-                        continue
-        
-        # Need to reshape - for now return 1D array
-        # Real implementation needs to parse structure
-        return np.array(values)
+@dataclass
+class StrictResult:
+    n_paired: int
+    n_ref_only: int
+    n_cand_only: int
+    zero_agreement: float
+    n_significant: int
+    p99_rel_err: float
+    frac_within_tol: float          # share of significant values within REL_TOL
+    max_abs_diff: float
+    zero_ok: bool
+    p99_ok: bool
+    coverage_ok: bool
+    h4h_n_receptors: Optional[int] = None
+    h4h_max_rel_diff: Optional[float] = None
+    h4h_n_fail: Optional[int] = None
+    h4h_ok: Optional[bool] = None
+
+    @property
+    def passes(self) -> bool:
+        return self.coverage_ok and self.zero_ok and self.p99_ok and self.h4h_ok is not False
 
 
-def compute_epa_parity(ref: np.ndarray, test: np.ndarray) -> Tuple[float, bool]:
-    """
-    Compute EPA regulatory parity: best-fit slope through origin.
-    
-    Pass criteria: slope within 1 ± 0.001
-    
-    Returns:
-        (slope, passes)
-    """
-    try:
-        from pyaermod.regulatory_parity import score_postfile_pair
-        # This would use pyaermod's implementation
-        # For now, compute manually
-    except ImportError:
-        pass
-    
-    # Flatten arrays
-    ref_flat = ref.flatten()
-    test_flat = test.flatten()
-    
-    # Best fit line through origin: minimize sum((test - slope*ref)^2)
-    # Solution: slope = sum(test*ref) / sum(ref^2)
-    
-    # Filter out very small values to avoid noise
-    mask = ref_flat > 1e-10
-    
-    if mask.sum() == 0:
-        return 1.0, True
-    
-    ref_filtered = ref_flat[mask]
-    test_filtered = test_flat[mask]
-    
-    slope = np.sum(test_filtered * ref_filtered) / np.sum(ref_filtered ** 2)
-    
-    # Pass if within 1 ± 0.001
-    passes = abs(slope - 1.0) <= 0.001
-    
-    return slope, passes
+@dataclass
+class CaseComparison:
+    case: str
+    epa: EpaResult
+    strict: StrictResult
+    by_stability: dict = field(default_factory=dict)
+
+    @property
+    def passes(self) -> bool:
+        return self.epa.passes and self.strict.passes
+
+    def to_dict(self) -> dict:
+        d = asdict(self)
+        d["strict"]["passes"] = self.strict.passes
+        d["passes"] = self.passes
+        return d
 
 
-def compute_strict_criteria(
-    ref: np.ndarray,
-    test: np.ndarray,
-    case_max: float
-) -> Tuple[float, float, bool]:
-    """
-    Compute strict numerical criteria.
-    
-    1. Zero/nonzero agreement >= 99.9%
-    2. P99 relative error <= 1e-4 on values >= 1% of case max
-    
-    Returns:
-        (zero_nonzero_agreement, p99_rel_error, passes)
-    """
-    ref_flat = ref.flatten()
-    test_flat = test.flatten()
-    
-    # 1. Zero/nonzero agreement
-    threshold = 1e-10
-    ref_nonzero = ref_flat > threshold
-    test_nonzero = test_flat > threshold
-    agreement = (ref_nonzero == test_nonzero).mean()
-    
-    # 2. P99 relative error on significant values
-    significant_threshold = 0.01 * case_max
-    mask = ref_flat >= significant_threshold
-    
-    if mask.sum() == 0:
-        p99_rel_error = 0.0
-    else:
-        ref_sig = ref_flat[mask]
-        test_sig = test_flat[mask]
-        
-        # Relative error
-        rel_error = np.abs((test_sig - ref_sig) / ref_sig)
-        p99_rel_error = np.percentile(rel_error, 99)
-    
-    # Pass criteria
-    passes = (agreement >= 0.999) and (p99_rel_error <= 1e-4)
-    
-    return agreement, p99_rel_error, passes
+def load(path: Path | str) -> pd.DataFrame:
+    df = read_postfile(path).data
+    return df[KEYS + ["concentration"]]
 
 
-def compute_design_value_diff(ref: np.ndarray, test: np.ndarray) -> float:
-    """
-    Compute max difference in H4H (4th highest hourly) design values.
-    
-    Returns:
-        Max absolute difference across all receptors
-    """
-    # For each receptor, find 4th highest value
-    if ref.ndim == 1:
-        # Can't compute per-receptor design values from flat array
-        return 0.0
-    
-    # Assume shape (hours, receptors)
-    n_receptors = ref.shape[1]
-    
-    max_diff = 0.0
-    for rec in range(n_receptors):
-        ref_sorted = np.sort(ref[:, rec])[::-1]
-        test_sorted = np.sort(test[:, rec])[::-1]
-        
-        if len(ref_sorted) >= 4:
-            ref_h4h = ref_sorted[3]
-            test_h4h = test_sorted[3]
-            diff = abs(test_h4h - ref_h4h)
-            max_diff = max(max_diff, diff)
-    
-    return max_diff
+def pair(ref: pd.DataFrame, cand: pd.DataFrame) -> tuple[pd.DataFrame, int, int]:
+    merged = ref.merge(cand, on=KEYS, how="outer", suffixes=("_ref", "_cand"), indicator=True)
+    ref_only = int((merged["_merge"] == "left_only").sum())
+    cand_only = int((merged["_merge"] == "right_only").sum())
+    both = merged[merged["_merge"] == "both"].drop(columns="_merge")
+    return both, ref_only, cand_only
 
 
-def split_by_stability(
-    ref: np.ndarray,
-    test: np.ndarray,
-    met_file: Optional[Path]
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Split data into stable and convective hours based on Monin-Obukhov length.
-    
-    Returns:
-        (ref_stable, test_stable, ref_convective, test_convective)
-    """
-    if met_file is None or not met_file.exists():
-        # Can't split without met data
-        return ref, test, np.array([]), np.array([])
-    
-    try:
-        from pyaermod.met_readers import read_surface_file
-        met_data = read_surface_file(met_file)
-        
-        # L > 0: stable
-        # L < 0: convective
-        L = met_data['L']
-        
-        stable_mask = L > 0
-        convective_mask = L < 0
-        
-        if ref.ndim == 2:
-            ref_stable = ref[stable_mask, :]
-            test_stable = test[stable_mask, :]
-            ref_convective = ref[convective_mask, :]
-            test_convective = test[convective_mask, :]
-        else:
-            # Flat array - can't split properly
-            ref_stable = ref
-            test_stable = test
-            ref_convective = np.array([])
-            test_convective = np.array([])
-        
-        return ref_stable, test_stable, ref_convective, test_convective
-        
-    except Exception:
-        # If met parsing fails, return unsplit
-        return ref, test, np.array([]), np.array([])
+def design_values(df: pd.DataFrame) -> pd.DataFrame:
+    years = df["date"].astype(str).str[:2].nunique()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        return so2_1hr_design_value(df, n_years=years)[["x", "y", "concentration"]]
 
 
-def compare_outputs(
-    ref_path: Path,
-    test_path: Path,
-    case_name: str,
-    met_file: Optional[Path] = None
-) -> ComparisonResult:
-    """
-    Compare reference and test outputs.
-    
-    Args:
-        ref_path: Reference POSTFILE
-        test_path: Test POSTFILE
-        case_name: Name of test case
-        met_file: Optional surface met file for stability split
-        
-    Returns:
-        ComparisonResult with all metrics
-    """
-    # Load data
-    ref = load_postfile(ref_path)
-    test = load_postfile(test_path)
-    
-    if ref.shape != test.shape:
-        raise ValueError(
-            f"Shape mismatch: ref {ref.shape} vs test {test.shape}"
-        )
-    
-    case_max = ref.max()
-    
-    # EPA regulatory parity
-    epa_slope, epa_pass = compute_epa_parity(ref, test)
-    
-    # Strict criteria
-    zero_agreement, p99_error, strict_pass = compute_strict_criteria(
-        ref, test, case_max
-    )
-    
-    # Design value difference
-    design_diff = compute_design_value_diff(ref, test)
-    design_pass = design_diff <= 1e-4
-    
-    # Overall strict pass requires all three
-    strict_pass = strict_pass and design_pass
-    
-    # Split by stability
-    ref_stable, test_stable, ref_conv, test_conv = split_by_stability(
-        ref, test, met_file
-    )
-    
-    stable_hours = ref_stable.size // (ref.shape[1] if ref.ndim == 2 else 1)
-    convective_hours = ref_conv.size // (ref.shape[1] if ref.ndim == 2 else 1)
-    
-    # Check pass rates by stability
-    if ref_stable.size > 0:
-        _, _, stable_pass = compute_strict_criteria(
-            ref_stable, test_stable, case_max
-        )
-    else:
-        stable_pass = True
-    
-    if ref_conv.size > 0:
-        _, _, convective_pass = compute_strict_criteria(
-            ref_conv, test_conv, case_max
-        )
-    else:
-        convective_pass = True
-    
-    return ComparisonResult(
-        case_name=case_name,
-        epa_slope=epa_slope,
-        epa_pass=epa_pass,
-        total_values=ref.size,
-        zero_nonzero_agreement=zero_agreement,
-        p99_relative_error=p99_error,
-        max_design_value_diff=design_diff,
-        strict_pass=strict_pass,
-        stable_hours=stable_hours,
-        convective_hours=convective_hours,
-        stable_pass=stable_pass,
-        convective_pass=convective_pass,
-        ref_max=case_max,
-        test_max=test.max()
+def strict_metrics(paired: pd.DataFrame, ref_only: int, cand_only: int,
+                   case_max: float) -> StrictResult:
+    r = paired["concentration_ref"].to_numpy(dtype=np.float64)
+    c = paired["concentration_cand"].to_numpy(dtype=np.float64)
+    n = len(r)
+    zero_agreement = float(np.mean((r > 0) == (c > 0))) if n else 1.0
+    sig = r >= SIGNIFICANT_FRACTION * case_max if case_max > 0 else np.zeros(n, bool)
+    rel = np.abs(c[sig] - r[sig]) / r[sig]
+    p99 = float(np.percentile(rel, PERCENTILE)) if rel.size else 0.0
+    return StrictResult(
+        n_paired=n,
+        n_ref_only=ref_only,
+        n_cand_only=cand_only,
+        zero_agreement=zero_agreement,
+        n_significant=int(sig.sum()),
+        p99_rel_err=p99,
+        frac_within_tol=float(np.mean(rel <= REL_TOL)) if rel.size else 1.0,
+        max_abs_diff=float(np.max(np.abs(c - r))) if n else 0.0,
+        zero_ok=zero_agreement >= ZERO_AGREEMENT_MIN,
+        p99_ok=p99 <= REL_TOL,
+        coverage_ok=ref_only == 0 and cand_only == 0,
     )
 
 
-def print_result(result: ComparisonResult) -> None:
-    """Print comparison results in human-readable format."""
-    print(f"\n{'='*70}")
-    print(f"Case: {result.case_name}")
-    print(f"{'='*70}")
-    
-    print("\nEPA Regulatory Parity:")
-    print(f"  Slope through origin: {result.epa_slope:.6f}")
-    status = "✓ PASS" if result.epa_pass else "✗ FAIL"
-    print(f"  Status: {status} (target: 1.000 ± 0.001)")
-    
-    print("\nStrict Numerical Criteria:")
-    print(f"  Total values: {result.total_values:,}")
-    print(f"  Zero/nonzero agreement: {result.zero_nonzero_agreement:.4%}")
-    print(f"  P99 relative error: {result.p99_relative_error:.2e}")
-    print(f"  Max H4H design value diff: {result.max_design_value_diff:.2e}")
-    status = "✓ PASS" if result.strict_pass else "✗ FAIL"
-    print(f"  Status: {status}")
-    
-    print("\nStability Split:")
-    print(f"  Stable hours: {result.stable_hours} "
-          f"({'✓' if result.stable_pass else '✗'})")
-    print(f"  Convective hours: {result.convective_hours} "
-          f"({'✓' if result.convective_pass else '✗'})")
-    
-    print("\nConcentration Range:")
-    print(f"  Reference max: {result.ref_max:.2e} ug/m3")
-    print(f"  Test max: {result.test_max:.2e} ug/m3")
+def strict_compare(ref: pd.DataFrame, cand: pd.DataFrame) -> StrictResult:
+    paired, ref_only, cand_only = pair(ref, cand)
+    case_max = float(ref["concentration"].max()) if len(ref) else 0.0
+    result = strict_metrics(paired, ref_only, cand_only, case_max)
+    dv = design_values(ref).merge(design_values(cand), on=["x", "y"], how="outer",
+                                  suffixes=("_ref", "_cand"))
+    dr = dv["concentration_ref"].to_numpy()
+    dc = dv["concentration_cand"].to_numpy()
+    bad = ~(np.abs(dc - dr) <= REL_TOL * np.abs(dr))     # NaN (missing receptor) counts as fail
+    with np.errstate(divide="ignore", invalid="ignore"):
+        rel = np.where(dr != 0, np.abs(dc - dr) / np.abs(dr), np.where(dc == dr, 0.0, np.inf))
+    result.h4h_n_receptors = len(dv)
+    result.h4h_max_rel_diff = float(np.nanmax(rel)) if len(rel) else 0.0
+    result.h4h_n_fail = int(bad.sum())
+    result.h4h_ok = result.h4h_n_fail == 0
+    return result
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description='Compare AERMOD outputs'
-    )
-    parser.add_argument(
-        'ref',
-        type=Path,
-        help='Reference POSTFILE'
-    )
-    parser.add_argument(
-        'test',
-        type=Path,
-        help='Test POSTFILE'
-    )
-    parser.add_argument(
-        '--case-name',
-        default='unknown',
-        help='Test case name'
-    )
-    parser.add_argument(
-        '--met',
-        type=Path,
-        help='Surface met file for stability split'
-    )
-    parser.add_argument(
-        '--json',
-        action='store_true',
-        help='Output as JSON'
-    )
-    
-    args = parser.parse_args()
-    
-    try:
-        result = compare_outputs(
-            args.ref,
-            args.test,
-            args.case_name,
-            args.met
-        )
-        
-        if args.json:
-            import json
-            print(json.dumps({
-                'case_name': result.case_name,
-                'epa_slope': result.epa_slope,
-                'epa_pass': result.epa_pass,
-                'zero_nonzero_agreement': result.zero_nonzero_agreement,
-                'p99_relative_error': result.p99_relative_error,
-                'max_design_value_diff': result.max_design_value_diff,
-                'strict_pass': result.strict_pass,
-                'stable_hours': result.stable_hours,
-                'convective_hours': result.convective_hours,
-                'stable_pass': result.stable_pass,
-                'convective_pass': result.convective_pass,
-            }, indent=2))
-        else:
-            print_result(result)
-        
-        # Exit code reflects strict pass status
-        return 0 if result.strict_pass else 1
-        
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        import traceback
-        traceback.print_exc()
-        return 2
+def read_obukhov(sfc: Path | str) -> pd.Series:
+    """YYMMDDHH (str) -> Monin-Obukhov length L (m) from an AERMET .sfc file."""
+    out = {}
+    with open(sfc, errors="replace") as f:
+        next(f)
+        for line in f:
+            t = line.split()
+            if len(t) < 12:
+                continue
+            yy, mo, dy, hr = int(t[0]) % 100, int(t[1]), int(t[2]), int(t[4])
+            out[f"{yy:02d}{mo:02d}{dy:02d}{hr:02d}"] = float(t[11])
+    return pd.Series(out, name="L")
 
 
-if __name__ == '__main__':
+def stability_split(ref: pd.DataFrame, cand: pd.DataFrame, sfc: Path | str) -> dict:
+    L = read_obukhov(sfc)
+    paired, _, _ = pair(ref, cand)
+    case_max = float(ref["concentration"].max()) if len(ref) else 0.0
+    lvals = paired["date"].astype(str).map(L)
+    out = {}
+    for label, mask in (("stable", lvals > 0), ("convective", lvals < 0)):
+        sub = paired[mask.to_numpy()]
+        m = strict_metrics(sub, 0, 0, case_max)
+        out[label] = {
+            "n_hours": int(sub["date"].nunique()),
+            "n_values": m.n_paired,
+            "zero_agreement": m.zero_agreement,
+            "p99_rel_err": m.p99_rel_err,
+            "pass_rate": m.frac_within_tol,
+            "passes": m.zero_ok and m.p99_ok,
+        }
+    return out
+
+
+def compare_case(candidate: Path | str, oracle: Path | str, *, epa: Path | str | None = None,
+                 sfc: Path | str | None = None, case: str = "") -> CaseComparison:
+    """Judge ``candidate`` against our binary's ``oracle`` (and EPA's file if given)."""
+    epa_ref = Path(epa) if epa else Path(oracle)
+    score = score_postfile_pair(epa_ref, candidate, case=case)
+    epa_result = EpaResult(
+        against="EPA reference POSTFILE" if epa else "our binary (case has no EPA POSTFILE)",
+        n_paired=score.n_paired,
+        slope=score.slope,
+        max_abs_error=score.max_abs_error,
+        passes=score.n_paired > 0 and score.passes(SLOPE_TOL),
+    )
+    ref_df, cand_df = load(oracle), load(candidate)
+    result = CaseComparison(case, epa_result, strict_compare(ref_df, cand_df))
+    if sfc:
+        result.by_stability = stability_split(ref_df, cand_df, sfc)
+    return result
+
+
+def _case_paths(name: str, who: str) -> dict:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import cases as catalog
+
+    case = catalog.get(name)
+    manifest = case.manifest()
+    return {
+        "candidate": case.postfile(who),
+        "oracle": case.postfile("ref"),
+        "epa": case.epa_ref,
+        "sfc": catalog.EPA_DIR / manifest["met"][0],
+        "case": case.name,
+    }
+
+
+def format_row(c: CaseComparison) -> str:
+    s = c.strict
+    stab = c.by_stability
+    split = " ".join(
+        f"{k[:4]} {v['pass_rate']*100:6.2f}%({v['n_hours']}h)" for k, v in stab.items()
+    )
+    return (f"{c.case:20s} {'PASS' if c.passes else 'FAIL'}  slope {c.epa.slope:.6f} "
+            f"[{'ok' if c.epa.passes else 'x'}]  zero {s.zero_agreement*100:7.3f}%  "
+            f"p99 {s.p99_rel_err:.2e}  H4H fail {s.h4h_n_fail}/{s.h4h_n_receptors}  {split}")
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--candidate", type=Path)
+    ap.add_argument("--oracle", type=Path, help="our compiled binary's POSTFILE")
+    ap.add_argument("--epa", type=Path, help="EPA reference POSTFILE (EPA rule only)")
+    ap.add_argument("--sfc", type=Path, help="AERMET .sfc file for the stability split")
+    ap.add_argument("--case", action="append", default=[],
+                    help="resolve paths from harness/cases.py (repeatable)")
+    ap.add_argument("--who", default="port", help="candidate run under out/<who>/ (with --case)")
+    ap.add_argument("--json", type=Path, help="write results as JSON")
+    args = ap.parse_args()
+
+    jobs = [_case_paths(n, args.who) for n in args.case]
+    if args.candidate:
+        if not args.oracle:
+            ap.error("--candidate needs --oracle")
+        jobs.append({"candidate": args.candidate, "oracle": args.oracle, "epa": args.epa,
+                     "sfc": args.sfc, "case": args.candidate.parent.name})
+    if not jobs:
+        ap.error("give --case NAME or --candidate/--oracle")
+
+    results = []
+    for job in jobs:
+        res = compare_case(**job)
+        results.append(res)
+        print(format_row(res))
+    if args.json:
+        args.json.write_text(json.dumps([r.to_dict() for r in results], indent=2))
+    return 0 if all(r.passes for r in results) else 1
+
+
+if __name__ == "__main__":
     sys.exit(main())
