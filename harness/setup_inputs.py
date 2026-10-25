@@ -209,6 +209,44 @@ def read_dump(path: Path) -> dict[str, object]:
     return out
 
 
+def _same(value: object, ref: object) -> bool:
+    if value is None or ref is None:
+        return value is None and ref is None
+    if isinstance(ref, np.ndarray):
+        arr = np.asarray(value)
+        if arr.shape != ref.shape:
+            return False
+        if ref.dtype == object:
+            return all(str(a).rstrip() == str(b).rstrip() for a, b in zip(arr.ravel(), ref.ravel()))
+        return np.array_equal(arr.astype(ref.dtype), ref)
+    if isinstance(ref, str):
+        return str(value).rstrip() == ref.rstrip()
+    if isinstance(ref, bool) or isinstance(value, bool):
+        return bool(value) is ref
+    return type(ref)(value) == ref
+
+
+def compare_dump(values: dict[str, object], dump: dict[str, object],
+                 skip: set[str] = frozenset()) -> list[str]:
+    """Names whose value differs (bit for bit) from SETUP.DMP, with the first difference."""
+    problems = []
+    for name, ref in dump.items():
+        if name in skip:
+            continue
+        if name not in values:
+            problems.append(f"{name}: missing")
+        elif not _same(values[name], ref):
+            value = values[name]
+            if isinstance(ref, np.ndarray) and ref.dtype != object and value is not None \
+                    and np.asarray(value).shape == ref.shape:
+                arr = np.asarray(value, dtype=ref.dtype)
+                idx = tuple(np.argwhere(arr != ref)[0])
+                problems.append(f"{name}{list(idx)}: {arr[idx]!r} != dump {ref[idx]!r}")
+            else:
+                problems.append(f"{name}: {str(value)[:60]} != dump {str(ref)[:60]}")
+    return problems
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--fortran", type=Path, help="also write the DUMP_SETUP subroutine here")
