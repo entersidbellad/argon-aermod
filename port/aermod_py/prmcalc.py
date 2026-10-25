@@ -26,7 +26,7 @@ def prmcalc(state: AermodState, xbrec: float, ybrec: float) -> None:
     state.MODNAM = "PRMCALC"
     state.PRMVAL[:] = 0.0
     if state.GRSM:
-        state.PRMVAL_SRC1 = 0.0
+        state.PRMVAL_Src1 = 0.0
     p.ueff_save = 0.0
     p.sweff_save = 0.0
     p.sveff_save = 0.0
@@ -36,17 +36,17 @@ def prmcalc(state: AermodState, xbrec: float, ybrec: float) -> None:
         state.PRMVAL[:] = state.AERVAL
         if state.GRSM:
             # Fortran AERVAL(1) -> index 0
-            state.PRMVAL_SRC1 = float(state.AERVAL[0])
+            state.PRMVAL_Src1 = float(state.AERVAL[0])
     elif ipositn != 2 and state.DISTR < 0.99:
         state.PRMVAL[:] = state.AERVAL
         if state.GRSM:
             # Fortran AERVAL(1) -> index 0
-            state.PRMVAL_SRC1 = float(state.AERVAL[0])
+            state.PRMVAL_Src1 = float(state.AERVAL[0])
     elif not state.WAKE:
         state.PRMVAL[:] = state.AERVAL
         if state.GRSM:
             # Fortran AERVAL(1) -> index 0
-            state.PRMVAL_SRC1 = float(state.AERVAL[0])
+            state.PRMVAL_Src1 = float(state.AERVAL[0])
     else:
         zhi = (
             1.2
@@ -56,7 +56,7 @@ def prmcalc(state: AermodState, xbrec: float, ybrec: float) -> None:
         if state.UNSTAB:
             zhi = min(zhi, state.ZI)
         zlo = 0.0
-        if state.L_AWMA_UTURB or state.L_AWMA_UTURBHX:
+        if state.L_AWMA_UTurb or state.L_AWMA_UTurbHX:
             betaj = 1.0 / 3.0 + state.US / state.VS
             p.zeff_prm2 = (
                 0.9
@@ -84,12 +84,12 @@ def prmcalc(state: AermodState, xbrec: float, ybrec: float) -> None:
             state.MXGLVL, state.GRIDHT, state.GRIDTG, zlo, ndxalo, zhi, ndxbhi
         )
 
-        if state.L_AWMA_UTURBHX:
+        if state.L_AWMA_UTurbHX:
             p.ueff_save = state.UEFF
             p.sweff_save = state.SWEFF
             p.sveff_save = state.SVEFF
 
-        if state.L_AWMA_UTURB or state.L_AWMA_UTURBHX:
+        if state.L_AWMA_UTurb or state.L_AWMA_UTurbHX:
             z30lo = 28.0
             z30hi = 32.0
             ndxblo = locate(state.GRIDHT, 1, state.MXGLVL, z30lo)
@@ -113,7 +113,7 @@ def prmcalc(state: AermodState, xbrec: float, ybrec: float) -> None:
             )
         state.UEFF = max(state.UEFF, state.WSMIN)
 
-        if state.L_AWMA_UTURB or state.L_AWMA_UTURBHX:
+        if state.L_AWMA_UTurb or state.L_AWMA_UTurbHX:
             p.sw30 = max(p.sw30, state.SWMIN)
             p.sv30 = max(p.sv30, state.SVMIN, state.SVUMIN * p.u30)
             if state.L_VECTORWS:
@@ -135,7 +135,7 @@ def prmcalc(state: AermodState, xbrec: float, ybrec: float) -> None:
             state.PRMVAL[:] = state.AERVAL
             if state.GRSM:
                 # Fortran AERVAL(1) -> index 0
-                state.PRMVAL_SRC1 = float(state.AERVAL[0])
+                state.PRMVAL_Src1 = float(state.AERVAL[0])
             return
 
         prmheff(state)
@@ -143,7 +143,7 @@ def prmcalc(state: AermodState, xbrec: float, ybrec: float) -> None:
             state.PRMVAL[:] = state.AERVAL
             if state.GRSM:
                 # Fortran AERVAL(1) -> index 0
-                state.PRMVAL_SRC1 = float(state.AERVAL[0])
+                state.PRMVAL_Src1 = float(state.AERVAL[0])
             return
 
         dhpout = state.DHP
@@ -186,7 +186,7 @@ def prmcalc(state: AermodState, xbrec: float, ybrec: float) -> None:
 
         state.PRMVAL[:] = 0.0
         if state.GRSM:
-            state.PRMVAL_SRC1 = 0.0
+            state.PRMVAL_Src1 = 0.0
 
         # Fortran IS = N1..N2 -> 0-based index is_ - 1
         for is_ in range(n1, n2 + 1):
@@ -204,7 +204,7 @@ def prmcalc(state: AermodState, xbrec: float, ybrec: float) -> None:
             if state.FSUBY == 0.0:
                 state.PRMVAL[:] = 0.0
                 if state.GRSM:
-                    state.PRMVAL_SRC1 = 0.0
+                    state.PRMVAL_Src1 = 0.0
             else:
                 state.FOPT = 0.5
                 if state.NPD == 0:
@@ -246,7 +246,7 @@ def prmcalc(state: AermodState, xbrec: float, ybrec: float) -> None:
                         prm_pchi(state, adj, float(state.VDEP[j_idx]), j, is_)
                 if state.GRSM and is_ == 1:
                     # Fortran PRMVAL(1) -> index 0
-                    state.PRMVAL_SRC1 = float(state.PRMVAL[0])
+                    state.PRMVAL_Src1 = float(state.PRMVAL[0])
 
         state.QTK = qtksav
         state.PPF = ppfsav
@@ -325,7 +325,7 @@ def prm_pchi(
     dryflux = 0.0
     wetflux = 0.0
     decay(state, state.X)
-    if state.L_ORD_UEFF:
+    if state.L_ORD_Ueff:
         zpht = state.DHP + state.HS
         ndxbloe = locate(state.GRIDHT, 1, state.MXGLVL, state.ZFLAG)
         ndxbhie = locate(state.GRIDHT, 1, state.MXGLVL, zpht)
@@ -343,7 +343,7 @@ def prm_pchi(
         )
         if insrc == 2 or insrc == 3:
             ueffe = state.US
-    elif state.L_AWMA_UEFF:
+    elif state.L_AWMA_Ueff:
         zpht = state.DHP + state.HS
         ht2use = max(zpht, zpht_min)
         ht_ndx = locate(state.GRIDHT, 1, state.MXGLVL, ht2use)

@@ -124,10 +124,70 @@ def build_input(task: str, show: list[str], units: list[str], tier: str, shared:
     return "\n\n".join(parts) + "\n"
 
 
+def evaluate(args, port_dir: Path, reply_path: Path, interaction_id: str, decision: dict,
+             before_scores, tier_a) -> dict:
+    """Write the reply's files, run the checks, record or restore. Updates ``decision``."""
+    try:
+        files = split.parse(reply_path.read_text())
+        if len(files) > args.max_files:
+            raise split.SplitError(f"{len(files)} files, at most {args.max_files} allowed")
+    except split.SplitError as exc:
+        decision["reason"] = f"unusable reply: {exc}"
+        return decision
+    snap = rl.snapshot(port_dir)
+    try:
+        written = split.write(files, port_dir)
+        decision["files"] = [str(p.relative_to(port_dir)) for p in written]
+        problems = []
+        for order in args.import_check:
+            ok, err = import_ok(order.split(","))
+            if not ok:
+                problems.append(f"import {order}: {err}")
+        if before_scores is not None and not problems:
+            after = rl.score(tier_a, port_dir, "port_edit")
+            decision["tier_a"] = {k: v.summary or v.error[-300:] for k, v in after.items()}
+            broke = rl.regressions(before_scores, after)
+            if broke:
+                problems.append("broke " + ", ".join(broke))
+        if problems:
+            decision["reason"] = "; ".join(problems)
+        else:
+            decision["accepted"], decision["reason"] = True, "all checks pass"
+    except Exception as exc:
+        decision["reason"] = f"evaluation failed: {type(exc).__name__}: {exc}"
+    except BaseException:
+        rl.restore(port_dir, snap)
+        raise
+    if decision["accepted"]:
+        split.record(written, reply_path, port_dir, interaction_id=interaction_id,
+                     step="edit", run=reply_path.parent.name)
+    else:
+        rl.restore(port_dir, snap)
+    return decision
+
+
+def reapply(args, port_dir: Path) -> int:
+    src = args.apply_reply.resolve()
+    meta = json.loads((src / "reply.json").read_text())
+    if meta.get("status") != "completed":
+        raise SystemExit(f"{src} does not hold a completed interaction")
+    tier_a = catalog.tier_cases("A") + [c for c in catalog.CASES if c.name == "testpm10_stack2"]
+    before = None if args.no_tier_a_check else (
+        {c.name: rl.CaseScore(c.name, True, True) for c in tier_a} if args.assume_tier_a_pass
+        else rl.score(tier_a, port_dir, "port_edit"))
+    decision = {"interaction_id": meta["id"], "reapplied": True, "cost_usd": 0.0,
+                "accepted": False, "reason": ""}
+    decision = evaluate(args, port_dir, src / "reply.txt", meta["id"], decision, before, tier_a)
+    (src / "reapply_decision.json").write_text(json.dumps(decision, indent=1, default=str) + "\n")
+    print(f"{'KEPT' if decision['accepted'] else 'REVERTED'} (reapplied {meta['id']}): "
+          f"{decision['reason']}")
+    return 0 if decision["accepted"] else 2
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--run-id", required=True)
-    ap.add_argument("--task", type=Path, required=True)
+    ap.add_argument("--run-id")
+    ap.add_argument("--task", type=Path)
     ap.add_argument("--system", type=Path, default=PROMPTS / "edit.md")
     ap.add_argument("--show", nargs="*", default=[], help="port files to include")
     ap.add_argument("--units", nargs="*", default=[], help="Fortran units to include")
@@ -144,17 +204,22 @@ def main() -> int:
                     help="orders like 'metext,hrloop' that must import in a fresh interpreter")
     ap.add_argument("--thinking", default="high")
     ap.add_argument("--max-output-tokens", type=int, default=65_536)
-    ap.add_argument("--budget-usd", type=float, required=True)
+    ap.add_argument("--budget-usd", type=float, default=0.0)
     ap.add_argument("--spent-usd", type=float, default=0.0)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--no-tier-a-check", action="store_true")
     ap.add_argument("--assume-tier-a-pass", action="store_true",
                     help="skip the before-scoring: the last accepted step left tier A all passing")
+    ap.add_argument("--apply-reply", type=Path,
+                    help="re-evaluate the saved reply of an earlier run dir (completed interaction, "
+                         "not sent again, no new spend) and record it there if it now passes")
     ap.add_argument("--resume-id", help="fetch this already-created interaction instead of "
                     "sending the prompt again (pending.json records it)")
     args = ap.parse_args()
 
     port_dir = split.PORT_DIR
+    if args.apply_reply:
+        return reapply(args, port_dir)
     run_dir = RUNS / args.run_id
     pending = run_dir / "pending.json"
     if not args.resume_id and pending.exists():

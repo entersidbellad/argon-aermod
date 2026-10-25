@@ -1,0 +1,29 @@
+{
+ "run_id": "tierB_c5_wire",
+ "kind": "edit",
+ "model": "gemini-4-argon",
+ "thinking": "high",
+ "task": "prompts/tasks/tier_b/c5_wire.md",
+ "shown": [
+  "calc1.py",
+  "__init__.py"
+ ],
+ "units": [
+  "PCALC"
+ ],
+ "fortran_ranges": [],
+ "strip_comments": true,
+ "notes": [
+  "prompts/tasks/tier_b/plan.md"
+ ],
+ "prompt_tokens": 77845,
+ "token_method": "Gemini count_tokens (gemini-4-argon)",
+ "max_output_tokens": 65536,
+ "budget_usd": 49.0,
+ "spent_before_usd": 2.37,
+ "prices_usd_per_mtok": {
+  "input": 2.0,
+  "output": 10.0
+ },
+ "started": "2026-10-25T23:35:59.051870+00:00"
+}

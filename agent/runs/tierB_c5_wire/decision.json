@@ -1,0 +1,40 @@
+{
+ "interaction_id": "v1_ChdYNUxlYXFxREpOSFBfdU1QZzVYQjJBRRIXWDVMZWFxcURKTkhQX3VNUGc1WEIyQUU",
+ "usage": {
+  "input_tokens_by_modality": [
+   {
+    "modality": "text",
+    "tokens": 77850
+   }
+  ],
+  "output_tokens_by_modality": [
+   {
+    "modality": "text",
+    "tokens": 19595
+   }
+  ],
+  "total_cached_tokens": 0,
+  "total_input_tokens": 77850,
+  "total_output_tokens": 19595,
+  "total_thought_tokens": 10054,
+  "total_tokens": 107499,
+  "total_tool_use_tokens": 0
+ },
+ "cost_usd": 0.45219,
+ "hypothesis": "Wire PRIME building downwash into `calc1.py` (`pcalc` calling `wake_ini`, `prmcalc`, `gamcalc`, blending `PRMVAL` and `AERVAL` with `GAMFACT`, and emitting `PRIME` debug rows) and initialize `state.prime = PrimeState()`, `numpr1(state)`, and `prime1(state)` in `aermod_py/__init__.py` before `hrloop(state)`.",
+ "accepted": false,
+ "reason": "broke aertest_nobldg, CAPPED_STACK2, CAPPED_STACK2C0, CAPPED_STACK2CE, HRDOW_STACK1, FLATELEV_FLAT_STK, testpm10_stack2",
+ "files": [
+  "calc1.py",
+  "__init__.py"
+ ],
+ "tier_a": {
+  "aertest_nobldg": "y/__init__.py\", line 25, in run_case\n    prime1(state)\n    ~~~~~~^^^^^^^\n  File \"/workspace/argon-aermod/port/aermod_py/prime_base.py\", line 24, in prime1\n    if state.L_ORD_TURB:\n       ^^^^^^^^^^^^^^^^\nAttributeError: 'AermodState' object has no attribute 'L_ORD_TURB'. Did you mean: 'L_ORD_Turb'?\n",
+  "CAPPED_STACK2": "y/__init__.py\", line 25, in run_case\n    prime1(state)\n    ~~~~~~^^^^^^^\n  File \"/workspace/argon-aermod/port/aermod_py/prime_base.py\", line 24, in prime1\n    if state.L_ORD_TURB:\n       ^^^^^^^^^^^^^^^^\nAttributeError: 'AermodState' object has no attribute 'L_ORD_TURB'. Did you mean: 'L_ORD_Turb'?\n",
+  "CAPPED_STACK2C0": "y/__init__.py\", line 25, in run_case\n    prime1(state)\n    ~~~~~~^^^^^^^\n  File \"/workspace/argon-aermod/port/aermod_py/prime_base.py\", line 24, in prime1\n    if state.L_ORD_TURB:\n       ^^^^^^^^^^^^^^^^\nAttributeError: 'AermodState' object has no attribute 'L_ORD_TURB'. Did you mean: 'L_ORD_Turb'?\n",
+  "CAPPED_STACK2CE": "y/__init__.py\", line 25, in run_case\n    prime1(state)\n    ~~~~~~^^^^^^^\n  File \"/workspace/argon-aermod/port/aermod_py/prime_base.py\", line 24, in prime1\n    if state.L_ORD_TURB:\n       ^^^^^^^^^^^^^^^^\nAttributeError: 'AermodState' object has no attribute 'L_ORD_TURB'. Did you mean: 'L_ORD_Turb'?\n",
+  "HRDOW_STACK1": "y/__init__.py\", line 25, in run_case\n    prime1(state)\n    ~~~~~~^^^^^^^\n  File \"/workspace/argon-aermod/port/aermod_py/prime_base.py\", line 24, in prime1\n    if state.L_ORD_TURB:\n       ^^^^^^^^^^^^^^^^\nAttributeError: 'AermodState' object has no attribute 'L_ORD_TURB'. Did you mean: 'L_ORD_Turb'?\n",
+  "FLATELEV_FLAT_STK": "y/__init__.py\", line 25, in run_case\n    prime1(state)\n    ~~~~~~^^^^^^^\n  File \"/workspace/argon-aermod/port/aermod_py/prime_base.py\", line 24, in prime1\n    if state.L_ORD_TURB:\n       ^^^^^^^^^^^^^^^^\nAttributeError: 'AermodState' object has no attribute 'L_ORD_TURB'. Did you mean: 'L_ORD_Turb'?\n",
+  "testpm10_stack2": "y/__init__.py\", line 25, in run_case\n    prime1(state)\n    ~~~~~~^^^^^^^\n  File \"/workspace/argon-aermod/port/aermod_py/prime_base.py\", line 24, in prime1\n    if state.L_ORD_TURB:\n       ^^^^^^^^^^^^^^^^\nAttributeError: 'AermodState' object has no attribute 'L_ORD_TURB'. Did you mean: 'L_ORD_Turb'?\n"
+ }
+}

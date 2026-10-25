@@ -183,7 +183,7 @@ def wake_u_turb(
         p.wake_u_turb_zvel_sav = zvel_sav
     elif scope == "turb":
         z = min(zvel_sav, p.zeff_prm2)
-        if state.L_AWMA_UTURBHX and p.dfsn2call:
+        if state.L_AWMA_UTurbHX and p.dfsn2call:
             # Fortran xtr_sav(p2mxntr), ztr_sav(p2mxntr) -> index P2MXNTR - 1
             if xinp < p.xtr_sav[P2MXNTR - 1]:
                 zplm = numgrad(state, xinp, p.xtr_sav, p.ztr_sav, P2MXNTR)
@@ -243,9 +243,9 @@ def wake_u_turb(
         hwlimsv = hwmaxsv
     hllimsv = p.hb / p.xlb
     if hllimsv < hlminsw:
-        hllimsv = hlminsv
+        hllimsv = hlminsw
     if hllimsv > hlmaxsw:
-        hllimsv = hlmaxsv
+        hllimsv = hlmaxsw
     a1 = 1.0 / hwlimsw
     a2 = (1.0 / hllimsw ** 0.3) * (1.0 + 0.24 / hwlimsw)
     xlrsw = 1.8 * a1 / a2
@@ -298,7 +298,7 @@ def wake_turb(
     ambiy = state.SVEFF / state.UEFF
     fariz = min(p.wiz0, ambiz)
     fariy = min(p.wiy0, ambiy)
-    if state.L_AWMA_UTURBHX and p.dfsn2call:
+    if state.L_AWMA_UTurbHX and p.dfsn2call:
         # Fortran xtr_sav(p2mxntr), ztr_sav(p2mxntr) -> index P2MXNTR - 1
         if xinp < p.xtr_sav[P2MXNTR - 1]:
             p.zeff_prm2 = numgrad(state, xinp, p.xtr_sav, p.ztr_sav, P2MXNTR)
@@ -323,7 +323,7 @@ def wake_turb(
         )
         ambiz = state.SWEFF / state.UEFF
         ambiy = state.SVEFF / state.UEFF
-    if state.L_AWMA_UTURB or state.L_AWMA_UTURBHX:
+    if state.L_AWMA_UTurb or state.L_AWMA_UTurbHX:
         zdum = -1.0
         _dum, tiz, tiy = wake_u_turb(state, "turb", xinp, zdum, ambiz, ambiy)
     else:
@@ -335,7 +335,7 @@ def wake_turb(
         xfrac = xinp / l
         tiz = ambiz + xfrac * (tiz - ambiz)
         tiy = ambiy + xfrac * (tiy - ambiy)
-    if state.L_AWMA_UTURBHX:
+    if state.L_AWMA_UTurbHX:
         state.UEFF = p.ueff_save
         state.SWEFF = p.sweff_save
         state.SVEFF = p.sveff_save
@@ -363,7 +363,7 @@ def wake_u(
     dufac = zero
     if z >= hwake or yabs >= wwake:
         return ubyua, dufac
-    if state.L_AWMA_UTURB or state.L_AWMA_UTURBHX:
+    if state.L_AWMA_UTurb or state.L_AWMA_UTurbHX:
         dum = 0.0
         du_ua, _dum1, _dum2 = wake_u_turb(state, "vel", x, z, dum, dum)
         ymin = max(0.5 * p.wb, wwake - p.rb / 3.0)
@@ -1098,7 +1098,7 @@ def wake_dfsn2(
                         zk,
                         yk,
                     )
-                if state.L_ORD_CAV:
+                if state.L_ORD_Cav:
                     if lcav and (xbc <= x) and (x >= xcave):
                         zkc, ykc, csigz[n - 1], csigy[n - 1], _dzrate = wake_sig(
                             state,
@@ -1271,7 +1271,7 @@ def wake_dfsn2(
                         asigy[n - 1] = math.sqrt(
                             float(asigy[n - 1]) ** 2 + p.vsigy ** 2
                         )
-                    if state.L_ORD_CAV:
+                    if state.L_ORD_Cav:
                         if lcav and (x >= xcave) and (xbc <= x):
                             csigy[n - 1] = sigypr(state, float(dist[n - 1]), 0.0)
                             p.vsigyc = max(p.vsigyc, sycav0)

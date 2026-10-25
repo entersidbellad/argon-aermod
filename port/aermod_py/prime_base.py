@@ -21,7 +21,7 @@ def prime1(state: AermodState) -> None:
     p.afac = 1.3
     p.xbyrmax = 15.0
     p.wiz0 = 0.06
-    if state.L_ORD_TURB:
+    if state.L_ORD_Turb:
         p.wiz0 = 0.07
     p.wiy0 = 0.08
     p.wfz = 1.7

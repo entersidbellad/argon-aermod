@@ -419,7 +419,7 @@ def numrise(
             p.emit_debug(state, "NUMRISE", "ZTR", float(ztr[i]))
             p.emit_debug(state, "NUMRISE", "RTR", float(rtr[i]))
 
-    if state.L_AWMA_UTURB or state.L_AWMA_UTURBHX:
+    if state.L_AWMA_UTurb or state.L_AWMA_UTurbHX:
         p.xtr_sav[:ntr] = xtr[:ntr]
         p.ztr_sav[:ntr] = ztr[:ntr]
 
