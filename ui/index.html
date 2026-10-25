@@ -262,15 +262,28 @@
         <!-- Port Screen -->
         <div id="port-screen" class="screen active">
             <div class="section">
-                <h2>Run New Port</h2>
+                <h2>Runs</h2>
                 <div class="stub-notice">
-                    <strong>Note:</strong> This is a UI stub. 
-                    Port runs must be triggered via <code>agent/port.py</code> for now.
+                    This dashboard is read-only. Start runs from a shell:
+                    <code>python agent/port.py --tier B</code>,
+                    <code>python agent/repair_loop.py --tier B</code>, then
+                    <code>python harness/suite.py --who port --tier all</code>.
                 </div>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3>Tier A pack tokens</h3>
+                        <div class="value"><span id="tokens-a">-</span></div>
+                    </div>
+                    <div class="info-card">
+                        <h3>Tier B pack tokens</h3>
+                        <div class="value"><span id="tokens-b">-</span></div>
+                    </div>
+                </div>
+                <p id="tokens-method" style="color: #666;"></p>
             </div>
             
             <div class="section">
-                <h2>Recent Runs</h2>
+                <h2>Recorded Runs (agent/runs)</h2>
                 <div id="runs-list">
                     <p style="color: #666;">Loading runs...</p>
                 </div>
@@ -284,10 +297,11 @@
                 
                 <div class="info-grid">
                     <div class="info-card">
-                        <h3>Compare Hash</h3>
-                        <div class="value" style="font-size: 16px; font-family: monospace;">
+                        <h3>compare.py sha256</h3>
+                        <div class="value" style="font-size: 12px; font-family: monospace; word-break: break-all;">
                             <span id="compare-hash">Loading...</span>
                         </div>
+                        <p id="hash-status" style="margin-top: 8px; color: #666;"></p>
                     </div>
                     
                     <div class="info-card">
@@ -322,39 +336,43 @@
                 <div class="grid" id="tier-b-grid">
                     <!-- Populated by JS -->
                 </div>
+                
+                <h3 style="margin-top: 30px; margin-bottom: 10px; color: #666;">
+                    Holdout (never shown to the repair loop)
+                </h3>
+                <div class="grid" id="holdout-grid">
+                    <!-- Populated by JS -->
+                </div>
             </div>
             
             <div class="section">
-                <h2>Agent Commits</h2>
+                <h2>Provenance of port/aermod_py</h2>
+                <div id="provenance" class="commit-list">
+                    <p style="color: #666;">Loading...</p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Git History of port/aermod_py</h2>
                 <div id="commits-list" class="commit-list">
                     <p style="color: #666;">Loading git history...</p>
                 </div>
             </div>
         </div>
         
-        <!-- Decision Screen (Stub) -->
+        <!-- Decision Screen -->
         <div id="decision-screen" class="screen">
             <div class="section">
-                <h2>Deployment Decision</h2>
-                <div class="stub-notice">
-                    <strong>Coming Soon:</strong> 
-                    Certification and deployment decision workflow.
+                <h2>Certification</h2>
+                <p style="color: #666;">
+                    Computed on every load from <code>out/suite_port.json</code>,
+                    the current <code>harness/compare.py</code> and
+                    <code>split.py --verify</code>. Nothing is stored.
+                </p>
+                <div style="margin-top: 20px;">
+                    <span id="certified" class="status-badge pending">loading</span>
                 </div>
-                
-                <div style="margin-top: 30px;">
-                    <h3>Certification Criteria</h3>
-                    <ul style="margin-left: 20px; line-height: 2;">
-                        <li>All Tier A cases pass EPA regulatory parity</li>
-                        <li>All Tier A cases pass strict numerical criteria</li>
-                        <li>Compare.py hash verified and frozen</li>
-                        <li>Git log shows agent-authored repairs</li>
-                        <li>No manual edits to <code>port/aermod_py/</code></li>
-                    </ul>
-                </div>
-                
-                <div style="margin-top: 30px;">
-                    <button class="button" disabled>Certify Results</button>
-                </div>
+                <div id="criteria" class="commit-list" style="margin-top: 20px;"></div>
             </div>
         </div>
     </div>
@@ -382,111 +400,125 @@
                     loadProofData();
                 } else if (screen === 'port') {
                     loadPortData();
+                } else if (screen === 'decision') {
+                    loadDecisionData();
                 }
             });
         });
         
-        // Load port data
+        const esc = s => String(s ?? '').replace(/[&<>"']/g,
+            c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+        const getJson = async url => {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`${url}: ${response.status}`);
+            return response.json();
+        };
+        const fmt = n => (n === null || n === undefined) ? '-' : Number(n).toLocaleString();
+
         async function loadPortData() {
             try {
-                const response = await fetch('/api/runs');
-                const runs = await response.json();
-                
+                const tokens = await getJson('/api/tokens');
+                document.getElementById('tokens-a').textContent = fmt(tokens.A?.tokens_with_comments);
+                document.getElementById('tokens-b').textContent = fmt(tokens.B?.tokens_with_comments);
+                document.getElementById('tokens-method').textContent = tokens.A
+                    ? `Fortran pack only, ${tokens.A.method}; the full prompt adds the contract, glue, setup table and variable catalogue.`
+                    : 'context/tokens.json missing: run python pack.py';
+
+                const runs = await getJson('/api/runs');
                 const runsList = document.getElementById('runs-list');
-                
                 if (runs.length === 0) {
-                    runsList.innerHTML = '<p style="color: #666;">No runs yet</p>';
+                    runsList.innerHTML = '<p style="color: #666;">No runs recorded under agent/runs yet.</p>';
                     return;
                 }
-                
                 runsList.innerHTML = runs.map(run => `
                     <div style="padding: 15px; background: #f5f5f5; border-radius: 6px; margin-bottom: 10px;">
-                        <strong>${run.id}</strong>
+                        <strong>${esc(run.id)}</strong>
                         <span style="margin-left: 20px; color: #666;">
-                            Tier ${run.tier} | ${run.model}
+                            ${esc(run.kind)} | Tier ${esc(run.tier)} | ${esc(run.model)} | thinking ${esc(run.thinking ?? '-')}
+                            | ${run.replies} replies
                         </span>
                         <span style="float: right; color: #666;">
-                            ${run.output_tokens.toLocaleString()} tokens
+                            prompt ${fmt(run.prompt_tokens)} | output ${fmt(run.output_tokens)} tokens
                         </span>
                     </div>
                 `).join('');
-                
             } catch (err) {
                 console.error('Failed to load runs:', err);
             }
         }
-        
-        // Load proof data
+
         async function loadProofData() {
             try {
-                const response = await fetch('/api/test-results');
-                const data = await response.json();
-                
-                // Update compare hash
-                document.getElementById('compare-hash').textContent = 
-                    data.compare_hash || 'Not computed';
-                
-                // Render test grids
+                const data = await getJson('/api/test-results');
+                document.getElementById('compare-hash').textContent = data.compare_hash;
+                document.getElementById('hash-status').textContent = !data.suite_found
+                    ? 'No out/suite_port.json yet.'
+                    : data.hash_matches
+                        ? `Suite from ${data.suite_time} was scored with this compare.py.`
+                        : `STALE: suite from ${data.suite_time} was scored with ${data.suite_compare_hash}.`;
+
                 renderTestGrid('tier-a-grid', data.tier_a, data.results);
                 renderTestGrid('tier-b-grid', data.tier_b, data.results);
-                
-                // Update pass rates
-                const tierAPass = data.tier_a.filter(c => 
-                    data.results[c]?.strict_pass === true
-                ).length;
-                document.getElementById('tier-a-rate').textContent = 
-                    `${tierAPass}/${data.tier_a.length}`;
-                
-                const tierBPass = data.tier_b.filter(c => 
-                    data.results[c]?.strict_pass === true
-                ).length;
-                document.getElementById('tier-b-rate').textContent = 
-                    `${tierBPass}/${data.tier_b.length}`;
-                
-                // Load git commits (stub)
-                document.getElementById('commits-list').innerHTML = `
-                    <div class="commit">
-                        <span class="commit-hash">abc123f</span>
-                        <span class="commit-author">Argon Repair</span>
-                        <div style="margin-top: 5px;">repair 1: PRISE: Fix plume rise calculation sign error</div>
-                    </div>
-                    <div class="commit">
-                        <span class="commit-hash">def456a</span>
-                        <span class="commit-author">Argon Repair</span>
-                        <div style="margin-top: 5px;">repair 2: SIGGRID: Correct sigma_z interpolation bounds</div>
-                    </div>
-                    <p style="color: #666; margin-top: 15px;">
-                        (Git integration stub - run <code>git log port/aermod_py/</code>)
-                    </p>
-                `;
-                
+                renderTestGrid('holdout-grid', data.holdout, data.results);
+                const passed = cases => cases.filter(c => data.results[c]?.passes === true).length;
+                document.getElementById('tier-a-rate').textContent = `${passed(data.tier_a)}/${data.tier_a.length}`;
+                const tierB = data.tier_a.concat(data.tier_b);
+                document.getElementById('tier-b-rate').textContent = `${passed(tierB)}/${tierB.length}`;
+
+                const prov = await getJson('/api/provenance');
+                document.getElementById('provenance').innerHTML = prov.python_files.length === 0
+                    ? '<p style="color: #666;">No Python files yet: only the README.</p>'
+                    : `<p><span class="status-badge ${prov.ok ? 'pass' : 'fail'}">${prov.ok ? 'verified' : 'unverified'}</span>
+                       ${prov.python_files.length} Python files</p>`
+                      + prov.problems.map(p => `<div class="commit">${esc(p)}</div>`).join('');
+
+                const commits = await getJson('/api/commits');
+                document.getElementById('commits-list').innerHTML = commits.length === 0
+                    ? '<p style="color: #666;">No commits touch port/aermod_py.</p>'
+                    : commits.map(c => `
+                        <div class="commit">
+                            <span class="commit-hash">${esc(c.hash)}</span>
+                            <span class="commit-author">${esc(c.author)} ${esc(c.date)}</span>
+                            <div style="margin-top: 5px;">${esc(c.subject)}</div>
+                        </div>`).join('');
             } catch (err) {
                 console.error('Failed to load proof data:', err);
             }
         }
-        
+
+        async function loadDecisionData() {
+            try {
+                const data = await getJson('/api/certify');
+                const badge = document.getElementById('certified');
+                badge.className = `status-badge ${data.certified ? 'pass' : 'fail'}`;
+                badge.textContent = data.certified ? 'certified' : 'not certified';
+                document.getElementById('criteria').innerHTML = data.criteria.map(c => `
+                    <div class="commit">
+                        <span class="status-badge ${c.ok ? 'pass' : 'fail'}">${c.ok ? 'ok' : 'no'}</span>
+                        <strong style="margin-left: 10px;">${esc(c.name)}</strong>
+                        <div style="margin-top: 5px; color: #666;">${esc(c.detail)}</div>
+                    </div>`).join('');
+            } catch (err) {
+                console.error('Failed to load certification:', err);
+            }
+        }
+
         function renderTestGrid(gridId, cases, results) {
-            const grid = document.getElementById(gridId);
-            
-            grid.innerHTML = cases.map(caseName => {
+            document.getElementById(gridId).innerHTML = cases.map(caseName => {
                 const result = results[caseName];
-                let status = 'pending';
-                
-                if (result?.strict_pass === true) {
-                    status = 'pass';
-                } else if (result?.strict_pass === false) {
-                    status = 'fail';
-                }
-                
+                const status = result === undefined ? 'pending' : (result.passes ? 'pass' : 'fail');
+                const detail = result === undefined ? 'not scored'
+                    : result.error ? esc(result.error)
+                    : `EPA ${result.epa_pass ? 'pass' : 'fail'}, strict ${result.strict_pass ? 'pass' : 'fail'}`;
                 return `
                     <div class="case-card ${status}">
-                        ${caseName}
+                        ${esc(caseName)}
+                        <div style="font-size: 12px; font-weight: 400; margin-top: 5px;">${detail}</div>
                     </div>
                 `;
             }).join('');
         }
-        
-        // Initial load
+
         loadPortData();
     </script>
 </body>
