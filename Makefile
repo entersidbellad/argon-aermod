@@ -1,6 +1,6 @@
 PY ?= python3
 
-.PHONY: help freeze ref refs debug-refs dumps context test test-fast fuzz suite-port verify serve clean
+.PHONY: help freeze check-frozen ref refs debug-refs dumps context test test-fast fuzz suite-port verify serve clean
 
 help:
 	@echo "ref         fetch EPA source + test cases, build ref/aermod and ref/aermod_dump"
@@ -14,10 +14,15 @@ help:
 	@echo "suite-port  run the port on every case and score it into out/suite_port.json"
 	@echo "verify      check every file in port/aermod_py came from a recorded model reply"
 	@echo "freeze      print sha256 of harness/compare.py"
+	@echo "check-frozen  fail unless compare.py matches harness/compare.sha256"
 	@echo "serve       read-only dashboard on http://127.0.0.1:8000"
 
 freeze:
 	@sha256sum harness/compare.py | cut -d' ' -f1
+
+# Fails if compare.py differs from the approved digest in harness/compare.sha256.
+check-frozen:
+	sha256sum --check harness/compare.sha256
 
 ref:
 	$(PY) ref/fetch.py

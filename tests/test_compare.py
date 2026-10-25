@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import warnings
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -11,6 +13,12 @@ import cases as catalog
 import compare
 import glue
 from conftest import oracle, require
+
+
+def test_compare_matches_its_approved_digest():
+    approved, rel = (catalog.ROOT / "harness" / "compare.sha256").read_text().split()
+    assert Path(compare.__file__).resolve() == (catalog.ROOT / rel).resolve()
+    assert hashlib.sha256((catalog.ROOT / rel).read_bytes()).hexdigest() == approved
 
 
 @pytest.fixture(scope="module")

@@ -19,8 +19,8 @@ jobs:
       - run: python -m pytest -q -rs -m "not slow"
       - name: port/aermod_py provenance
         run: python split.py --verify
-      - name: compare.py sha256
-        run: make freeze
+      - name: compare.py matches its approved digest (harness/compare.sha256)
+        run: make check-frozen
 
   reference:
     # Builds our gfortran AERMOD 26135, regenerates every oracle, dump and
