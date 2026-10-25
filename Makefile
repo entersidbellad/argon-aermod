@@ -1,6 +1,6 @@
 PY ?= python3
 
-.PHONY: help freeze check-frozen ref refs debug-refs dumps context test test-fast fuzz suite-port verify serve clean
+.PHONY: help freeze check-frozen ref refs debug-refs dumps context test test-fast fuzz suite-port verify whatif serve clean
 
 help:
 	@echo "ref         fetch EPA source + test cases, build ref/aermod and ref/aermod_dump"
@@ -15,6 +15,7 @@ help:
 	@echo "verify      check every file in port/aermod_py came from a recorded model reply"
 	@echo "freeze      print sha256 of harness/compare.py"
 	@echo "check-frozen  fail unless compare.py matches harness/compare.sha256"
+	@echo "whatif      precompute the kiln what-if stack grid with the port into whatif/cache"
 	@echo "serve       read-only dashboard on http://127.0.0.1:8000"
 
 freeze:
@@ -57,6 +58,9 @@ suite-port:
 
 verify:
 	$(PY) split.py --verify
+
+whatif:
+	$(PY) whatif/precompute.py
 
 serve:
 	$(PY) server.py

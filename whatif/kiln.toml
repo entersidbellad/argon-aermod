@@ -1,0 +1,113 @@
+# Cement-kiln what-if demo: every number a plant engineer might want to change.
+#
+# ILLUSTRATIVE EXAMPLE VALUES. The stack defaults, fuel-mix factors, emission
+# rates and background concentrations below are made up to tell the story;
+# they are not data from any real plant or monitor. Edit them freely.
+#
+# The stack grid (heights, diameters, temperatures, velocities) is what
+# `python whatif/precompute.py` runs through the Argon-ported AERMOD. After
+# changing it, rerun precompute; the dashboard only shows precomputed stacks.
+
+title = "Cement kiln: switch fuel or change the stack - will it still meet the limits?"
+
+[met]
+# Meteorology of an existing Tier A EPA test case (HRDOW_STACK1): one full year,
+# Houston TX 1996, flat terrain. Files come from ref/fetch.py.
+case = "HRDOW_STACK1"
+surffile = "houston_adju.sfc"
+proffile = "houston_adju.pfl"
+surfdata = "722430  1996  HOUSTON"
+uairdata = "3937    1996  LAKE_CHARLES"
+label = "Houston, TX, 1996 (EPA AERMOD test case HRDOW_STACK1 met)"
+
+[receptors]
+# Polar grid centred on the stack: every direction at every distance.
+distances_m = [200, 400, 700, 1000, 1500, 2000, 3000, 5000]
+directions = 16                       # every 360/N degrees clockwise, the last one north
+
+[grid]
+# Stacks the precompute runs. Sliders snap to these values.
+stack_height_m = [60, 80, 100, 120]
+stack_diameter_m = [3.0, 4.0, 5.0]
+exit_temperature_k = [423, 433, 443]
+exit_velocity_ms = [12, 16, 20]
+
+[defaults]
+stack_height_m = 80
+stack_diameter_m = 4.0
+exit_temperature_k = 423
+exit_velocity_ms = 16
+pollutant = "SO2"
+fuel_mix = "coal_100"
+
+[pollutants.SO2]
+label = "Sulfur dioxide (SO2)"
+molecular_weight = 64.066
+emission_rate_gs = 40.0               # illustrative baseline at 100% coal
+emission_rate_max_gs = 300.0
+# Illustrative ambient background added before comparing with the standard;
+# a real study uses monitored values for the site.
+background_1h_ugm3 = 20.0
+background_annual_ugm3 = 3.0
+
+[pollutants.NOX]
+label = "Nitrogen oxides (NOx, compared as NO2)"
+molecular_weight = 46.0055            # NO2: all NOx assumed to be NO2 (Tier 1)
+emission_rate_gs = 80.0               # illustrative baseline at 100% coal
+emission_rate_max_gs = 300.0
+background_1h_ugm3 = 60.0             # illustrative
+background_annual_ugm3 = 15.0         # illustrative
+
+# Fuel-mix presets: multiply the pollutant's baseline emission rate and add to
+# the exit temperature. ILLUSTRATIVE: real factors depend on the fuel's sulfur,
+# nitrogen and moisture content and on the kiln. exit_temperature_k must land
+# on a value in [grid].exit_temperature_k.
+[fuel_mix.coal_100]
+label = "100% coal"
+emission_factor = { SO2 = 1.00, NOX = 1.00 }
+exit_temperature_k = 423
+
+[fuel_mix.coal_70_alt_30]
+label = "70% coal / 30% alternative fuel (tyres, plastics, RDF)"
+emission_factor = { SO2 = 1.15, NOX = 0.92 }
+exit_temperature_k = 433
+
+[fuel_mix.coal_50_alt_50]
+label = "50% coal / 50% alternative fuel"
+emission_factor = { SO2 = 1.30, NOX = 0.85 }
+exit_temperature_k = 443
+
+# US National Ambient Air Quality Standards, 40 CFR part 50, as listed in EPA's
+# NAAQS table (https://www.epa.gov/criteria-air-pollutants/naaqs-table).
+# ug/m3 = ppb * molecular weight / 24.45 (25 C, 1 atm; 40 CFR 50.3).
+# rank: the Nth-highest daily maximum 1-hour value that stands in for the
+# percentile in one modelled year (99th -> 4th highest, 98th -> 8th highest).
+[naaqs.SO2.one_hour]
+ppb = 75
+rank = 4
+form = "99th percentile of 1-hour daily maximum concentrations, averaged over 3 years (primary)"
+cite = "40 CFR 50.17; EPA NAAQS table"
+
+[naaqs.SO2.annual]
+ppb = 10
+form = "annual mean, averaged over 3 years (secondary)"
+cite = "40 CFR part 50 (2024 secondary SO2 standard); EPA NAAQS table"
+
+[naaqs.NOX.one_hour]
+ppb = 100
+rank = 8
+form = "98th percentile of 1-hour daily maximum concentrations, averaged over 3 years (primary)"
+cite = "40 CFR 50.11; EPA NAAQS table"
+
+[naaqs.NOX.annual]
+ppb = 53
+form = "annual mean (primary and secondary)"
+cite = "40 CFR 50.11; EPA NAAQS table"
+
+[scope]
+# Tier A certifies: one POINT source, flat terrain, rural, no building downwash.
+# A building is within the stack's downwash region if it is closer than five
+# times L, where L is the lesser of its height and projected width ("nearby"
+# in EPA's GEP stack height rule, 40 CFR 51.100(jj)); downwash needs PRIME,
+# which is Tier B and not certified.
+downwash_lengths = 5.0
