@@ -1,34 +1,27 @@
-# Reference AERMOD Build
+# Reference AERMOD 26135
 
-This directory contains scripts to download and build EPA's AERMOD reference implementation.
+```bash
+python3 ref/fetch.py     # source zip + in-scope test-case members, checksum-verified
+ref/build.sh             # gfortran build -> ref/aermod
+```
 
-## Files Ignored by Git
+`fetch.py` downloads `aermod_source.zip` (0.7 MB) from EPA SCRAM and pulls only
+the members listed in `testcase_manifest.txt` out of `aermod_test_cases.zip`
+(489 MB) with HTTP range requests, so a fresh checkout fetches about 10 MB
+compressed instead of the whole package. Everything is unpacked user-writable
+(EPA's zips are read-only).
 
-The following large files are downloaded and built locally but not committed:
-- `aermod_source_26135.zip` - AERMOD source code archive
-- `aermod_testcases_26135.zip` - AERMOD test cases archive
-- `aermod_source/` - Extracted source code
-- `aermod_testcases/` - Extracted test cases
-- `build/` - Build artifacts
-- `aermod` - Compiled binary (symlink)
+`build.sh` reads the compile order and flags from EPA's own
+`gfortran-aermod.bat` (29 files), minus `-static`.
 
-Checksums are committed for verification:
-- `aermod_source_26135.zip.sha256`
-- `aermod_testcases_26135.zip.sha256`
+Committed: `fetch.py`, `build.sh`, `testcase_manifest.txt`, and
+`checksums.sha256` (the source zip, all 29 `.f` files, and every fetched
+test-case member). `fetch.py` fails if anything differs; `--update-checksums`
+rewrites the file and should only be used when moving to a new EPA release.
 
-## Usage
+Not committed (gitignored): `aermod_source.zip`, `aermod_source/`,
+`epa_testcases/`, `build/`, `aermod`.
 
-1. Download AERMOD source and test cases:
-   ```bash
-   ./download_aermod.sh
-   ```
-
-2. Build the reference binary:
-   ```bash
-   ./build_aermod.sh
-   ```
-
-3. Run test cases:
-   ```bash
-   ../harness/run_ref.py <case_name>
-   ```
+Verified on Ubuntu 24.04 with gfortran 13.3.0: the build is warning-clean at
+the default flags, and the binary reproduces EPA's shipped 1-hr POSTFILEs
+exactly for 7 of the 9 EPA cases (see `python3 harness/suite.py --vs-epa`).

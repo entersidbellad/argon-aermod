@@ -68,17 +68,6 @@ Thumbs.db
 
 # Project-specific
 
-# EPA downloads (too large for git)
-ref/aermod_source_26135.zip
-ref/aermod_testcases_26135.zip
-ref/aermod_source/
-ref/aermod_testcases/
-ref/build/
-ref/aermod
-ref/*.o
-ref/*.mod
-ref/compile.log
-
 # Generated context
 context/*.txt
 
@@ -89,5 +78,7 @@ agent/runs/*/prompt.txt
 # Baseline outputs
 agent/baselines/chunked_tier_*/
 
-# Temp test outputs
-/tmp/aermod_*
+
+# Harness outputs (runs, debug files, reports)
+out/
+runs/

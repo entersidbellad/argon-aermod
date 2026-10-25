@@ -1,0 +1,26 @@
+# Members of aermod_test_cases.zip (under aermet26135_aermod26135/) fetched by ref/fetch.py.
+# Only in-scope decks, their met/include files, and the reference 1-hr POSTFILEs.
+inputs/aertest.inp
+inputs/allsrcs.inp
+inputs/capped.inp
+inputs/flatelev.inp
+inputs/lovett_rec.dat
+inputs/hrdow.inp
+inputs/testpm10.inp
+meteorology/aermet2.sfc
+meteorology/aermet2.pfl
+meteorology/lovett.sfc
+meteorology/lovett.pfl
+meteorology/houston_adju.sfc
+meteorology/houston_adju.pfl
+meteorology/salem_86-90_adju.sfc
+meteorology/salem_86-90_adju.pfl
+postfiles/AERTEST_01H.PST
+postfiles/ALLSRCS_STACKDW_01H.PST
+postfiles/CAPPED_STACK1C0_01H.PST
+postfiles/CAPPED_STACK2_01H.PST
+postfiles/CAPPED_STACK2C0_01H.PST
+postfiles/CAPPED_STACK2CE_01H.PST
+postfiles/FLATELEV_FLAT_STK_01H.PST
+postfiles/HRDOW_STACK1_01H.PST
+postfiles/TESTPM10_01H.PST
