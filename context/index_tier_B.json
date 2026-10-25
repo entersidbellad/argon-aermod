@@ -1783,6 +1783,26 @@
   "tokens": 2325
  },
  {
+  "name": "PRIME1",
+  "kind": "SUBROUTINE",
+  "file": "prime.f",
+  "start": 2,
+  "end": 62,
+  "calls": [],
+  "called_by": [],
+  "tokens": 479
+ },
+ {
+  "name": "NUMPR1",
+  "kind": "SUBROUTINE",
+  "file": "prime.f",
+  "start": 63,
+  "end": 212,
+  "calls": [],
+  "called_by": [],
+  "tokens": 1329
+ },
+ {
   "name": "NUMRISE",
   "kind": "SUBROUTINE",
   "file": "prime.f",
