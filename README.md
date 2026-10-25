@@ -108,6 +108,26 @@ Kept patches are recorded in `files.json` next to the reply. Each iteration is l
 - A crash packet includes the port modules named in the traceback, innermost first.
 - A patch that crashes during evaluation is rolled back.
 
+## Kiln what-if demo (`whatif/`, the dashboard's What-if tab)
+
+This tab is for plant engineers. The question it answers: if a cement plant moves part of its kiln fuel to alternative fuels, or changes its stack, does it still meet the NAAQS?
+
+**Scenario.** The demo stays inside Tier A scope:
+- one POINT source on flat, rural terrain, with no downwash;
+- a full year of met from the tier A case HRDOW_STACK1 (Houston 1996, 8,784 hours);
+- a polar receptor grid of 16 directions × 8 distances, from 200 m out to 5 km.
+
+**Config.** Everything a user might change is in `whatif/kiln.toml`: the stack grid, the fuel-mix presets (emission factor and exit temperature), the illustrative emission rates and backgrounds, the NAAQS values with their citations, and the downwash rule.
+
+**Precompute** (`make whatif`, i.e. `python whatif/precompute.py`):
+- runs every stack in the grid through `port/aermod_py` at 1 g/s;
+- stores per-receptor statistics in `whatif/cache/<stack>.json`: max 1-hour, period mean, and the top 8 daily maxima, together with the port's sha256 and the run time.
+- The emission-rate slider scales those stored values, because AERMOD concentrations are proportional to emission rate (tested on the port).
+
+**Statistics.** They match ref/aermod's own outputs on the same deck (`tests/test_whatif.py`). The period mean excludes calm and missing hours, and the 1-hour NAAQS form is the 4th-highest (SO2) or 8th-highest (NO2) daily maximum.
+
+**Scope guardrail.** A building within 5L of the stack, an urban site, or complex terrain shows "not certified for this scenario" instead of a number.
+
 ## Dashboard (`make serve`, or `python server.py --root CHECKOUT`)
 
 The dashboard is read-only and computes everything from files on disk at each page load. It has three screens:
@@ -135,4 +155,5 @@ agent/      argon (Interactions API client), port, repair_loop, baselines/chunke
 port/aermod_py/   Argon output only (plus a human README)
 tests/      pytest; stub_ports/ hold replay, zero and buggy fake ports
 server.py, ui/    read-only dashboard
+whatif/     kiln what-if demo: kiln.toml (config), scenario.py, precompute.py, cache/ (port results)
 ```
