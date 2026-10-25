@@ -1,258 +1,172 @@
 #!/usr/bin/env python3
-"""
-Baseline: Chunked porting approach.
+"""Baseline: the same port in requests of at most 128K input tokens.
 
-Port AERMOD one file at a time with 128K token cap per request.
+    python agent/baselines/chunked.py --tier B            # needs GEMINI_API_KEY
+    python agent/baselines/chunked.py --tier B --dry-run  # plan and count only
+
+Same model, contract and harness as agent/port.py, but no request sees the
+whole Fortran. Every request carries the contract, harness/glue.py, the SETUP
+input names and the DEBUGOPT catalogue. The first request ports modules.f into
+state.py; each later one adds an interface summary of the Python written so
+far (module-level names, dataclass fields, function signatures and docstrings)
+and as many program units as fit, callees before callers, so HRLOOP comes last.
+Output goes to agent/baselines/chunked_tier_<T>/aermod_py (gitignored), never
+to port/.
 """
+
+from __future__ import annotations
 
 import argparse
+import ast
 import json
-import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path[:0] = [str(ROOT), str(ROOT / "harness"), str(ROOT / "agent")]
+import argon  # noqa: E402
+import cases as catalog  # noqa: E402
+import pack  # noqa: E402
+import port  # noqa: E402
+import run_port  # noqa: E402
+import split  # noqa: E402
+
+CAP = 128_000
+PROMPTS = ROOT / "prompts"
+# Callees before callers; modules.f is the first request on its own.
+FILE_ORDER = ["prime.f", "sigmas.f", "prise.f", "windgrid.f", "tempgrid.f", "siggrid.f",
+              "iblval.f", "metext.f", "calc2.f", "calc1.f", "aermod.f"]
 
 
-# Files to port in order
-PORT_SEQUENCE = [
-    ('modules.f', 'state.py', 'Module state and constants'),
-    ('metext.f', 'meteorology_metext.py', 'Met extraction'),
-    ('iblval.f', 'meteorology_iblval.py', 'IBL interpolation'),
-    ('siggrid.f', 'meteorology_siggrid.py', 'Sigma grid'),
-    ('tempgrid.f', 'meteorology_tempgrid.py', 'Temperature grid'),
-    ('windgrid.f', 'meteorology_windgrid.py', 'Wind grid'),
-    ('calc1.f', 'dispersion_calc1.py', 'Point source calc (PCALC)'),
-    ('calc2.f', 'dispersion_calc2.py', 'Dispersion calc'),
-    ('prise.f', 'plume_rise.py', 'Plume rise'),
-    ('sigmas.f', 'sigmas.py', 'Sigma_y and sigma_z'),
-    ('aermod.f', 'core.py', 'Main hourly loop'),
-]
+def fixed_parts() -> str:
+    return "\n\n".join([
+        "# Contract (prompts/contract.md)\n\n" + (PROMPTS / "contract.md").read_text(),
+        "# harness/glue.py (import it; do not port it)\n\n```python\n"
+        + (ROOT / "harness" / "glue.py").read_text() + "```",
+        "# SETUP inputs: the keys of `setup`\n\n" + port.setup_table(),
+        "# DEBUGOPT variables\n\n" + (PROMPTS / "debug_vars.md").read_text(),
+    ])
 
 
-class ChunkedPorter:
-    """Port AERMOD in chunks."""
-    
-    def __init__(self, source_dir: Path, output_dir: Path):
-        self.source_dir = source_dir
-        self.output_dir = output_dir
-        self.module_summary = None
-    
-    def extract_module_summary(self) -> str:
-        """
-        Extract MODULE variable declarations from modules.f.
-        
-        Returns:
-            Markdown summary
-        """
-        modules_path = self.source_dir / 'modules.f'
-        
-        if not modules_path.exists():
-            raise FileNotFoundError(f"modules.f not found at {modules_path}")
-        
-        summary_lines = ["# Module Variables Summary\n\n"]
-        summary_lines.append("Extracted from modules.f\n\n")
-        
-        with open(modules_path, 'r', encoding='latin-1', errors='ignore') as f:
-            in_module = False
-            current_module = None
-            
-            for line in f:
-                # Detect MODULE start
-                if line.strip().upper().startswith('MODULE '):
-                    module_name = line.strip().split()[1]
-                    current_module = module_name
-                    in_module = True
-                    summary_lines.append(f"## MODULE {module_name}\n\n")
-                    continue
-                
-                # Detect MODULE end
-                if line.strip().upper().startswith('END MODULE'):
-                    in_module = False
-                    summary_lines.append("\n")
-                    continue
-                
-                # Extract variable declarations
-                if in_module:
-                    stripped = line.strip()
-                    if any(stripped.upper().startswith(t) for t in 
-                          ['INTEGER', 'REAL', 'DOUBLE PRECISION', 'LOGICAL', 'CHARACTER']):
-                        summary_lines.append(f"- {line.strip()}\n")
-        
-        self.module_summary = "".join(summary_lines)
-        return self.module_summary
-    
-    def port_file(
-        self,
-        fortran_file: str,
-        output_file: str,
-        description: str
-    ) -> str:
-        """
-        Port one Fortran file.
-        
-        Returns:
-            Generated Python code
-        """
-        fortran_path = self.source_dir / fortran_file
-        
-        if not fortran_path.exists():
-            raise FileNotFoundError(f"Fortran file not found: {fortran_path}")
-        
-        # Read Fortran source
-        with open(fortran_path, 'r', encoding='latin-1', errors='ignore') as f:
-            fortran_code = f.read()
-        
-        # Build prompt
-        prompt = self._build_chunked_prompt(
-            fortran_file,
-            fortran_code,
-            output_file,
-            description
-        )
-        
-        # Call model (simplified - would use Gemini API)
-        print(f"  Porting {fortran_file} -> {output_file}...")
-        print(f"  Description: {description}")
-        print(f"  Size: {len(fortran_code)} bytes")
-        
-        # This is a stub - real implementation would call Gemini
-        python_code = f"# Generated from {fortran_file}\n"
-        python_code += f"# {description}\n\n"
-        python_code += "# Port code would be generated by Gemini here\n"
-        
-        return python_code
-    
-    def _build_chunked_prompt(
-        self,
-        fortran_file: str,
-        fortran_code: str,
-        output_file: str,
-        description: str
-    ) -> str:
-        """Build prompt for one file."""
-        prompt_parts = [
-            "# Port Fortran File to Python\n\n",
-            f"## Task\n\nPort {fortran_file} ({description}) to Python.\n\n",
-            "## Contract\n\n",
-            "Follow the same contract as the full-context port:\n",
-            "- Float64 for DOUBLE PRECISION\n",
-            "- Comment index conversions\n",
-            "- Preserve algorithm structure\n",
-            "- Use numpy as xp\n\n",
-        ]
-        
-        if self.module_summary:
-            prompt_parts.append("## Module Variables Reference\n\n")
-            prompt_parts.append(self.module_summary)
-            prompt_parts.append("\n")
-        
-        prompt_parts.append(f"## Fortran Source: {fortran_file}\n\n")
-        prompt_parts.append("```fortran\n")
-        prompt_parts.append(fortran_code)
-        prompt_parts.append("\n```\n\n")
-        
-        prompt_parts.append("Generate complete Python implementation.\n")
-        
-        return "".join(prompt_parts)
-    
-    def run(self, tier: str = 'A') -> None:
-        """Run the chunked porting process."""
-        print("="*70)
-        print("Chunked Porting Baseline")
-        print("="*70)
-        print(f"Tier: {tier}")
-        print(f"Source: {self.source_dir}")
-        print(f"Output: {self.output_dir}\n")
-        
-        # Step 1: Extract module summary
-        print("Step 1: Extracting module summary...")
-        self.extract_module_summary()
-        print(f"  ✓ Extracted {len(self.module_summary)} bytes\n")
-        
-        # Save summary
-        summary_path = self.output_dir / 'module_vars_summary.md'
-        summary_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(summary_path, 'w') as f:
-            f.write(self.module_summary)
-        print(f"  Saved: {summary_path}\n")
-        
-        # Step 2: Port each file
-        print("Step 2: Porting files...")
-        
-        sequence = PORT_SEQUENCE.copy()
-        if tier == 'B':
-            sequence.append(('prime.f', 'prime.py', 'PRIME building downwash'))
-        
-        for fortran_file, python_file, description in sequence:
-            try:
-                python_code = self.port_file(
-                    fortran_file,
-                    python_file,
-                    description
-                )
-                
-                # Save output
-                output_path = self.output_dir / python_file
-                with open(output_path, 'w') as f:
-                    f.write(python_code)
-                
-                print(f"  ✓ Saved: {output_path}\n")
-                
-            except FileNotFoundError as e:
-                print(f"  ⚠ Skipped: {e}\n")
-                continue
-        
-        print("="*70)
-        print("Chunked porting complete")
-        print("="*70)
-        print("\nThis is a baseline stub. To use:")
-        print("1. Implement actual Gemini API calls in port_file()")
-        print("2. Add proper token counting and truncation for 128K cap")
-        print("3. Handle dependencies between files")
-        print("4. Test with same harness as full-context port")
+def interface(pkg: Path) -> str:
+    """Module-level names, class fields and function signatures+docstrings of the package."""
+    out = []
+    for path in sorted(pkg.rglob("*.py")):
+        try:
+            tree = ast.parse(path.read_text())
+        except SyntaxError as exc:
+            out.append(f"## aermod_py/{path.relative_to(pkg)} (does not parse: {exc})")
+            continue
+        out.append(f"## aermod_py/{path.relative_to(pkg)}")
+        for node in tree.body:
+            if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+                head = ast.unparse(node).split("\n")[0]
+                doc = ast.get_docstring(node)
+                out.append(head + (f'\n    """{doc.splitlines()[0]}"""' if doc else ""))
+                if isinstance(node, ast.ClassDef):
+                    out += [f"    {ast.unparse(s)}" for s in node.body if isinstance(s, ast.AnnAssign)]
+            elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+                out.append(ast.unparse(node)[:200])
+    return "\n".join(out)
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description='Baseline chunked porting approach'
-    )
-    parser.add_argument(
-        '--tier',
-        choices=['A', 'B'],
-        default='A',
-        help='Port tier'
-    )
-    parser.add_argument(
-        '--source-dir',
-        type=Path,
-        default=Path('ref/aermod_source'),
-        help='AERMOD source directory'
-    )
-    parser.add_argument(
-        '--output-dir',
-        type=Path,
-        help='Output directory (default: agent/baselines/chunked_tier_{A|B})'
-    )
-    
-    args = parser.parse_args()
-    
-    if args.output_dir is None:
-        script_dir = Path(__file__).parent
-        args.output_dir = script_dir / 'baselines' / f'chunked_tier_{args.tier}'
-    
-    try:
-        porter = ChunkedPorter(args.source_dir, args.output_dir)
-        porter.run(args.tier)
-        
+def chunks(tier: str, budget: int, counter: pack.TokenCounter) -> list[list[pack.Unit]]:
+    units, _ = pack.select_units(tier)
+    cache: dict[str, list[str]] = {}
+    by_file: dict[str, list[pack.Unit]] = {}
+    for u in units:
+        by_file.setdefault(u.file, []).append(u)
+    plan = [by_file.pop("modules.f")]
+    for f in FILE_ORDER + sorted(by_file):
+        current, size = [], 0
+        for u in reversed(by_file.pop(f, [])):        # within a file, later units are often callees
+            n = counter(pack.unit_text(u, cache))
+            if current and size + n > budget:
+                plan.append(current)
+                current, size = [], 0
+            current.append(u)
+            size += n
+        if current:
+            plan.append(current)
+    return plan
+
+
+def module_name(units: list[pack.Unit], step: int) -> str:
+    return f"{Path(units[0].file).stem}_{step:02d}.py"
+
+
+def chunk_input(units: list[pack.Unit], fixed: str, summary: str, step: int, total: int) -> str:
+    cache: dict[str, list[str]] = {}
+    src = "\n".join(f"##### UNIT {u.name} ({u.kind}) {u.file}:{u.start}-{u.end}\n"
+                    + pack.unit_text(u, cache) for u in units)
+    names = ", ".join(u.name for u in units)
+    task = (f"Request {step} of {total}. Translate these Fortran units: {names}. "
+            + ("This is MODULE state: write aermod_py/state.py with one dataclass per MODULE "
+               "(fields named as in the Fortran) and aermod_py/constants.py for PARAMETERs."
+               if step == 1 else
+               f"Write them to aermod_py/{module_name(units, step)}. Call the Python already "
+               "written (interface above) rather than redefining it. "
+               + ("HRLOOP is here: also write aermod_py/__init__.py exporting run_case."
+                  if any(u.name == "HRLOOP" for u in units) else "")))
+    return (f"{fixed}\n\n# Python written so far\n\n{summary or '(none)'}\n\n"
+            f"# Fortran\n\n{src}\n\n# TASK\n\n{task}\n")
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--tier", choices=["A", "B"], default="B")
+    ap.add_argument("--thinking", choices=argon.THINKING_LEVELS, default="high")
+    ap.add_argument("--summary-reserve", type=int, default=20_000,
+                    help="tokens kept free for the interface summary")
+    ap.add_argument("--dry-run", action="store_true")
+    args = ap.parse_args()
+
+    out_root = ROOT / "agent" / "baselines" / f"chunked_tier_{args.tier}"
+    pkg = out_root / "aermod_py"
+    run_dir = out_root / f"run_{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}"
+    counter = pack.TokenCounter()
+    system = (PROMPTS / "chunked_port.md").read_text()
+    fixed = fixed_parts()
+    budget = CAP - counter(system) - counter(fixed) - args.summary_reserve - 1_000
+    plan = chunks(args.tier, budget, counter)
+    print(f"tier {args.tier}: {len(plan)} requests, Fortran budget {budget:,} tokens each "
+          f"({counter.method})")
+    for i, units in enumerate(plan, 1):
+        print(f"  {i:2d}: {units[0].file:12s} {len(units):3d} units  {units[0].name} .. {units[-1].name}")
+    if args.dry_run:
         return 0
-        
-    except Exception as e:
-        print(f"\nError: {e}", file=sys.stderr)
-        import traceback
-        traceback.print_exc()
-        return 1
+
+    client = argon.make_client()
+    run_dir.mkdir(parents=True)
+    split.clear(pkg) if pkg.exists() else pkg.mkdir(parents=True)
+    log = []
+    for i, units in enumerate(plan, 1):
+        prompt = chunk_input(units, fixed, interface(pkg), i, len(plan))
+        tokens = counter(system + prompt)
+        if tokens > CAP:
+            raise SystemExit(f"request {i} is {tokens:,} tokens; raise --summary-reserve")
+        step_dir = run_dir / f"step_{i:02d}"
+        step_dir.mkdir()
+        (step_dir / "prompt.txt").write_text(system + "\n\n" + prompt)
+        reply = argon.ask(client, input=prompt, system_instruction=system,
+                          thinking_level=args.thinking)
+        reply.save(step_dir)
+        files = split.parse(reply.text)
+        clobbered = [str(rel) for rel, _ in files if (pkg / rel).exists()]
+        if clobbered:
+            raise SystemExit(f"step {i} rewrote existing files {clobbered}; see {step_dir}")
+        written = split.write(files, pkg)
+        split.record(written, step_dir / "reply.txt", pkg, interaction_id=reply.id, step=i)
+        log.append({"step": i, "units": [u.name for u in units], "prompt_tokens": tokens,
+                    "usage": reply.usage, "files": [str(p.relative_to(pkg)) for p in written]})
+        print(f"step {i}: {len(written)} files, usage {reply.usage}")
+    (run_dir / "steps.json").write_text(json.dumps(log, indent=1) + "\n")
+    smoke = run_port.run_case(catalog.tier_cases(args.tier)[0], who=f"chunked_{args.tier}",
+                              package_dir=pkg)
+    print(f"smoke test {smoke.case}: {'ok' if smoke.ok else 'FAILED'}")
+    return 0 if smoke.ok else 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
