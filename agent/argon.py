@@ -27,6 +27,32 @@ THINKING_LEVELS = ("minimal", "low", "medium", "high")
 PENDING = {"queued", "in_progress"}
 
 
+@dataclass(frozen=True)
+class Prices:
+    """USD per million tokens. No defaults: take them from your Google Cloud billing."""
+    input: float
+    output: float
+
+    def cost(self, usage: dict) -> float:
+        """Spend for one reply's usage; thought tokens are billed as output."""
+        out = (usage.get("total_output_tokens") or 0) + (usage.get("total_thought_tokens") or 0)
+        return ((usage.get("total_input_tokens") or 0) * self.input + out * self.output) / 1e6
+
+    @classmethod
+    def from_args(cls, input_price: float | None, output_price: float | None) -> "Prices | None":
+        """From CLI values, else ARGON_USD_PER_MTOK_INPUT / _OUTPUT; None unless both are set."""
+        input_price = input_price if input_price is not None else _env_float("ARGON_USD_PER_MTOK_INPUT")
+        output_price = output_price if output_price is not None else _env_float("ARGON_USD_PER_MTOK_OUTPUT")
+        if input_price is None or output_price is None:
+            return None
+        return cls(input_price, output_price)
+
+
+def _env_float(name: str) -> float | None:
+    value = os.environ.get(name)
+    return float(value) if value else None
+
+
 class ArgonError(RuntimeError):
     def __init__(self, message: str, reply: "Reply | None" = None) -> None:
         super().__init__(message)

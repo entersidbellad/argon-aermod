@@ -20,6 +20,13 @@ Each iteration:
    passes, it no longer crashes, or its first problem moved later in AERMOD's
    order. Otherwise restore the previous files.
 
+The failure-specific packet of a repair (problem, met, Fortran unit, Python
+files) is capped at MAX_PACKET_TOKENS; a packet that cannot fit is not sent and
+counts as a rejection, so the target escalates to a consult. ``--budget-usd``
+stops before a request whose input alone would pass the cap and after any reply
+that reaches it, pricing each reply's usage at the given per-token rates;
+``--stop-at-passing N`` stops once N training cases pass.
+
 The holdout case is never used for repair; it is scored once at the end.
 Accepted patches are recorded in files.json beside their reply, so
 ``split.py --verify`` can trace every port file to model output.
@@ -61,6 +68,7 @@ PROMPTS = ROOT / "prompts"
 RUNS = ROOT / "agent" / "runs"
 MAX_REPAIR_FILES = 2
 CONSULT_AFTER = 3
+MAX_PACKET_TOKENS = 30_000           # failure-specific part of a repair; shared documents excluded
 MET_SHOWN = ["OBULEN", "USTAR", "WSTAR", "ZICONV", "ZIMECH", "VPTGZI", "SFCHF", "UREF",
              "UREFHT", "WDREF", "TA", "SFCZ0", "BOWEN", "ALBEDO"]
 UNIT_IN_DOC = re.compile(r"\b(?:SUBROUTINE|FUNCTION|MODULE)\s+([A-Z][A-Z0-9_]*)")
@@ -84,6 +92,7 @@ class Problem:
     var: str = ""
     date: int = 0
     rank: tuple = ()                  # larger is later in AERMOD's order (progress)
+    files: tuple[str, ...] = ()       # port files to show first (e.g. named in a traceback)
 
     @property
     def target(self) -> str:
@@ -100,6 +109,8 @@ class Attempt:
     reason: str
     interaction_id: str = ""
     usage: dict = field(default_factory=dict)
+    cost_usd: float = 0.0
+    packet_tokens: int = 0
 
 
 # --- scoring -----------------------------------------------------------------
@@ -147,6 +158,31 @@ def files_translating(port_dir: Path, sub: str) -> list[str]:
     return [rel for rel, text in python_files(port_dir).items() if pattern.search(text)]
 
 
+def files_in_traceback(error: str, port_dir: Path) -> list[str]:
+    """Port files a traceback names, innermost first: frame paths, paths in the message
+    (a circular ImportError names the partially initialised file) and dotted module names."""
+    root = port_dir.resolve()
+    found: list[str] = []
+
+    def add(path: Path) -> None:
+        try:
+            rel = path.resolve().relative_to(root).as_posix()
+        except (ValueError, OSError):
+            return
+        if path.suffix == ".py" and path.is_file() and rel not in found:
+            found.append(rel)
+
+    for raw in reversed(re.findall(r'File "([^"]+\.py)"', error)):
+        add(Path(raw))
+    for raw in re.findall(r"\(([^()\s]+\.py)\)", error):
+        add(Path(raw))
+    for dotted in re.findall(rf"\b{re.escape(root.name)}((?:\.\w+)+)", error):
+        parts = dotted.strip(".").split(".")
+        add(root.joinpath(*parts).with_suffix(".py"))
+        add(root.joinpath(*parts, "__init__.py"))
+    return found
+
+
 def crash_problem(case: catalog.Case, error: str, port_dir: Path) -> Problem:
     sub = ""
     port_frames = re.findall(r'File "([^"]+)", line (\d+), in (\w+)', error)
@@ -159,7 +195,7 @@ def crash_problem(case: catalog.Case, error: str, port_dir: Path) -> Problem:
                 break
     tail = "\n".join(error.strip().splitlines()[-40:])
     return Problem(case.name, "crash", f"The port raised an exception on {case.name}:\n\n{tail}",
-                   sub=sub, rank=(-1,))
+                   sub=sub, rank=(-1,), files=tuple(files_in_traceback(error, port_dir)))
 
 
 def met_for(case: catalog.Case, who: str, date: int) -> str:
@@ -244,19 +280,52 @@ def fortran_source(sub: str, tier: str) -> str:
             f"```fortran\n{pack.fortran_unit(sub, tier)}\n```")
 
 
-def repair_input(problem: Problem, port_dir: Path, tier: str) -> str:
-    parts = [port.shared_context(), f"# Case {problem.case}: {problem.kind}\n\n{problem.text}"]
+class PacketTooLarge(ValueError):
+    pass
+
+
+def repair_packet(problem: Problem, port_dir: Path, tier: str, counter=None,
+                  limit: int = MAX_PACKET_TOKENS) -> tuple[str, int]:
+    """The failure-specific part of a repair request, at most ``limit`` tokens.
+
+    Python files are added in priority order (named in the traceback, then the
+    files translating the unit) while they fit; the first is required.
+    """
+    counter = counter or pack.TokenCounter()
+    parts = [f"# Case {problem.case}: {problem.kind}\n\n{problem.text}"]
     if problem.sub:
         src = fortran_source(problem.sub, tier)
         if src:
             parts.append(f"# Fortran\n\n{src}")
     files = python_files(port_dir)
-    shown = files_translating(port_dir, problem.sub) if problem.sub else []
+    shown = [f for f in problem.files if f in files]
+    shown += [f for f in (files_translating(port_dir, problem.sub) if problem.sub else [])
+              if f not in shown]
     if not shown:
         shown = ["__init__.py"] if "__init__.py" in files else list(files)[:1]
-    for rel in shown:
-        parts.append(f"# Current Python: aermod_py/{rel}\n\n```python\n{files[rel]}```")
-    return "\n\n".join(parts) + "\n"
+    def measure(blocks: list[str]) -> int:
+        return counter("\n\n".join(blocks) + "\n")
+
+    left_out = []
+    for i, rel in enumerate(shown):
+        block = f"# Current Python: aermod_py/{rel}\n\n```python\n{files[rel]}```"
+        size = measure(parts + [block])
+        if size > limit:
+            if i == 0:
+                raise PacketTooLarge(f"repair packet needs {size:,} tokens with "
+                                     f"aermod_py/{rel}; the cap is {limit:,}")
+            left_out.append(rel)
+            continue
+        parts.append(block)
+    note = "# Not shown (packet size cap): " + ", ".join(f"aermod_py/{r}" for r in left_out)
+    if left_out and measure(parts + [note]) <= limit:
+        parts.append(note)
+    return "\n\n".join(parts) + "\n", measure(parts)
+
+
+def repair_input(problem: Problem, port_dir: Path, tier: str, counter=None) -> tuple[str, int]:
+    packet, size = repair_packet(problem, port_dir, tier, counter)
+    return port.shared_context() + "\n\n" + packet, size
 
 
 def consult_input(problem: Problem, history: list[Attempt], port_dir: Path, tier: str) -> str:
@@ -298,21 +367,31 @@ class LoopResult:
     attempts: list[Attempt]
     final: dict[str, CaseScore]
     holdout: dict[str, CaseScore] = field(default_factory=dict)
+    stop_reason: str = ""
+    spent_usd: float = 0.0
 
 
 def repair(cases: list[catalog.Case], *, client, run_dir: Path, port_dir: Path = split.PORT_DIR,
            tier: str = "B", iterations: int = 50, thinking: str = "high", who: str = "port_repair",
-           holdout: list[catalog.Case] | None = None, log=print) -> LoopResult:
+           holdout: list[catalog.Case] | None = None, log=print,
+           budget_usd: float | None = None, prices: argon.Prices | None = None,
+           stop_at_passing: int | None = None, counter=None) -> LoopResult:
+    if budget_usd is not None and prices is None:
+        raise ValueError("a spend cap needs token prices")
     run_dir.mkdir(parents=True, exist_ok=True)
+    counter = counter or pack.TokenCounter()
     diag = Diagnoser(port_dir, who)
     attempts: list[Attempt] = []
     failures: Counter[str] = Counter()
     scores = score(cases, port_dir, who)
+    spent, stop_reason = 0.0, f"{iterations} iterations used"
     it = 0
     for it in range(1, iterations + 1):
         _log_scores(run_dir, it, scores)
         failing = [c for c in cases if not scores[c.name].passes]
-        if not failing:
+        n_pass = len(cases) - len(failing)
+        if not failing or (stop_at_passing is not None and n_pass >= stop_at_passing):
+            stop_reason = "all training cases pass" if not failing else f"{n_pass} cases pass"
             it -= 1
             break
         target = failing[0]
@@ -321,9 +400,25 @@ def repair(cases: list[catalog.Case], *, client, run_dir: Path, port_dir: Path =
         mode = "consult" if consult else "repair"
         log(f"[{it}] {target.name}: {problem.kind} {problem.target} ({mode})")
         system = (PROMPTS / f"{mode}.md").read_text()
-        prompt = (consult_input(problem, [a for a in attempts if a.problem == problem.target],
-                                port_dir, tier)
-                  if consult else repair_input(problem, port_dir, tier))
+        packet_tokens = 0
+        try:
+            if consult:
+                prompt = consult_input(problem, [a for a in attempts if a.problem == problem.target],
+                                       port_dir, tier)
+            else:
+                prompt, packet_tokens = repair_input(problem, port_dir, tier, counter)
+        except PacketTooLarge as exc:
+            attempts.append(Attempt(it, mode, problem.target, "", False, f"not sent: {exc}"))
+            failures[problem.target] += 1
+            log(f"[{it}] not sent: {exc}")
+            continue
+        if budget_usd is not None:
+            floor = spent + prices.cost({"total_input_tokens": counter(system + prompt)})
+            if floor > budget_usd:
+                stop_reason = (f"budget: ${spent:.2f} spent, this request's input alone would "
+                               f"reach ${floor:.2f} of ${budget_usd:.2f}")
+                it -= 1
+                break
         it_dir = run_dir / f"iter_{it:03d}"
         it_dir.mkdir(parents=True, exist_ok=True)
         (it_dir / "prompt.txt").write_text(system + "\n\n" + prompt)
@@ -331,14 +426,21 @@ def repair(cases: list[catalog.Case], *, client, run_dir: Path, port_dir: Path =
             reply = argon.ask(client, input=prompt, system_instruction=system,
                               thinking_level=thinking)
         except argon.ArgonError as exc:
+            cost = 0.0
             if exc.reply is not None:
                 exc.reply.save(it_dir)
-            attempts.append(Attempt(it, mode, problem.target, "", False, f"model error: {exc}"))
+                cost = prices.cost(exc.reply.usage) if prices else 0.0
+            spent += cost
+            attempts.append(Attempt(it, mode, problem.target, "", False, f"model error: {exc}",
+                                    cost_usd=cost, packet_tokens=packet_tokens))
             failures[problem.target] += 1
             continue
         reply.save(it_dir)
+        cost = prices.cost(reply.usage) if prices else 0.0
+        spent += cost
         hyp = hypothesis(reply.text)
-        attempt = Attempt(it, mode, problem.target, hyp, False, "", reply.id, reply.usage)
+        attempt = Attempt(it, mode, problem.target, hyp, False, "", reply.id, reply.usage,
+                          cost_usd=cost, packet_tokens=packet_tokens)
         try:
             files = split.parse(reply.text)
             if not consult and len(files) > MAX_REPAIR_FILES:
@@ -381,9 +483,14 @@ def repair(cases: list[catalog.Case], *, client, run_dir: Path, port_dir: Path =
             failures[problem.target] += 1
         attempts.append(attempt)
         (it_dir / "decision.json").write_text(json.dumps(asdict(attempt), indent=1) + "\n")
-        log(f"[{it}] {'kept' if attempt.accepted else 'reverted'}: {attempt.reason}")
+        log(f"[{it}] {'kept' if attempt.accepted else 'reverted'}: {attempt.reason}"
+            + (f" (${spent:.2f} spent)" if prices else ""))
+        if budget_usd is not None and spent >= budget_usd:
+            stop_reason = f"budget: ${spent:.2f} spent of ${budget_usd:.2f}"
+            break
 
-    result = LoopResult(it, all(s.passes for s in scores.values()), attempts, scores)
+    result = LoopResult(it, all(s.passes for s in scores.values()), attempts, scores,
+                        stop_reason=stop_reason, spent_usd=spent)
     if holdout:
         result.holdout = score(holdout, port_dir, who)
     (run_dir / "result.json").write_text(json.dumps(asdict(result), indent=1, default=str) + "\n")
@@ -405,27 +512,46 @@ def main() -> int:
     ap.add_argument("--thinking", choices=argon.THINKING_LEVELS, default="high")
     ap.add_argument("--port-dir", type=Path, default=split.PORT_DIR)
     ap.add_argument("--run-id", help="default: repair_<tier>_<UTC timestamp>")
+    ap.add_argument("--budget-usd", type=float,
+                    help="stop before a request would pass this spend (needs token prices)")
+    ap.add_argument("--usd-per-mtok-input", type=float,
+                    help="default: $ARGON_USD_PER_MTOK_INPUT")
+    ap.add_argument("--usd-per-mtok-output", type=float,
+                    help="output and thought tokens; default: $ARGON_USD_PER_MTOK_OUTPUT")
+    ap.add_argument("--stop-at-passing", type=int, metavar="N",
+                    help="stop once N training cases pass")
     args = ap.parse_args()
 
     training = [catalog.get(n) for n in args.case] or catalog.tier_cases(args.tier)
     if any(c.tier == "holdout" for c in training):
         ap.error("holdout cases are never used for repair")
+    prices = argon.Prices.from_args(args.usd_per_mtok_input, args.usd_per_mtok_output)
+    if args.budget_usd is not None and prices is None:
+        ap.error("--budget-usd needs --usd-per-mtok-input and --usd-per-mtok-output "
+                 "(or ARGON_USD_PER_MTOK_INPUT/_OUTPUT)")
+    if args.stop_at_passing is not None and not 1 <= args.stop_at_passing <= len(training):
+        ap.error(f"--stop-at-passing must be between 1 and {len(training)}")
     holdout = [c for c in catalog.CASES if c.tier == "holdout"]
     run_id = args.run_id or f"repair_{args.tier}_{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}"
     (RUNS / run_id).mkdir(parents=True, exist_ok=True)
     meta = {"run_id": run_id, "kind": "repair", "tier": args.tier, "model": argon.MODEL,
             "thinking": args.thinking, "iterations": args.iterations,
-            "cases": [c.name for c in training]}
+            "cases": [c.name for c in training], "budget_usd": args.budget_usd,
+            "prices_usd_per_mtok": asdict(prices) if prices else None,
+            "stop_at_passing": args.stop_at_passing}
     (RUNS / run_id / "run.json").write_text(json.dumps(meta, indent=1) + "\n")
     result = repair(training, client=argon.make_client(), run_dir=RUNS / run_id,
                     port_dir=args.port_dir, tier=args.tier, iterations=args.iterations,
-                    thinking=args.thinking, holdout=holdout)
+                    thinking=args.thinking, holdout=holdout, budget_usd=args.budget_usd,
+                    prices=prices, stop_at_passing=args.stop_at_passing)
     print(f"{run_id}: {result.iterations} iterations, "
           f"{sum(a.accepted for a in result.attempts)} patches kept, "
-          f"all training cases pass: {result.all_pass}")
+          f"stopped: {result.stop_reason}"
+          + (f", ${result.spent_usd:.2f} spent" if prices else ""))
     for s in list(result.final.values()) + list(result.holdout.values()):
         print(s.summary or f"{s.case:20s} CRASH {s.error.strip().splitlines()[-1] if s.error else ''}")
-    return 0 if result.all_pass else 1
+    done = result.all_pass or result.stop_reason.endswith("cases pass")
+    return 0 if done else 1
 
 
 if __name__ == "__main__":
