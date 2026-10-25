@@ -43,7 +43,7 @@ fuel_mix = "coal_100"
 [pollutants.SO2]
 label = "Sulfur dioxide (SO2)"
 molecular_weight = 64.066
-emission_rate_gs = 40.0               # illustrative baseline at 100% coal
+emission_rate_gs = 120.0              # illustrative baseline at 100% coal
 emission_rate_max_gs = 300.0
 # Illustrative ambient background added before comparing with the standard;
 # a real study uses monitored values for the site.
@@ -53,7 +53,7 @@ background_annual_ugm3 = 3.0
 [pollutants.NOX]
 label = "Nitrogen oxides (NOx, compared as NO2)"
 molecular_weight = 46.0055            # NO2: all NOx assumed to be NO2 (Tier 1)
-emission_rate_gs = 80.0               # illustrative baseline at 100% coal
+emission_rate_gs = 150.0              # illustrative baseline at 100% coal
 emission_rate_max_gs = 300.0
 background_1h_ugm3 = 60.0             # illustrative
 background_annual_ugm3 = 15.0         # illustrative
