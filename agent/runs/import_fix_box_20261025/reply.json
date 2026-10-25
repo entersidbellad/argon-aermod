@@ -1,0 +1,26 @@
+{
+ "id": "v1_ChdsWDdlYXVUZUNxdU1fUFVQNDQ3ZHdBMBIXbFg3ZWF1VGVDcXVNX1BVUDQ0N2R3QTA",
+ "status": "completed",
+ "seconds": 171.30839179000031,
+ "usage": {
+  "input_tokens_by_modality": [
+   {
+    "modality": "text",
+    "tokens": 21756
+   }
+  ],
+  "output_tokens_by_modality": [
+   {
+    "modality": "text",
+    "tokens": 20562
+   }
+  ],
+  "total_cached_tokens": 0,
+  "total_input_tokens": 21756,
+  "total_output_tokens": 20562,
+  "total_thought_tokens": 1757,
+  "total_tokens": 44075,
+  "total_tool_use_tokens": 0
+ },
+ "errors": []
+}
