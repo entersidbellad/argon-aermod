@@ -6,7 +6,7 @@ its artefact is missing:
 
     make ref          # python ref/fetch.py && ref/build.sh && ref/build_dump.sh
     make refs         # out/ref
-    make debug-refs   # out/ref_debug (AERTEST, aertest_nobldg)
+    make debug-refs   # out/ref_debug (the five dbgcatalog.DEFAULT_CASES)
     make dumps        # out/setup_dump/<case>/SETUP.DMP
     python pack.py    # context/
 """

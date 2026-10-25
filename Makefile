@@ -5,7 +5,7 @@ PY ?= python3
 help:
 	@echo "ref         fetch EPA source + test cases, build ref/aermod and ref/aermod_dump"
 	@echo "refs        run every case through ref/aermod into out/ref (the oracles)"
-	@echo "debug-refs  DEBUGOPT runs of AERTEST and aertest_nobldg into out/ref_debug"
+	@echo "debug-refs  DEBUGOPT runs of the five catalogue cases into out/ref_debug"
 	@echo "dumps       SETUP.DMP for every case into out/setup_dump (ground truth for glue)"
 	@echo "context     pack the Fortran slice into context/ and count tokens"
 	@echo "test        full pytest suite (needs ref, refs, debug-refs, dumps)"
@@ -28,7 +28,7 @@ refs:
 	$(PY) harness/run_ref.py --all
 
 debug-refs:
-	$(PY) harness/run_ref.py --debug AERTEST aertest_nobldg
+	$(PY) harness/run_ref.py --debug aertest_nobldg CAPPED_STACK2CE AERTEST CAPPED_STACK1C0 ALLSRCS_STACKDW
 
 dumps:
 	$(PY) harness/run_ref.py --all --binary ref/aermod_dump --who setup_dump

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Write the DEBUGOPT variable catalogue from real reference runs.
 
-  python harness/run_ref.py AERTEST aertest_nobldg --debug
+  make debug-refs                         # DEBUGOPT runs of DEFAULT_CASES into out/ref_debug
   python harness/dbgcatalog.py            # -> prompts/debug_vars.md, harness/debug_vars.json
 
 Every name in the catalogue is a record dbgparse.py read out of a *.DBG file
@@ -20,7 +20,7 @@ from pathlib import Path
 import cases as catalog
 import dbgparse
 
-DEFAULT_CASES = ["aertest_nobldg", "AERTEST"]
+DEFAULT_CASES = ["aertest_nobldg", "CAPPED_STACK2CE", "AERTEST", "CAPPED_STACK1C0", "ALLSRCS_STACKDW"]
 JSON_OUT = Path(__file__).resolve().parent / "debug_vars.json"
 MD_OUT = catalog.ROOT / "prompts" / "debug_vars.md"
 FILE_OF = {"METDEB": "METEOR.DBG"}
