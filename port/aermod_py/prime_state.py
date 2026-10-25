@@ -168,6 +168,10 @@ class PrimeState:
     rate_alpha0: float = 0.11
     rate_beta0: float = 0.6
 
+    # SAVEd locals for prime_wake units (<unit>_<var>)
+    wake_u_turb_z: float = 0.0
+    wake_u_turb_zvel_sav: float = 0.0
+
     def emit_debug(
         self,
         state: AermodState,
