@@ -22,6 +22,8 @@ e.g. agent/runs/repair_A_box/step_001); its id is that folder's path.
   GET /api/tokens               context/tokens.json
   GET /api/commits              git log of port/aermod_py
   GET /api/certify              every certification criterion, computed now
+  GET /api/whatif/config        what-if sliders, fuel-mix presets, NAAQS and cache coverage
+  GET /api/whatif?...           baseline and scenario concentrations from whatif/cache
 """
 
 from __future__ import annotations
@@ -40,8 +42,10 @@ from fastapi.staticfiles import StaticFiles
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "harness"))
+sys.path.insert(0, str(ROOT / "whatif"))
 import cases as catalog  # noqa: E402
 import run_port  # noqa: E402
+import scenario as whatif  # noqa: E402
 import split  # noqa: E402
 
 UI_DIR = ROOT / "ui"
@@ -56,11 +60,14 @@ RESULTS_DIR = ROOT / "results"
 COMPARE = ROOT / "harness" / "compare.py"
 APPROVED = ROOT / "harness" / "compare.sha256"
 TOKENS = ROOT / "context" / "tokens.json"
+WHATIF_CONFIG = whatif.CONFIG_PATH
+WHATIF_CACHE = whatif.CACHE_DIR
 
 
 def configure(root: Path) -> None:
     """Read artifacts from another checkout."""
     global DATA_ROOT, RUNS_DIR, PORT_DIR, OUT_DIR, RESULTS_DIR, COMPARE, APPROVED, TOKENS
+    global WHATIF_CONFIG, WHATIF_CACHE
     DATA_ROOT = root.resolve()
     RUNS_DIR = DATA_ROOT / "agent" / "runs"
     PORT_DIR = DATA_ROOT / "port" / "aermod_py"
@@ -69,6 +76,9 @@ def configure(root: Path) -> None:
     COMPARE = DATA_ROOT / "harness" / "compare.py"
     APPROVED = DATA_ROOT / "harness" / "compare.sha256"
     TOKENS = DATA_ROOT / "context" / "tokens.json"
+    if (DATA_ROOT / "whatif" / "kiln.toml").is_file():
+        WHATIF_CONFIG = DATA_ROOT / "whatif" / "kiln.toml"
+        WHATIF_CACHE = DATA_ROOT / "whatif" / "cache"
 
 
 app = FastAPI(title="AERMOD port dashboard (read-only)")
@@ -433,6 +443,54 @@ def certify() -> dict:
     return {
         "certified": all(ok for _, ok, _ in criteria),
         "criteria": [{"name": n, "ok": bool(ok), "detail": d} for n, ok, d in criteria],
+    }
+
+
+# --- what-if (whatif/) ------------------------------------------------------------
+
+@app.get("/api/whatif/config")
+def whatif_config() -> dict:
+    """Sliders, presets, standards and baselines for the What-if screen."""
+    config = whatif.load_config(WHATIF_CONFIG)
+    stacks = whatif.grid(config)
+    cached = [s.key for s in stacks if whatif.load_cached(s, WHATIF_CACHE)]
+    limits = {p: {avg: {**std, "limit_ugm3": whatif.limit_ugm3(
+                  std["ppb"], config["pollutants"][p]["molecular_weight"])}
+                  for avg, std in config["naaqs"][p].items()}
+              for p in config["pollutants"]}
+    return {
+        "title": config["title"], "met": config["met"], "receptors": config["receptors"],
+        "grid": config["grid"], "defaults": config["defaults"],
+        "pollutants": config["pollutants"], "fuel_mix": config["fuel_mix"], "naaqs": limits,
+        "scope": config["scope"],
+        "presets": {p: {m: whatif.preset(config, p, m) for m in config["fuel_mix"]}
+                    for p in config["pollutants"]},
+        "stacks": len(stacks), "cached": len(cached), "port_sha256": port_hash(),
+        "config_path": "whatif/kiln.toml",
+    }
+
+
+@app.get("/api/whatif")
+def whatif_scenario(pollutant: str, height: float, diameter: float, temperature: float,
+                    velocity: float, emission: float, background_1h: float = 0.0,
+                    background_annual: float = 0.0, building_height: float = 0.0,
+                    building_width: float = 0.0, building_distance: float = 0.0,
+                    urban: bool = False, complex_terrain: bool = False) -> dict:
+    """Baseline (config defaults) and the requested scenario, from precomputed port runs."""
+    config = whatif.load_config(WHATIF_CONFIG)
+    if pollutant not in config["pollutants"]:
+        raise HTTPException(status_code=400, detail=f"pollutant must be one of {sorted(config['pollutants'])}")
+    inputs = whatif.Inputs(
+        pollutant=pollutant, stack=whatif.Stack(height, diameter, temperature, velocity),
+        emission_rate_gs=emission, background_1h_ugm3=background_1h,
+        background_annual_ugm3=background_annual, building_height_m=building_height,
+        building_width_m=building_width, building_distance_m=building_distance,
+        urban=urban, complex_terrain=complex_terrain)
+    port_now = port_hash()
+    return {
+        "baseline": whatif.evaluate(config, whatif.baseline(config, pollutant),
+                                    cache_dir=WHATIF_CACHE, current_port=port_now),
+        "scenario": whatif.evaluate(config, inputs, cache_dir=WHATIF_CACHE, current_port=port_now),
     }
 
 
