@@ -171,9 +171,9 @@
                 <div class="panel">
                     <h2>Plume footprint</h2>
                     <label class="muted">Show <select id="wi-metric">
+                        <option value="annual" selected>annual mean</option>
                         <option value="one_hour">1-hour NAAQS statistic</option>
                         <option value="max_1h">highest 1-hour value</option>
-                        <option value="annual">annual mean</option>
                     </select></label>
                     <div class="maps" id="wi-maps" style="margin-top:10px"></div>
                     <p class="muted" id="wi-map-note"></p>
@@ -529,7 +529,7 @@ function polarMap(title, r, metric, vmax) {
             <title>${Math.round(d)} m ${compass((Math.atan2(x, y) * 180 / Math.PI + 360) % 360)}: ${ug(vals[i])}</title></path>`;
     });
     dists.forEach((d, k) => {
-        s += `<text x="${cx + 3}" y="${cy - (r0 + (k + 1) * w) + 10}" font-size="8" fill="#333">${d >= 1000 ? d / 1000 + ' km' : d + ' m'}</text>`;
+        s += `<text x="${cx + 3}" y="${cy - (r0 + (k + 1) * w) + 10}" font-size="8" fill="#333" paint-order="stroke" stroke="#fff" stroke-width="3">${d >= 1000 ? d / 1000 + ' km' : d + ' m'}</text>`;
     });
     const best = vals.indexOf(Math.max(...vals));
     const bx = r.field.x[best], by = r.field.y[best], bd = Math.hypot(bx, by);
@@ -600,8 +600,8 @@ function show(screen) {
             `<div class="panel fail"><b>Could not load:</b> ${esc(err.message)}</div>`);
     });
 }
-document.querySelectorAll('nav button').forEach(b => b.onclick = () => show(b.dataset.screen));
-show('port');
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => { history.replaceState(null, '', `#${b.dataset.screen}`); show(b.dataset.screen); });
+show(loaders[location.hash.slice(1)] ? location.hash.slice(1) : 'port');
 </script>
 </body>
 </html>
