@@ -71,9 +71,8 @@ Thumbs.db
 # Generated context
 context/*.txt
 
-# Agent run outputs (large)
-agent/runs/*/raw_output.txt
-agent/runs/*/prompt.txt
+# Agent prompts embed EPA source; replies and files.json stay committed (provenance)
+agent/runs/**/prompt.txt
 
 # Baseline outputs
 agent/baselines/chunked_tier_*/

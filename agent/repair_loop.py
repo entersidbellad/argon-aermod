@@ -1,516 +1,413 @@
 #!/usr/bin/env python3
-"""
-Automated repair loop for AERMOD port.
+"""Repair loop: find the port's first divergence from AERMOD and ask Argon to fix it.
 
-Strategy:
-1. Run all tier A/B test cases
-2. For first failure, generate failure packet (<= 30K tokens)
-3. Call Gemini 4 Argon with targeted repair prompt
-4. Apply patch and re-test all cases
-5. Keep patch only if no regressions
-6. Escalate to full-context consult after 3 failures on same variable
-7. Budget: 10 iterations or 60 minutes per tier
+    python agent/repair_loop.py --tier B --iterations 50     # needs GEMINI_API_KEY
+
+Each iteration:
+
+1. Run the port on every training case of the tier (harness/run_port.py) and
+   judge each with harness/compare.py. Stop when all pass.
+2. Take the first failing case. If the port crashed, the problem is the
+   traceback. Otherwise rerun it with debug rows and diff them against
+   out/ref_debug/<case> (harness/debugdiff.py); the problem is the first
+   divergent or missing record in AERMOD's order.
+3. Send prompts/repair.md with the problem, that hour's met, the Fortran unit
+   that printed the value (pack.fortran_unit) and the Python files that
+   translate it. After three rejected attempts on the same variable, send
+   prompts/consult.md with the full packed Fortran and the whole port instead.
+4. Apply the reply's files (at most two for a repair). Keep the patch only if no
+   training case that passed now fails and the target case improved: it
+   passes, it no longer crashes, or its first problem moved later in AERMOD's
+   order. Otherwise restore the previous files.
+
+The holdout case is never used for repair; it is scored once at the end.
+Accepted patches are recorded in files.json beside their reply, so
+``split.py --verify`` can trace every port file to model output.
 """
+
+from __future__ import annotations
 
 import argparse
+import ast
 import json
-import subprocess
+import pickle
+import re
 import sys
-import time
+import warnings
 from collections import Counter
-from datetime import datetime, timedelta
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+
+import numpy as np
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "harness"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import argon  # noqa: E402
+import cases as catalog  # noqa: E402
+import compare  # noqa: E402
+import dbgparse  # noqa: E402
+import debugdiff  # noqa: E402
+import glue  # noqa: E402
+import pack  # noqa: E402
+import run_port  # noqa: E402
+import run_ref  # noqa: E402
+import split  # noqa: E402
+
+PROMPTS = ROOT / "prompts"
+RUNS = ROOT / "agent" / "runs"
+MAX_REPAIR_FILES = 2
+CONSULT_AFTER = 3
+MET_SHOWN = ["OBULEN", "USTAR", "WSTAR", "ZICONV", "ZIMECH", "VPTGZI", "SFCHF", "UREF",
+             "UREFHT", "WDREF", "TA", "SFCZ0", "BOWEN", "ALBEDO"]
+UNIT_IN_DOC = re.compile(r"\b(?:SUBROUTINE|FUNCTION|MODULE)\s+([A-Z][A-Z0-9_]*)")
 
 
-# Test cases by tier
-TIER_A_CASES = [
-    'aertest_nobldg',
-    'CAPPED_STACK2',
-    'CAPPED_STACK2C0',
-    'CAPPED_STACK2CE',
-    'HRDOW_STACK1',
-    'FLATELEV_FLAT_STK',
-]
-
-TIER_B_CASES = TIER_A_CASES + [
-    'AERTEST',
-    'CAPPED_STACK1C0',
-    'ALLSRCS_STACKDW',
-]
+@dataclass
+class CaseScore:
+    case: str
+    ran: bool
+    passes: bool
+    error: str = ""
+    summary: str = ""
 
 
-class RepairLoop:
-    """Automated repair loop for port divergences."""
-    
-    def __init__(
-        self,
-        tier: str,
-        max_iterations: int = 10,
-        max_duration_minutes: int = 60
-    ):
-        self.tier = tier
-        self.max_iterations = max_iterations
-        self.max_duration = timedelta(minutes=max_duration_minutes)
-        self.start_time = datetime.now()
-        
-        self.cases = TIER_B_CASES if tier == 'B' else TIER_A_CASES
-        self.divergence_counter = Counter()  # Track variable divergence counts
-        
-        self.script_dir = Path(__file__).parent
-        self.root_dir = self.script_dir.parent
-        self.harness_dir = self.root_dir / 'harness'
-        self.port_dir = self.root_dir / 'port' / 'aermod_py'
-    
-    def run_all_tests(self) -> Dict[str, bool]:
-        """
-        Run all tier test cases.
-        
-        Returns:
-            Dict mapping case name to pass/fail
-        """
-        results = {}
-        
-        print(f"\nRunning {len(self.cases)} test cases...")
-        
-        for case in self.cases:
-            print(f"  Testing {case}...", end=' ', flush=True)
-            
-            # Run port
-            try:
-                subprocess.run(
-                    [
-                        sys.executable,
-                        str(self.harness_dir / 'run_port.py'),
-                        case,
-                        '--output', f'/tmp/aermod_port_{case}'
-                    ],
-                    check=True,
-                    capture_output=True
-                )
-                
-                # Compare with reference
-                result = subprocess.run(
-                    [
-                        sys.executable,
-                        str(self.harness_dir / 'compare.py'),
-                        f'/tmp/aermod_ref_{case}/POSTFILE.OUT',
-                        f'/tmp/aermod_port_{case}/POSTFILE.OUT',
-                        '--case-name', case
-                    ],
-                    capture_output=True
-                )
-                
-                passed = result.returncode == 0
-                results[case] = passed
-                print("✓" if passed else "✗")
-                
-            except Exception as e:
-                print(f"✗ (error: {e})")
-                results[case] = False
-        
-        n_passed = sum(results.values())
-        print(f"\nResults: {n_passed}/{len(results)} passed")
-        
-        return results
-    
-    def find_first_failure(
-        self,
-        results: Dict[str, bool]
-    ) -> Optional[Tuple[str, str, int, float, float]]:
-        """
-        Find first failing case and divergent variable.
-        
-        Returns:
-            (case_name, variable_name, hour, ref_value, port_value) or None
-        """
-        for case, passed in results.items():
-            if not passed:
-                # Run with debug to find divergence
-                try:
-                    # Run ref with debug
-                    subprocess.run(
-                        [
-                            sys.executable,
-                            str(self.harness_dir / 'run_ref.py'),
-                            case,
-                            '--debug',
-                            '--output', f'/tmp/aermod_ref_debug_{case}'
-                        ],
-                        check=True,
-                        capture_output=True
-                    )
-                    
-                    # Run port with debug
-                    subprocess.run(
-                        [
-                            sys.executable,
-                            str(self.harness_dir / 'run_port.py'),
-                            case,
-                            '--debug',
-                            '--output', f'/tmp/aermod_port_debug_{case}'
-                        ],
-                        check=True,
-                        capture_output=True
-                    )
-                    
-                    # Find divergence
-                    result = subprocess.run(
-                        [
-                            sys.executable,
-                            str(self.harness_dir / 'debugdiff.py'),
-                            f'/tmp/aermod_ref_debug_{case}/debug.out',
-                            f'/tmp/aermod_port_debug_{case}/debug.out'
-                        ],
-                        capture_output=True,
-                        text=True
-                    )
-                    
-                    if result.returncode == 1:  # Divergence found
-                        # Parse output to extract variable info
-                        # This is a simplified version - real implementation
-                        # would parse debugdiff output properly
-                        lines = result.stdout.split('\n')
-                        var_name = None
-                        for line in lines:
-                            if line.startswith('Variable:'):
-                                var_name = line.split(':')[1].strip()
-                                break
-                        
-                        if var_name:
-                            return (case, var_name, 0, 0.0, 0.0)
-                    
-                except Exception as e:
-                    print(f"Warning: Could not debug {case}: {e}")
-                    continue
-        
-        return None
-    
-    def generate_failure_packet(
-        self,
-        case: str,
-        variable: str,
-        hour: int,
-        ref_value: float,
-        port_value: float
-    ) -> str:
-        """
-        Generate repair prompt with failure context.
-        
-        Returns:
-            Repair prompt string (<= 30K tokens target)
-        """
-        # Load repair template
-        template_path = self.root_dir / 'prompts' / 'repair.md'
-        with open(template_path, 'r') as f:
-            template = f.read()
-        
-        # Get Fortran source for divergent subroutine
-        # This requires the subroutine index from packing
-        fortran_source = self._get_subroutine_source(variable)
-        
-        # Get Python source for the function
-        python_source = self._get_python_function(variable)
-        
-        # Get met data for the hour
-        met_summary = self._get_met_summary(case, hour)
-        
-        # Fill template
-        rel_diff = abs((port_value - ref_value) / ref_value) if ref_value != 0 else float('inf')
-        
-        prompt = template.format(
-            case_name=case,
-            hour=hour,
-            variable_name=variable,
-            L=met_summary.get('L', 0),
-            ustar=met_summary.get('ustar', 0),
-            wstar=met_summary.get('wstar', 0),
-            zi=met_summary.get('zi', 0),
-            stability='stable' if met_summary.get('L', 0) > 0 else 'convective',
-            ref_value=ref_value,
-            port_value=port_value,
-            rel_diff=rel_diff,
-            fortran_source=fortran_source,
-            python_source=python_source
-        )
-        
-        return prompt
-    
-    def _get_subroutine_source(self, variable: str) -> str:
-        """Extract Fortran source for subroutine computing this variable."""
-        # Simplified - real implementation would use the subroutine index
-        # from pack.py to find the right file and line numbers
-        return "! Fortran source would be extracted here\n"
-    
-    def _get_python_function(self, variable: str) -> str:
-        """Extract Python function that should compute this variable."""
-        return "# Python source would be extracted here\n"
-    
-    def _get_met_summary(self, case: str, hour: int) -> Dict:
-        """Get meteorology summary for a specific hour."""
-        # Simplified - real implementation would parse met files
-        return {
-            'L': 100.0,
-            'ustar': 0.3,
-            'wstar': 0.0,
-            'zi': 1000.0
-        }
-    
-    def apply_patch(self, patch_content: str, iteration: int) -> bool:
-        """
-        Apply a repair patch to the port.
-        
-        Returns:
-            True if applied successfully
-        """
-        # Parse patch output (FILE markers)
-        # This uses the same splitter as split.py
-        from split import OutputSplitter
-        
-        splitter = OutputSplitter()
-        
-        try:
-            files = splitter.parse_output(patch_content)
-            
-            # Write files
-            for filepath, content in files:
-                full_path = self.port_dir / filepath
-                with open(full_path, 'w') as f:
-                    f.write(content)
-            
-            print(f"  Applied patch to {len(files)} file(s)")
-            return True
-            
-        except Exception as e:
-            print(f"  Failed to apply patch: {e}")
-            return False
-    
-    def commit_repair(self, iteration: int, variable: str, hypothesis: str):
-        """Commit the repair with descriptive message."""
-        message = f"repair {iteration}: {variable}: {hypothesis}"
-        
-        subprocess.run(
-            ['git', 'add', 'port/aermod_py/'],
-            cwd=self.root_dir,
-            check=True
-        )
-        
-        subprocess.run(
-            ['git', 'commit', '-m', message, '--author', 'Argon Repair <agent@argon>'],
-            cwd=self.root_dir,
-            check=True
-        )
-        
-        print(f"  ✓ Committed: {message}")
-    
-    def run_iteration(self, iteration: int) -> bool:
-        """
-        Run one repair iteration.
-        
-        Returns:
-            True if repair was successful, False if should continue
-        """
-        print(f"\n{'='*70}")
-        print(f"Repair Iteration {iteration + 1}/{self.max_iterations}")
-        print(f"{'='*70}")
-        
-        # Run all tests
-        results = self.run_all_tests()
-        
-        if all(results.values()):
-            print("\n✓ All tests passing! Repair complete.")
-            return True
-        
-        # Find first failure
-        failure = self.find_first_failure(results)
-        if failure is None:
-            print("\n✗ Tests failing but no divergence found")
-            return False
-        
-        case, variable, hour, ref_val, port_val = failure
-        print(f"\nDivergence: {variable} in {case} (hour {hour})")
-        
-        # Track divergence count
-        self.divergence_counter[variable] += 1
-        
-        # Check if we should escalate
-        if self.divergence_counter[variable] >= 3:
-            print(f"⚠ Variable {variable} diverged 3 times, escalating to consult")
-            return self._escalate_to_consult(variable)
-        
-        # Generate failure packet
-        print("Generating repair prompt...")
-        prompt = self.generate_failure_packet(case, variable, hour, ref_val, port_val)
-        
-        # Call Argon for repair
-        print("Requesting repair from Gemini 4 Argon...")
-        patch = self._call_argon_repair(prompt)
-        
-        if patch is None:
-            print("✗ Repair generation failed")
-            return False
-        
-        # Extract hypothesis from patch
-        hypothesis = self._extract_hypothesis(patch)
-        
-        # Apply patch
-        if not self.apply_patch(patch, iteration):
-            return False
-        
-        # Test for regressions
-        print("Testing for regressions...")
-        new_results = self.run_all_tests()
-        
-        # Count changes
-        improvements = sum(
-            1 for case in results
-            if not results[case] and new_results[case]
-        )
-        regressions = sum(
-            1 for case in results
-            if results[case] and not new_results[case]
-        )
-        
-        if regressions > 0:
-            print(f"✗ Patch caused {regressions} regression(s), reverting")
-            subprocess.run(
-                ['git', 'reset', '--hard', 'HEAD'],
-                cwd=self.root_dir,
-                check=True
-            )
-            return False
-        
-        if improvements > 0:
-            print(f"✓ Patch fixed {improvements} case(s), no regressions")
-            self.commit_repair(iteration, variable, hypothesis)
-        else:
-            print("⚠ Patch had no effect")
-        
-        return False  # Continue to next iteration
-    
-    def _call_argon_repair(self, prompt: str) -> Optional[str]:
-        """Call Gemini 4 Argon for repair."""
-        # Similar to port.py but with repair prompt
-        import google.generativeai as genai
-        
-        api_key = os.environ.get('GEMINI_API_KEY')
-        if not api_key:
-            print("Error: GEMINI_API_KEY not set", file=sys.stderr)
-            return None
-        
-        genai.configure(api_key=api_key)
-        
-        try:
-            model = genai.GenerativeModel('gemini-4-argon-high')
-            response = model.generate_content(
-                prompt,
-                generation_config={'temperature': 0.0}
-            )
-            
-            return response.text
-            
-        except Exception as e:
-            print(f"Error calling Argon: {e}", file=sys.stderr)
-            return None
-    
-    def _extract_hypothesis(self, patch: str) -> str:
-        """Extract hypothesis from patch output."""
-        # Look for === HYPOTHESIS === section
-        lines = patch.split('\n')
-        in_hypothesis = False
-        hypothesis_lines = []
-        
-        for line in lines:
-            if '=== HYPOTHESIS ===' in line:
-                in_hypothesis = True
-                continue
-            if in_hypothesis:
-                if line.startswith('==='):
-                    break
-                hypothesis_lines.append(line)
-        
-        return ' '.join(hypothesis_lines).strip()[:100]
-    
-    def _escalate_to_consult(self, variable: str) -> bool:
-        """Escalate to full-context consult for persistent divergence."""
-        print("\nEscalating to full-context consult...")
-        # Load consult template and packed context
-        # Call Argon with full context
-        # This is a more expensive operation
-        return False  # Simplified for now
-    
-    def run(self) -> int:
-        """
-        Run the complete repair loop.
-        
-        Returns:
-            Exit code (0 = success, 1 = failure)
-        """
-        print("="*70)
-        print(f"AERMOD Repair Loop - Tier {self.tier}")
-        print("="*70)
-        print(f"Max iterations: {self.max_iterations}")
-        print(f"Max duration: {self.max_duration.total_seconds() / 60:.0f} minutes")
-        print(f"Test cases: {len(self.cases)}")
-        
-        for iteration in range(self.max_iterations):
-            # Check time budget
-            elapsed = datetime.now() - self.start_time
-            if elapsed > self.max_duration:
-                print(f"\n⚠ Time budget exceeded ({elapsed.total_seconds() / 60:.1f} min)")
-                break
-            
-            # Run iteration
-            if self.run_iteration(iteration):
-                return 0  # Success
-        
-        print("\n✗ Repair loop exhausted without complete fix")
-        return 1
+@dataclass
+class Problem:
+    case: str
+    kind: str                         # "crash", "divergence", "missing", "postfile"
+    text: str                         # what the model is told
+    sub: str = ""                     # Fortran unit to show
+    var: str = ""
+    date: int = 0
+    rank: tuple = ()                  # larger is later in AERMOD's order (progress)
+
+    @property
+    def target(self) -> str:
+        return f"{self.sub}.{self.var}" if self.var else f"{self.kind}:{self.sub}"
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description='Automated repair loop for AERMOD port'
-    )
-    parser.add_argument(
-        '--tier',
-        choices=['A', 'B'],
-        default='A',
-        help='Port tier'
-    )
-    parser.add_argument(
-        '--max-iterations',
-        type=int,
-        default=10,
-        help='Max repair iterations (default: 10)'
-    )
-    parser.add_argument(
-        '--max-minutes',
-        type=int,
-        default=60,
-        help='Max duration in minutes (default: 60)'
-    )
-    
-    args = parser.parse_args()
-    
+@dataclass
+class Attempt:
+    iteration: int
+    mode: str
+    problem: str
+    hypothesis: str
+    accepted: bool
+    reason: str
+    interaction_id: str = ""
+    usage: dict = field(default_factory=dict)
+
+
+# --- scoring -----------------------------------------------------------------
+
+def score(cases: list[catalog.Case], port_dir: Path, who: str) -> dict[str, CaseScore]:
+    out = {}
+    for case in cases:
+        run = run_port.run_case(case, who=who, package_dir=port_dir)
+        if not run.ok:
+            out[case.name] = CaseScore(case.name, False, False, run.error)
+            continue
+        paths = compare._case_paths(case.name, who)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            res = compare.compare_case(**paths)
+        out[case.name] = CaseScore(case.name, True, res.passes, summary=compare.format_row(res))
+    return out
+
+
+def regressions(before: dict[str, CaseScore], after: dict[str, CaseScore]) -> list[str]:
+    return [n for n, s in before.items() if s.passes and not after[n].passes]
+
+
+# --- diagnosis ---------------------------------------------------------------
+
+def python_files(port_dir: Path) -> dict[str, str]:
+    return {str(p.relative_to(port_dir)): p.read_text()
+            for p in sorted(port_dir.rglob("*.py")) if "__pycache__" not in p.parts}
+
+
+def units_in(source: str, function: str) -> list[str]:
+    """Fortran units named in the docstring of ``function`` in a Python source file."""
     try:
-        loop = RepairLoop(
-            args.tier,
-            max_iterations=args.max_iterations,
-            max_duration_minutes=args.max_minutes
-        )
-        return loop.run()
-        
-    except KeyboardInterrupt:
-        print("\n\nInterrupted by user")
-        return 130
-    except Exception as e:
-        print(f"\nError: {e}", file=sys.stderr)
-        import traceback
-        traceback.print_exc()
-        return 1
+        tree = ast.parse(source)
+    except SyntaxError:
+        return []
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == function:
+            return UNIT_IN_DOC.findall(ast.get_docstring(node) or "")
+    return []
 
 
-if __name__ == '__main__':
-    import os
+def files_translating(port_dir: Path, sub: str) -> list[str]:
+    pattern = re.compile(rf"\b(?:SUBROUTINE|FUNCTION)\s+{re.escape(sub)}\b")
+    return [rel for rel, text in python_files(port_dir).items() if pattern.search(text)]
+
+
+def crash_problem(case: catalog.Case, error: str, port_dir: Path) -> Problem:
+    sub = ""
+    port_frames = re.findall(r'File "([^"]+)", line (\d+), in (\w+)', error)
+    for path, _, func in reversed(port_frames):
+        p = Path(path)
+        if p.is_relative_to(port_dir.resolve()):
+            names = units_in(p.read_text(), func)
+            if names:
+                sub = names[0]
+                break
+    tail = "\n".join(error.strip().splitlines()[-40:])
+    return Problem(case.name, "crash", f"The port raised an exception on {case.name}:\n\n{tail}",
+                   sub=sub, rank=(-1,))
+
+
+def met_for(case: catalog.Case, who: str, date: int) -> str:
+    workdir = case.out_dir(who)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        project = glue.load_project(workdir / "case.inp")
+        met = glue.load_met(project, workdir)
+    s = met.surface
+    yy = s["IYEAR"] % 100
+    kur = yy * 1000000 + s["IMONTH"] * 10000 + s["IDAY"] * 100 + s["IHOUR"]
+    hits = np.flatnonzero(kur == date)
+    if not len(hits):
+        return ""
+    h = int(hits[0])
+    vals = ", ".join(f"{n}={s[n][h]:g}" for n in MET_SHOWN)
+    lo, hi = met.profile_start[h], met.profile_start[h + 1]
+    levels = "; ".join(
+        f"PFLHT={met.profile['PFLHT'][j]:g} PFLWD={met.profile['PFLWD'][j]:g} "
+        f"PFLWS={met.profile['PFLWS'][j]:g} PFLTA={met.profile['PFLTA'][j]:g}"
+        for j in range(lo, hi))
+    return f"surface record {h} (KURDAT {date}): {vals}\nprofile levels: {levels}"
+
+
+class Diagnoser:
+    """Debug-diffs the port on a case; reference records are parsed once per case."""
+
+    def __init__(self, port_dir: Path, who: str) -> None:
+        self.port_dir = port_dir
+        self.who = who
+        self._ref: dict[str, list[dbgparse.Record]] = {}
+
+    def reference(self, case: catalog.Case) -> list[dbgparse.Record]:
+        if case.name not in self._ref:
+            workdir = case.out_dir("ref_debug")
+            if not any(workdir.glob("*.DBG")):
+                run = run_ref.run_case(case, debug=True)
+                if not run.ok:
+                    raise RuntimeError(f"reference debug run failed for {case.name}")
+            self._ref[case.name] = dbgparse.parse_dir(workdir)
+        return self._ref[case.name]
+
+    def diagnose(self, case: catalog.Case, current: CaseScore) -> tuple[Problem, debugdiff.Report | None]:
+        if not current.ran:
+            return crash_problem(case, current.error, self.port_dir), None
+        debug_who = self.who + "_debug"
+        run = run_port.run_case(case, debug=True, who=debug_who, package_dir=self.port_dir)
+        if not run.ok:
+            return crash_problem(case, run.error, self.port_dir), None
+        with open(case.out_dir(debug_who) / run_port.DEBUG_FILE, "rb") as f:
+            rows = pickle.load(f)
+        report = debugdiff.diff(self.reference(case), debugdiff.port_records(rows), case.name)
+        point = report.first_problem
+        if point is None:
+            return Problem(case.name, "postfile",
+                           "Every debug value matches AERMOD, but the POSTFILE does not:\n"
+                           + current.summary + "\n" + report.text(), sub="HRLOOP",
+                           rank=(len(self.reference(case)), report.n_matched)), report
+        date, isrc, irec, comp, sub, var, k = point.key
+        kind = "missing" if point.port is None else "divergence"
+        text = report.text()
+        met = met_for(case, debug_who, date)
+        if met:
+            text += "\n\nMet for this hour:\n" + met
+        return Problem(case.name, kind, text, sub=sub, var=var, date=date,
+                       rank=(point.seq, report.n_matched)), report
+
+
+# --- prompts -----------------------------------------------------------------
+
+def fortran_source(sub: str, tier: str) -> str:
+    try:
+        rec = pack.load_index(tier)[sub.upper()]
+    except KeyError:
+        return ""
+    return (f"##### UNIT {sub} {rec['file']}:{rec['start']}-{rec['end']}\n"
+            f"```fortran\n{pack.fortran_unit(sub, tier)}\n```")
+
+
+def repair_input(problem: Problem, port_dir: Path, tier: str) -> str:
+    parts = [f"# Case {problem.case}: {problem.kind}\n\n{problem.text}"]
+    if problem.sub:
+        src = fortran_source(problem.sub, tier)
+        if src:
+            parts.append(f"# Fortran\n\n{src}")
+    files = python_files(port_dir)
+    shown = files_translating(port_dir, problem.sub) if problem.sub else []
+    if not shown:
+        shown = ["__init__.py"] if "__init__.py" in files else list(files)[:1]
+    for rel in shown:
+        parts.append(f"# Current Python: aermod_py/{rel}\n\n```python\n{files[rel]}```")
+    return "\n\n".join(parts) + "\n"
+
+
+def consult_input(problem: Problem, history: list[Attempt], port_dir: Path, tier: str) -> str:
+    hist = "\n".join(f"- iteration {a.iteration}: {a.hypothesis or '(no hypothesis)'} "
+                     f"-> rejected: {a.reason}" for a in history)
+    parts = [f"# Attempt history for {problem.target}\n\n{hist}",
+             f"# Current problem on {problem.case}\n\n{problem.text}"]
+    for rel, text in python_files(port_dir).items():
+        parts.append(f"# Current Python: aermod_py/{rel}\n\n```python\n{text}```")
+    parts.append(f"# Fortran, tier {tier}\n\n" + (pack.CONTEXT / f"tier_{tier}.txt").read_text())
+    return "\n\n".join(parts) + "\n"
+
+
+def hypothesis(text: str) -> str:
+    m = re.search(r"===\s*(?:HYPOTHESIS|ANALYSIS)\s*===\s*\n(.*?)(?=^===\s*FILE:|\Z)",
+                  text, re.S | re.M)
+    return m.group(1).strip() if m else ""
+
+
+# --- the loop ----------------------------------------------------------------
+
+def snapshot(port_dir: Path) -> dict[str, bytes]:
+    return {str(p.relative_to(port_dir)): p.read_bytes()
+            for p in port_dir.rglob("*") if p.is_file() and "__pycache__" not in p.parts}
+
+
+def restore(port_dir: Path, snap: dict[str, bytes]) -> None:
+    for p in list(port_dir.rglob("*")):
+        if p.is_file() and "__pycache__" not in p.parts and str(p.relative_to(port_dir)) not in snap:
+            p.unlink()
+    for rel, data in snap.items():
+        (port_dir / rel).write_bytes(data)
+
+
+@dataclass
+class LoopResult:
+    iterations: int
+    all_pass: bool
+    attempts: list[Attempt]
+    final: dict[str, CaseScore]
+    holdout: dict[str, CaseScore] = field(default_factory=dict)
+
+
+def repair(cases: list[catalog.Case], *, client, run_dir: Path, port_dir: Path = split.PORT_DIR,
+           tier: str = "B", iterations: int = 50, thinking: str = "high", who: str = "port_repair",
+           holdout: list[catalog.Case] | None = None, log=print) -> LoopResult:
+    run_dir.mkdir(parents=True, exist_ok=True)
+    diag = Diagnoser(port_dir, who)
+    attempts: list[Attempt] = []
+    failures: Counter[str] = Counter()
+    scores = score(cases, port_dir, who)
+    it = 0
+    for it in range(1, iterations + 1):
+        _log_scores(run_dir, it, scores)
+        failing = [c for c in cases if not scores[c.name].passes]
+        if not failing:
+            it -= 1
+            break
+        target = failing[0]
+        problem, _ = diag.diagnose(target, scores[target.name])
+        consult = failures[problem.target] >= CONSULT_AFTER
+        mode = "consult" if consult else "repair"
+        log(f"[{it}] {target.name}: {problem.kind} {problem.target} ({mode})")
+        system = (PROMPTS / f"{mode}.md").read_text()
+        prompt = (consult_input(problem, [a for a in attempts if a.problem == problem.target],
+                                port_dir, tier)
+                  if consult else repair_input(problem, port_dir, tier))
+        it_dir = run_dir / f"iter_{it:03d}"
+        it_dir.mkdir(parents=True, exist_ok=True)
+        (it_dir / "prompt.txt").write_text(system + "\n\n" + prompt)
+        try:
+            reply = argon.ask(client, input=prompt, system_instruction=system,
+                              thinking_level=thinking)
+        except argon.ArgonError as exc:
+            if exc.reply is not None:
+                exc.reply.save(it_dir)
+            attempts.append(Attempt(it, mode, problem.target, "", False, f"model error: {exc}"))
+            failures[problem.target] += 1
+            continue
+        reply.save(it_dir)
+        hyp = hypothesis(reply.text)
+        attempt = Attempt(it, mode, problem.target, hyp, False, "", reply.id, reply.usage)
+        try:
+            files = split.parse(reply.text)
+            if not consult and len(files) > MAX_REPAIR_FILES:
+                raise split.SplitError(f"{len(files)} files changed, at most {MAX_REPAIR_FILES} allowed")
+        except split.SplitError as exc:
+            attempt.reason = f"unusable reply: {exc}"
+        else:
+            before = snapshot(port_dir)
+            written = split.write(files, port_dir)
+            new_scores = score(cases, port_dir, who)
+            broke = regressions(scores, new_scores)
+            if broke:
+                attempt.reason = f"broke {', '.join(broke)}"
+            elif new_scores[target.name].passes:
+                attempt.accepted, attempt.reason = True, f"{target.name} passes"
+            else:
+                new_problem, _ = diag.diagnose(target, new_scores[target.name])
+                if new_problem.rank > problem.rank:
+                    attempt.accepted = True
+                    attempt.reason = f"first problem moved to {new_problem.kind} {new_problem.target}"
+                else:
+                    attempt.reason = (f"no progress: first problem now {new_problem.kind} "
+                                      f"{new_problem.target}")
+            if attempt.accepted:
+                split.record(written, it_dir / "reply.txt", port_dir,
+                             interaction_id=reply.id, step=mode, iteration=it)
+                scores = new_scores
+                failures[problem.target] = 0
+            else:
+                restore(port_dir, before)
+        if not attempt.accepted:
+            failures[problem.target] += 1
+        attempts.append(attempt)
+        (it_dir / "decision.json").write_text(json.dumps(asdict(attempt), indent=1) + "\n")
+        log(f"[{it}] {'kept' if attempt.accepted else 'reverted'}: {attempt.reason}")
+
+    result = LoopResult(it, all(s.passes for s in scores.values()), attempts, scores)
+    if holdout:
+        result.holdout = score(holdout, port_dir, who)
+    (run_dir / "result.json").write_text(json.dumps(asdict(result), indent=1, default=str) + "\n")
+    return result
+
+
+def _log_scores(run_dir: Path, it: int, scores: dict[str, CaseScore]) -> None:
+    with open(run_dir / "scoreboard.jsonl", "a") as f:
+        f.write(json.dumps({"iteration": it, "scores": {n: {"ran": s.ran, "passes": s.passes,
+                                                             "summary": s.summary}
+                                                         for n, s in scores.items()}}) + "\n")
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--tier", choices=["A", "B"], default="B")
+    ap.add_argument("--case", action="append", default=[], help="limit to these training cases")
+    ap.add_argument("--iterations", type=int, default=50)
+    ap.add_argument("--thinking", choices=argon.THINKING_LEVELS, default="high")
+    ap.add_argument("--port-dir", type=Path, default=split.PORT_DIR)
+    ap.add_argument("--run-id", help="default: repair_<tier>_<UTC timestamp>")
+    args = ap.parse_args()
+
+    training = [catalog.get(n) for n in args.case] or catalog.tier_cases(args.tier)
+    if any(c.tier == "holdout" for c in training):
+        ap.error("holdout cases are never used for repair")
+    holdout = [c for c in catalog.CASES if c.tier == "holdout"]
+    run_id = args.run_id or f"repair_{args.tier}_{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}"
+    result = repair(training, client=argon.make_client(), run_dir=RUNS / run_id,
+                    port_dir=args.port_dir, tier=args.tier, iterations=args.iterations,
+                    thinking=args.thinking, holdout=holdout)
+    print(f"{run_id}: {result.iterations} iterations, "
+          f"{sum(a.accepted for a in result.attempts)} patches kept, "
+          f"all training cases pass: {result.all_pass}")
+    for s in list(result.final.values()) + list(result.holdout.values()):
+        print(s.summary or f"{s.case:20s} CRASH {s.error.strip().splitlines()[-1] if s.error else ''}")
+    return 0 if result.all_pass else 1
+
+
+if __name__ == "__main__":
     sys.exit(main())

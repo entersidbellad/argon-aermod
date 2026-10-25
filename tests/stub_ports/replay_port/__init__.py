@@ -11,7 +11,7 @@ import numpy as np
 import dbgparse
 import glue
 
-OUT = Path(__file__).resolve().parents[3] / "out"
+OUT = Path(glue.__file__).resolve().parents[1] / "out"
 
 
 def run_case(project: glue.Project, met: glue.Met, setup: dict, *, debug: bool = False) -> glue.Result:
