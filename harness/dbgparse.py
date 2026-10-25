@@ -147,6 +147,23 @@ _FMT_6140 = "19X,F7.1,F7.0,F8.2,2F7.2,F7.2,F8.4"
 _NAMES_6140 = ["HS", "WDIR", "US", "UP", "SVS", "SWS", "TGS"]
 
 
+# Lines with digits that carry no computed value: column headers and printed formulas.
+IGNORED_TEMPLATES = {
+    "# (M) (M) (M) (M) (M) (M) (M) (M) (M) (UG/M#) (UG/M#) (UG/M#)",
+    "TYPE FRAC. (G/S) (M) (M) (M) (M) (M) TERM (M) (M) (M) (M) (M) TERM (UG/M#)",
+    "ITYP = # - CONC:",
+    "AEROUT(ITYP) = ADJ * EMIFAC(ITYP) * (FOPT * CWRAP + (# -FOPT) * CLIFT) * D",
+    "AERVAL(ITYP) = FRAN*AERPAN(ITYP) + (#-FRAN)*AERPLM(ITYP)",
+}
+
+
+def unexplained(skipped: dict[str, Counter[str]]) -> dict[str, Counter[str]]:
+    """Skipped templates that are neither a file banner nor in IGNORED_TEMPLATES."""
+    return {f: Counter({t: n for t, n in c.items()
+                        if not t.startswith("***") and t not in IGNORED_TEMPLATES})
+            for f, c in skipped.items()}
+
+
 def template(line: str) -> str:
     """A line with every number replaced by '#', for grouping lines the parser skipped."""
     return re.sub(r"\s+", " ", re.sub(NUM, "#", line)).strip()
@@ -273,7 +290,14 @@ class _ModelParser:
             for name, tok in zip(["DHFAER", "UP", "TGS"], m.groups()):
                 self.emit("PCALC", name, *_val(tok))
             return True
-        m = re.match(r"OPTH2 ITER\. #\d+: OLD DELH =\s*(\S+) M; NEW DELH =\s*(\S+) M; MET LEVEL ="
+        m = re.match(r"(PLUME RISE|OPTH2) ITERATION FAILED TO CONVERGE;\s+PLUME RISE SET AT\s+(\S+)"
+                     r" METERS\.", s)
+        if m:
+            sub, var = ("PCALC", "DHFAER") if m.group(1) == "PLUME RISE" else ("DELTAH", "DHP")
+            self.emit(sub, var, *_val(m.group(2)))
+            return True
+        # KITER is printed with I1, so iterations >= 10 show as '*'.
+        m = re.match(r"OPTH2 ITER\. #[\d*]+: OLD DELH =\s*(\S+) M; NEW DELH =\s*(\S+) M; MET LEVEL ="
                      r"\s*(\S+) M; NEW Upl =\s*(\S+) M/S; NEW DTHDZ =\s*(\S+)", s)
         if m:
             if self.block is not None:

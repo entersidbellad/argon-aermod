@@ -1,0 +1,6082 @@
+[
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "GRIDHT",
+  "level": "grid level",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "GRIDPT",
+  "level": "grid level",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "GRIDSV",
+  "level": "grid level",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "GRIDSW",
+  "level": "grid level",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "GRIDTG",
+  "level": "grid level",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "GRIDWD",
+  "level": "grid level",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "GRIDWS",
+  "level": "grid level",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "NDIST",
+  "level": "receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "OBULEN",
+  "level": "hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "SFCZ0",
+  "level": "hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "SVATZI",
+  "level": "hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "SVAVG",
+  "level": "hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "SVEFF",
+  "level": "receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "SVEFF3",
+  "level": "receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "SVEFFD",
+  "level": "receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "SVEFFN",
+  "level": "receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "SWATZI",
+  "level": "hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "SWAVG",
+  "level": "hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "SWEFF",
+  "level": "receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "SWEFF3",
+  "level": "receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "SWEFFD",
+  "level": "receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "SWEFFN",
+  "level": "receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "TA",
+  "level": "hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "THSTAR",
+  "level": "hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "UATZI",
+  "level": "hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "UAVG",
+  "level": "hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "UEFF",
+  "level": "receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "UEFF3",
+  "level": "receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "UEFFD",
+  "level": "receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "UEFFN",
+  "level": "receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "USTAR",
+  "level": "hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "VPTGZI",
+  "level": "hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "WSTAR",
+  "level": "hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "METEOR.DBG",
+  "sub": "METDEB",
+  "comp": "",
+  "var": "ZI",
+  "level": "hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "AER_PCHI",
+  "comp": "PAN",
+  "var": "ADJ",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "AER_PCHI",
+  "comp": "PAN",
+  "var": "AEROUT",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "AER_PCHI",
+  "comp": "PAN",
+  "var": "CLIFT",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "AER_PCHI",
+  "comp": "PAN",
+  "var": "CWRAP",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "AER_PCHI",
+  "comp": "PAN",
+  "var": "D",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "AER_PCHI",
+  "comp": "PAN",
+  "var": "FOPT",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "AER_PCHI",
+  "comp": "PLM",
+  "var": "ADJ",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "AER_PCHI",
+  "comp": "PLM",
+  "var": "AEROUT",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "AER_PCHI",
+  "comp": "PLM",
+  "var": "CLIFT",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "AER_PCHI",
+  "comp": "PLM",
+  "var": "CWRAP",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "AER_PCHI",
+  "comp": "PLM",
+  "var": "D",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "AER_PCHI",
+  "comp": "PLM",
+  "var": "FOPT",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "AERVAL",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "CLIFT*EMIFAC",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "CWRAP*EMIFAC",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "D",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT1.HED1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT1.PPF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT1.QTK*(1-PPF)",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT1.SY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT1.SYAMB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT1.SYB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT1.SZAD1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT1.SZBD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT1.SZD1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT1.SZSURF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT1.VSIGY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT1.VSZD1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT2.CHID",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT2.FSUBYD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT2.FSUBZD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT2.HED2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT2.QTK*(1-PPF)",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT2.SY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT2.SYAMB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT2.SYB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT2.SZAD2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT2.SZBD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT2.SZD2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT2.SZSURF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT2.VSIGY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "DIRECT2.VSZD2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "FOPT",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "GAUSSIAN.CHID",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "GAUSSIAN.FSUBY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "GAUSSIAN.FSUBZ",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "GAUSSIAN.HE",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "GAUSSIAN.PPF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "GAUSSIAN.QTK",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "GAUSSIAN.SY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "GAUSSIAN.SYAMB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "GAUSSIAN.SYB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "GAUSSIAN.SZ",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "GAUSSIAN.SZAMB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "GAUSSIAN.SZB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "GAUSSIAN.SZSURF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "GAUSSIAN.VSIGY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "GAUSSIAN.VSIGZ",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "HCRIT",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT1.HEN1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT1.PPF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT1.QTK*(1-PPF)",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT1.SY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT1.SYAMB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT1.SYB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT1.SZAN1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT1.SZBN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT1.SZN1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT1.SZSURF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT1.VSIGY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT1.VSZN1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT2.CHIN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT2.FSUBYN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT2.FSUBZN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT2.HEN2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT2.QTK*(1-PPF)",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT2.SY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT2.SYAMB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT2.SYB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT2.SZAN2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT2.SZBN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT2.SZN2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT2.SZSURF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT2.VSIGY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "INDIRECT2.VSZN2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PENETRATE.CHI3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PENETRATE.FSUBY3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PENETRATE.FSUBZ3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PENETRATE.HE3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PENETRATE.PPF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PENETRATE.PPF*QTK",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PENETRATE.SY3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PENETRATE.SYA3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PENETRATE.SYB3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PENETRATE.SZ3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PENETRATE.SZA3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PENETRATE.SZB3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PENETRATE.VSY3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PENETRATE.VSZ3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PHEE",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "PRMVAL",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "X",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "XR",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "Y",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "YR",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "ZELEV",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "ZELEV-ZS",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "ZFLAG",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PAN",
+  "var": "ZHILL",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "AERVAL",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "CLIFT*EMIFAC",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "CWRAP*EMIFAC",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "D",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT1.HED1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT1.PPF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT1.QTK*(1-PPF)",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT1.SY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT1.SYAMB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT1.SYB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT1.SZAD1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT1.SZBD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT1.SZD1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT1.SZSURF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT1.VSIGY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT1.VSZD1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT2.CHID",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT2.FSUBYD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT2.FSUBZD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT2.HED2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT2.QTK*(1-PPF)",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT2.SY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT2.SYAMB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT2.SYB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT2.SZAD2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT2.SZBD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT2.SZD2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT2.SZSURF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT2.VSIGY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "DIRECT2.VSZD2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "FOPT",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "GAUSSIAN.CHID",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "GAUSSIAN.FSUBY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "GAUSSIAN.FSUBZ",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "GAUSSIAN.HE",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "GAUSSIAN.PPF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "GAUSSIAN.QTK",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "GAUSSIAN.SY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "GAUSSIAN.SYAMB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "GAUSSIAN.SYB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "GAUSSIAN.SZ",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "GAUSSIAN.SZAMB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "GAUSSIAN.SZB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "GAUSSIAN.SZSURF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "GAUSSIAN.VSIGY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "GAUSSIAN.VSIGZ",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "HCRIT",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT1.HEN1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT1.PPF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT1.QTK*(1-PPF)",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT1.SY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT1.SYAMB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT1.SYB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT1.SZAN1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT1.SZBN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT1.SZN1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT1.SZSURF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT1.VSIGY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT1.VSZN1",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT2.CHIN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT2.FSUBYN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT2.FSUBZN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT2.HEN2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT2.QTK*(1-PPF)",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT2.SY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT2.SYAMB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT2.SYB",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT2.SZAN2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT2.SZBN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT2.SZN2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT2.SZSURF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT2.VSIGY",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "INDIRECT2.VSZN2",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PENETRATE.CHI3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PENETRATE.FSUBY3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PENETRATE.FSUBZ3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PENETRATE.HE3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PENETRATE.PPF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PENETRATE.PPF*QTK",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PENETRATE.SY3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PENETRATE.SYA3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PENETRATE.SYB3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PENETRATE.SZ3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PENETRATE.SZA3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PENETRATE.SZB3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PENETRATE.VSY3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PENETRATE.VSZ3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PHEE",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "PRMVAL",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "X",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "XR",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "Y",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "YR",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "ZELEV",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "ZELEV-ZS",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "ZFLAG",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DEBOUT",
+  "comp": "PLM",
+  "var": "ZHILL",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DELTAH",
+  "comp": "PAN",
+  "var": "DHP",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DELTAH",
+  "comp": "PAN",
+  "var": "DHPOLD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DELTAH",
+  "comp": "PAN",
+  "var": "TGP",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DELTAH",
+  "comp": "PAN",
+  "var": "UP",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DELTAH",
+  "comp": "PAN",
+  "var": "ZPLM",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DELTAH",
+  "comp": "PLM",
+  "var": "DHP",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DELTAH",
+  "comp": "PLM",
+  "var": "DHPOLD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DELTAH",
+  "comp": "PLM",
+  "var": "TGP",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DELTAH",
+  "comp": "PLM",
+  "var": "UP",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "DELTAH",
+  "comp": "PLM",
+  "var": "ZPLM",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "CENTER",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "HE3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "PPF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "SVEFF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "SVEFF3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "SVEFFD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "SWEFF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "SWEFF3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "SWEFFD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "SZ3NEW",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "SZDNEW",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "SZNEW",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "UEFF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "UEFF3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "UEFFD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "ZHI",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "ZLO",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PAN",
+  "var": "ZRT",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "CENTER",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "HE3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "PPF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "SVEFF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "SVEFF3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "SVEFFD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "SWEFF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "SWEFF3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "SWEFFD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "SZ3NEW",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "SZDNEW",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "SZNEW",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "UEFF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "UEFF3",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "UEFFD",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "ZHI",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "ZLO",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "IBLVAL",
+  "comp": "PLM",
+  "var": "ZRT",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "MEANDR",
+  "comp": "PAN",
+  "var": "DISTR",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "MEANDR",
+  "comp": "PAN",
+  "var": "FRAN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "MEANDR",
+  "comp": "PAN",
+  "var": "SIGRAN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "MEANDR",
+  "comp": "PAN",
+  "var": "SVEF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "MEANDR",
+  "comp": "PAN",
+  "var": "TOTKIN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "MEANDR",
+  "comp": "PAN",
+  "var": "TRAN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "MEANDR",
+  "comp": "PAN",
+  "var": "TTRAV",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "MEANDR",
+  "comp": "PAN",
+  "var": "UEF",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "MEANDR",
+  "comp": "PAN",
+  "var": "UMEAN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "",
+  "var": "AFV",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "",
+  "var": "DHCRIT",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "",
+  "var": "DHFAER",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "",
+  "var": "DHFOLD",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "",
+  "var": "TGP",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "",
+  "var": "TGS",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "",
+  "var": "UP",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "",
+  "var": "XFINAL",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "",
+  "var": "XMIXED",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "",
+  "var": "ZMIDMX",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "",
+  "var": "ZPLM",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "PAN",
+  "var": "AERPAN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "PAN",
+  "var": "AERPLM",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "PAN",
+  "var": "AERVAL",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "PAN",
+  "var": "DHFAER",
+  "level": "source-receptor",
+  "cases": [
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "PAN",
+  "var": "FRAN",
+  "level": "source-receptor",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "PAN",
+  "var": "TGS",
+  "level": "source-receptor",
+  "cases": [
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PCALC",
+  "comp": "PAN",
+  "var": "UP",
+  "level": "source-receptor",
+  "cases": [
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PSRDEB",
+  "comp": "",
+  "var": "DHCRIT",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PSRDEB",
+  "comp": "",
+  "var": "DS",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PSRDEB",
+  "comp": "",
+  "var": "FB",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PSRDEB",
+  "comp": "",
+  "var": "FM",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PSRDEB",
+  "comp": "",
+  "var": "HS",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PSRDEB",
+  "comp": "",
+  "var": "QS",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PSRDEB",
+  "comp": "",
+  "var": "SVS",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PSRDEB",
+  "comp": "",
+  "var": "SWS",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PSRDEB",
+  "comp": "",
+  "var": "TGS",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PSRDEB",
+  "comp": "",
+  "var": "TS",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PSRDEB",
+  "comp": "",
+  "var": "UP",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PSRDEB",
+  "comp": "",
+  "var": "US",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PSRDEB",
+  "comp": "",
+  "var": "VS",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "MODEL.DBG",
+  "sub": "PSRDEB",
+  "comp": "",
+  "var": "WDIR",
+  "level": "source-hour",
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2CE",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "AMBIY",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "AMBIZ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "DELTAZ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "DELZFIN",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "DEN",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "DPDZ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "DS",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "DS0",
+  "level": "source-hour",
+  "cases": [
+   "CAPPED_STACK1C0"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "DUDZ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "DYDS",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "DZDS",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "FARIYT",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "FARIZT",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "FB",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "FM",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "FQCAV",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "IPOSITN",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "PHI",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "R",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "RA",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "RFIN",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "RTR",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "SYI",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "SZI",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "TA",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "TEXIT",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "TP",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "U",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "UA",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "USC",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "V",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "W",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "X",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "X15R",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "XAY",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "XAZ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "XB",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "XFIN",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "XFIN0",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "XMAX",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "XTR",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "Y",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "YFIN",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "YTR",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "Z",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "Z+ZCUM",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "ZC",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "ZCUMUL",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "ZFIN",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "ZNF",
+  "level": "source-hour",
+  "cases": [
+   "CAPPED_STACK1C0"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "NUMRISE",
+  "comp": "PRIME",
+  "var": "ZTR",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "PCALC",
+  "comp": "PRIME",
+  "var": "AERVAL",
+  "level": "source-receptor",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "PCALC",
+  "comp": "PRIME",
+  "var": "GAMFACT",
+  "level": "source-receptor",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "PCALC",
+  "comp": "PRIME",
+  "var": "HRVAL",
+  "level": "source-receptor",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "PCALC",
+  "comp": "PRIME",
+  "var": "PRMVAL",
+  "level": "source-receptor",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "PRMCALC",
+  "comp": "PRIME",
+  "var": "SVEFF",
+  "level": "source-receptor",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "PRMCALC",
+  "comp": "PRIME",
+  "var": "SWEFF",
+  "level": "source-receptor",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "PRMCALC",
+  "comp": "PRIME",
+  "var": "TGEFF",
+  "level": "source-receptor",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "PRMCALC",
+  "comp": "PRIME",
+  "var": "UEFF",
+  "level": "source-receptor",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "PRMCALC",
+  "comp": "PRIME",
+  "var": "ZHI",
+  "level": "source-receptor",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "PRMCALC",
+  "comp": "PRIME",
+  "var": "ZLO",
+  "level": "source-receptor",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DBG",
+  "comp": "PRIME",
+  "var": "DBDRDX",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DBG",
+  "comp": "PRIME",
+  "var": "DBDUW",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DBG",
+  "comp": "PRIME",
+  "var": "DBHC",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DBG",
+  "comp": "PRIME",
+  "var": "DBHW",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DBG",
+  "comp": "PRIME",
+  "var": "DBRSZ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DBG",
+  "comp": "PRIME",
+  "var": "DBSY",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DBG",
+  "comp": "PRIME",
+  "var": "DBSZ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DBG",
+  "comp": "PRIME",
+  "var": "DBSZC",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DBG",
+  "comp": "PRIME",
+  "var": "DBUW",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DBG",
+  "comp": "PRIME",
+  "var": "DBX",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DBG",
+  "comp": "PRIME",
+  "var": "DBXB",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DBG",
+  "comp": "PRIME",
+  "var": "DBZ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DBG",
+  "comp": "PRIME",
+  "var": "IPOSITN",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "DISTC",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "DRWAK",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "LCAV",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "LWAK",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "NCS",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "NPC",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "NPW",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "NWAK",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "NWS",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "SYCAV",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "SYWAK",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "SZCAV",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "SZWAK",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "XAY+XBADJ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "XAZ+XBADJ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "XBADJ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "XBC",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "XCAV",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "XDC",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "XI",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "XWAK",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN",
+  "comp": "PRIME",
+  "var": "YBADJ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN2",
+  "comp": "PRIME",
+  "var": "NWAK",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN2",
+  "comp": "PRIME",
+  "var": "RTR",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN2",
+  "comp": "PRIME",
+  "var": "VSIGY",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN2",
+  "comp": "PRIME",
+  "var": "VSIGYC",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN2",
+  "comp": "PRIME",
+  "var": "VSIGZ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN2",
+  "comp": "PRIME",
+  "var": "VSIGZC",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN2",
+  "comp": "PRIME",
+  "var": "XAY+XBADJ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN2",
+  "comp": "PRIME",
+  "var": "XAZ+XBADJ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN2",
+  "comp": "PRIME",
+  "var": "XBADJ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN2",
+  "comp": "PRIME",
+  "var": "XI",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN2",
+  "comp": "PRIME",
+  "var": "XTR",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN2",
+  "comp": "PRIME",
+  "var": "YBADJ",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN2",
+  "comp": "PRIME",
+  "var": "YTR",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_DFSN2",
+  "comp": "PRIME",
+  "var": "ZTR",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_FQC",
+  "comp": "PRIME",
+  "var": "FQCAV",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_FQC",
+  "comp": "PRIME",
+  "var": "FRACTZ0",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_FQC",
+  "comp": "PRIME",
+  "var": "FZMAX",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_FQC",
+  "comp": "PRIME",
+  "var": "NSTEP",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_FQC",
+  "comp": "PRIME",
+  "var": "XB85",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_FQC",
+  "comp": "PRIME",
+  "var": "XBEND",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_FQC",
+  "comp": "PRIME",
+  "var": "XBI",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_FQC",
+  "comp": "PRIME",
+  "var": "XBSTART",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_FQC",
+  "comp": "PRIME",
+  "var": "XMAX",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_FQC",
+  "comp": "PRIME",
+  "var": "XSTEP",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_SCALES",
+  "comp": "PRIME",
+  "var": "HB",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_SCALES",
+  "comp": "PRIME",
+  "var": "HR",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_SCALES",
+  "comp": "PRIME",
+  "var": "RB",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_SCALES",
+  "comp": "PRIME",
+  "var": "WB",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_SCALES",
+  "comp": "PRIME",
+  "var": "XLB",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_SCALES",
+  "comp": "PRIME",
+  "var": "XLC",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ },
+ {
+  "file": "PRIME.DBG",
+  "sub": "WAKE_SCALES",
+  "comp": "PRIME",
+  "var": "XLR",
+  "level": "source-hour",
+  "cases": [
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ]
+ }
+]
