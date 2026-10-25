@@ -172,6 +172,17 @@ class PrimeState:
     wake_u_turb_z: float = 0.0
     wake_u_turb_zvel_sav: float = 0.0
 
+    # SAVEd locals for prime_rise units (<unit>_<var>)
+    prmdelh_hseff: float = 0.0
+    prmdelh_reff: float = 0.0
+    prmdelh_xtr: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNTR, dtype=xp.float64))
+    prmdelh_ytr: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNTR, dtype=xp.float64))
+    prmdelh_ztr: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNTR, dtype=xp.float64))
+    prmdelh_rtr: xp.ndarray = field(default_factory=lambda: xp.zeros(MXNTR, dtype=xp.float64))
+    prmdelh_l_inwake_save: bool = False
+    prmdelh_capped: bool = False
+    prmdelh_horiz: bool = False
+
     def emit_debug(
         self,
         state: AermodState,

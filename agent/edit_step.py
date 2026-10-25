@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import re
 import json
 import os
 import subprocess
@@ -73,6 +74,8 @@ def api_index(port_dir: Path) -> str:
                         + (f" -> {ast.unparse(node.returns)}" if getattr(node, "returns", None) else "")
                         if isinstance(node, ast.FunctionDef) else f"class {node.name}")
                 rows.append(f"  {head}" + (f"   # {doc[0]}" if doc else ""))
+                rows += [f"      # {ln.strip()}" for ln in doc[1:]
+                         if re.match(r"\s*(Returns?|Mutates|Fills|Modifies)\b", ln)]
         if rows:
             out.append(f"aermod_py/{rel}:\n" + "\n".join(rows))
     return "\n".join(out)
@@ -145,6 +148,8 @@ def main() -> int:
     ap.add_argument("--spent-usd", type=float, default=0.0)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--no-tier-a-check", action="store_true")
+    ap.add_argument("--assume-tier-a-pass", action="store_true",
+                    help="skip the before-scoring: the last accepted step left tier A all passing")
     ap.add_argument("--resume-id", help="fetch this already-created interaction instead of "
                     "sending the prompt again (pending.json records it)")
     args = ap.parse_args()
@@ -187,7 +192,12 @@ def main() -> int:
 
     tier_a = catalog.tier_cases("A") + [c for c in catalog.CASES if c.tier == "holdout"
                                         and c.name == "testpm10_stack2"]
-    before_scores = None if args.no_tier_a_check else rl.score(tier_a, port_dir, "port_edit")
+    if args.no_tier_a_check:
+        before_scores = None
+    elif args.assume_tier_a_pass:
+        before_scores = {c.name: rl.CaseScore(c.name, True, True) for c in tier_a}
+    else:
+        before_scores = rl.score(tier_a, port_dir, "port_edit")
 
     try:
         reply = argon.ask(client, input=prompt, system_instruction=system,

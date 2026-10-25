@@ -1,0 +1,30 @@
+{
+ "run_id": "tierB_c3_rise",
+ "kind": "edit",
+ "model": "gemini-4-argon",
+ "thinking": "high",
+ "task": "prompts/tasks/tier_b/c3_rise.md",
+ "shown": [
+  "prime_state.py"
+ ],
+ "units": [
+  "NUMRISE",
+  "WAKE_DBG",
+  "PRMDELH"
+ ],
+ "fortran_ranges": [],
+ "strip_comments": true,
+ "notes": [
+  "prompts/tasks/tier_b/plan.md"
+ ],
+ "prompt_tokens": 60519,
+ "token_method": "Gemini count_tokens (gemini-4-argon)",
+ "max_output_tokens": 65536,
+ "budget_usd": 49.0,
+ "spent_before_usd": 1.52,
+ "prices_usd_per_mtok": {
+  "input": 2.0,
+  "output": 10.0
+ },
+ "started": "2026-10-25T23:12:21.549702+00:00"
+}
