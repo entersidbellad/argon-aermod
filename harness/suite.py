@@ -128,12 +128,13 @@ def main() -> int:
             stamp = case.out_dir(args.who) / run_port.PORT_HASH_FILE
             results.append({"tier": case.tier, **res.to_dict(),
                             "port_sha256": stamp.read_text().strip() if stamp.exists() else None})
-        versions = {r.get("port_sha256") for r in results}
+        versions = {r["port_sha256"] for r in results if "port_sha256" in r}
         report = {
             "who": args.who,
             "time": time.strftime("%Y-%m-%dT%H:%M:%S"),
             "compare_sha256": hashlib.sha256(Path(compare.__file__).read_bytes()).hexdigest(),
-            # One package version for every case, or None (mixed, missing, or not a port).
+            # One package version for every case that ran, or None (mixed, unstamped, or
+            # not a port); cases whose output is missing were not scored with any version.
             "port_sha256": versions.pop() if len(versions) == 1 else None,
             "results": results,
         }
