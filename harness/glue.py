@@ -4,21 +4,29 @@ AERMOD's SETUP phase and its output writers are not ported. This module does
 their job for the scoped slice and hands the port arrays named after the MAIN1
 module variables SETUP would have filled:
 
-  * ``load_project(inp)`` -> ``Project``: pyaermod parses the deck; this module
-    adds what pyaermod does not model (receptor networks expanded in AERMOD's
-    order, INCLUDED receptor files, EMISFACT, STARTEND -> ISDATE/IEDATE).
+  * ``load_project(inp)`` -> ``Project``: the deck's sources (after PPARM's
+    floors and PROFBASE's ZBASE reassignment), receptor networks expanded in
+    AERMOD's order (INCLUDED files too), EMISFACT, STARTEND -> ISDATE/IEDATE.
+    pyaermod parses the deck as a cross-check; options this module does not
+    model are rejected.
   * ``load_met(project)`` -> ``Met``: the values METEXT's list-directed READ
     statements would assign, one array per READ-list variable.
+  * ``setup_values(project, met)`` -> dict: every module variable the port reads
+    but never assigns (harness/setup_inputs.json), as SETUP leaves it before
+    HRLOOP. Numbers go through ``stodbl``, a port of AERMOD's runstream parser.
+  * ``expected_dates`` and ``Result``: what the port's run_case must return.
   * ``write_postfile(...)``: a 1-hr PLOT POSTFILE in the FORMAT AERMOD uses.
 
-Every coordinate is computed with the same double-precision expression as the
-Fortran (reset.f GENCAR/SETCAR/GENPOL/SETPOL/DISCAR/DISPOL/EVCART), and
-tests/test_glue.py checks the result against every oracle POSTFILE.
+Coordinates use the same double-precision expressions as the Fortran (reset.f
+GENCAR/SETCAR/GENPOL/SETPOL/DISCAR/DISPOL/EVCART). tests/test_harness.py checks
+receptors and the POSTFILE round trip against every oracle POSTFILE, and
+setup_values against the SETUP.DMP that ref/aermod_dump writes.
 """
 
 from __future__ import annotations
 
 import json
+import logging
 import math
 import re
 import warnings
@@ -148,6 +156,16 @@ class Met:
 
     def __len__(self) -> int:
         return len(self.surface["IYEAR"])
+
+
+@dataclass
+class Result:
+    """What the port's run_case returns (prompts/contract.md)."""
+    dates: np.ndarray                  # int64 KURDAT (YYMMDDHH), one per hour HRLOOP processed
+    conc: np.ndarray                   # float64 [hour, receptor], ug/m^3, POSTFILE group total
+    debug: list[tuple] = field(default_factory=list)
+    # debug rows: (KURDAT, ISRC, IREC, comp, sub, var, value) in the order AERMOD would
+    # print them; names and keys as in prompts/debug_vars.md (harness/dbgparse.py).
 
 
 # --- deck tokenising ---------------------------------------------------------
@@ -546,9 +564,15 @@ def _postfile_group(ou_cards: list[list[str]]) -> tuple[str, str]:
 
 def load_project(inp: Path | str) -> Project:
     inp = Path(inp)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        deck = read_aermod_input(inp)
+    reader_log = logging.getLogger("pyaermod.input_reader")
+    level = reader_log.level
+    reader_log.setLevel(logging.ERROR)      # it warns about every keyword this module parses itself
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            deck = read_aermod_input(inp)
+    finally:
+        reader_log.setLevel(level)
     co, so, re_, me, ou = (_cards(inp, p) for p in ("CO", "SO", "RE", "ME", "OU"))
     modelopt = tuple(t.upper() for toks in co if toks[0].upper() == "MODELOPT" for t in toks[1:])
     for pathway, cards in (("CO", co), ("SO", so), ("ME", me), ("OU", ou)):
@@ -616,6 +640,16 @@ def load_met(project: Project, met_dir: Path | str | None = None) -> Met:
     profile = _read_free(pfl, PROFILE_READ, PROFILE_INT)
     return Met(sfc_path=sfc, pfl_path=pfl, surface=surface, profile=profile,
                profile_start=_profile_start(surface, profile), sfc_headers=headers)
+
+
+def expected_dates(project: Project, met: Met) -> np.ndarray:
+    """KURDAT of every surface record inside STARTEND (what HRLOOP writes to the POSTFILE)."""
+    s = met.surface
+    year = np.where(s["IYEAR"] < 100, [_cent(int(y)) for y in s["IYEAR"]], s["IYEAR"])
+    mdh = s["IMONTH"] * 10000 + s["IDAY"] * 100 + s["IHOUR"]
+    full = year * 1000000 + mdh
+    keep = (full >= project.ISDATE) & (full <= project.IEDATE)
+    return ((year % 100) * 1000000 + mdh)[keep].astype(np.int64)
 
 
 def _profile_start(surface: dict[str, np.ndarray], profile: dict[str, np.ndarray]) -> np.ndarray:

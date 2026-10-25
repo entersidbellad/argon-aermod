@@ -57,6 +57,19 @@ def add_debugopt(inp_text: str) -> str:
     raise ValueError("deck has no 'CO STARTING' record")
 
 
+def stage(inp_text: str, staged: list[Path], workdir: Path) -> Path:
+    """Fresh workdir holding case.inp plus symlinks to its met/include files."""
+    if workdir.exists():
+        shutil.rmtree(workdir)
+    workdir.mkdir(parents=True)
+    for f in staged:
+        if not f.exists():
+            raise FileNotFoundError(f"{f} missing; run ref/fetch.py")
+        os.symlink(f.resolve(), workdir / f.name)
+    (workdir / "case.inp").write_text(inp_text)
+    return workdir / "case.inp"
+
+
 def run_deck(
     inp_text: str,
     staged: list[Path],
@@ -70,14 +83,7 @@ def run_deck(
     binary = Path(binary).resolve()
     if not binary.exists():
         raise FileNotFoundError(f"{binary} missing; run ref/fetch.py and ref/build.sh")
-    if workdir.exists():
-        shutil.rmtree(workdir)
-    workdir.mkdir(parents=True)
-    for f in staged:
-        if not f.exists():
-            raise FileNotFoundError(f"{f} missing; run ref/fetch.py")
-        os.symlink(f.resolve(), workdir / f.name)
-    (workdir / "case.inp").write_text(add_debugopt(inp_text) if debug else inp_text)
+    stage(add_debugopt(inp_text) if debug else inp_text, staged, workdir)
 
     t0 = time.monotonic()
     proc = subprocess.run(
