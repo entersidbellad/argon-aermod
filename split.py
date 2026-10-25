@@ -121,14 +121,15 @@ def _interaction_problem(entry: dict, reply: Path) -> str | None:
     return None
 
 
-def verify(port_dir: Path = PORT_DIR, runs_dir: Path = RUNS_DIR) -> list[str]:
-    """Problems with port_dir's provenance; empty means every file came from a recorded reply.
+def trace(port_dir: Path = PORT_DIR, runs_dir: Path = RUNS_DIR) -> list[dict]:
+    """For every file in port_dir but the README: the reply and Argon interaction that
+    produced it, or ``problem`` saying why it is not traceable.
 
     A reply counts only if its manifest entry names an interaction id that the
     reply's saved metadata (``<stem>.json``) records as completed, so running
     this script by hand on some text file never vouches for its output.
     """
-    recorded: dict[tuple[str, str], Path] = {}
+    recorded: dict[tuple[str, str], tuple[Path, dict]] = {}
     rejected: dict[tuple[str, str], str] = {}
     for manifest in sorted(runs_dir.rglob(MANIFEST)):
         for entry in json.loads(manifest.read_text()):
@@ -136,24 +137,33 @@ def verify(port_dir: Path = PORT_DIR, runs_dir: Path = RUNS_DIR) -> list[str]:
             why = _interaction_problem(entry, reply)
             for rel, digest in entry["files"].items():
                 if why is None:
-                    recorded.setdefault((rel, digest), reply)
+                    recorded.setdefault((rel, digest), (reply, entry))
                 else:
                     rejected.setdefault((rel, digest), why)
-    problems = []
+    out = []
     for path in sorted(p for p in port_dir.rglob("*") if p.is_file()):
         rel = str(path.relative_to(port_dir))
         if rel in PROTECTED or "__pycache__" in path.parts:
             continue
         key = (rel, sha256(path))
-        reply = recorded.get(key)
-        if reply is None:
-            why = rejected.get(key)
-            problems.append(f"{rel}: " + (why or "not produced by any recorded model reply"))
+        row = {"file": rel, "sha256": key[1], "reply": None, "interaction_id": None,
+               "step": None, "problem": None}
+        out.append(row)
+        if key not in recorded:
+            row["problem"] = rejected.get(key) or "not produced by any recorded model reply"
             continue
+        reply, entry = recorded[key]
+        row.update(reply=reply.relative_to(runs_dir).as_posix(),
+                   interaction_id=entry["interaction_id"], step=entry.get("step"))
         produced = dict((str(r), body) for r, body in parse(reply.read_text()))
         if produced.get(rel) != path.read_text():
-            problems.append(f"{rel}: differs from what {reply.relative_to(runs_dir)} splits into")
-    return problems
+            row["problem"] = f"differs from what {row['reply']} splits into"
+    return out
+
+
+def verify(port_dir: Path = PORT_DIR, runs_dir: Path = RUNS_DIR) -> list[str]:
+    """Problems with port_dir's provenance; empty means every file came from a recorded reply."""
+    return [f"{t['file']}: {t['problem']}" for t in trace(port_dir, runs_dir) if t["problem"]]
 
 
 def main() -> int:
