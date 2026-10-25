@@ -1,280 +1,257 @@
 #!/usr/bin/env python3
-"""
-Pack AERMOD Fortran source into a single context for Gemini 4 Argon.
+"""Pack the in-scope AERMOD Fortran plus a subroutine index into one prompt.
 
-Includes:
-- Scoped Fortran files (modules.f, aermod.f, calc1/2, prise, sigmas, etc.)
-- Subroutine index for navigation
-- Token count using Gemini API or tiktoken proxy
+Scope (see prompts/contract.md): modules.f whole (module state); every other
+file (aermod.f, metext, iblval, siggrid, tempgrid, windgrid, calc1, calc2,
+prise, sigmas, and prime.f for tier B) reduced to the program units reachable
+from HRLOOP through CALL statements and function references, minus the
+branches in EXCLUDE_* (other source types, NO2 chemistry, deposition,
+platform downwash, EVALFILE/events, hourly emission files, averaging and
+output). Tier A also cuts the PRIME entry points.
+
+Comments are kept by default; both counts (with comments, code only) are
+reported. Writes context/tier_<T>.txt (gitignored: it is EPA source) and
+context/index_tier_<T>.json + context/tokens.json (committed). Token counts
+use Gemini count_tokens when GEMINI_API_KEY is set, else tiktoken o200k_base.
 """
+
+from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import sys
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+
+ROOT = Path(__file__).resolve().parent
+SRC = ROOT / "ref" / "aermod_source" / "aermod_source_v26135"
+CONTEXT = ROOT / "context"
+MODEL = "gemini-4-argon"
+
+WHOLE_FILES = ["modules.f"]
+REDUCED_FILES = ["aermod.f", "metext.f", "iblval.f", "siggrid.f", "tempgrid.f", "windgrid.f",
+                 "calc1.f", "calc2.f", "prise.f", "sigmas.f"]
+TIER_B_FILES = ["prime.f"]
+ROOTS = ["HRLOOP"]
+
+EXCLUDE_COMMON = {
+    # other source types and their dispatch
+    "ACALC", "VCALC", "OCALC", "LCALC", "RLCALC", "BL_CALC", "SWCALC", "ARISE", "AFLUXES",
+    "PLAT_DOWNWASH", "AIRCRAFT", "AHRQREAD",
+    # NO2 / chemistry options
+    "ARM2_CALC", "OLM_CALC", "PVMRM_CALC", "GRSM_CALC", "TTRM_CALC", "OZONVALS", "VARYNOXVALS",
+    "O3EXT", "NOXEXT",
+    # background, hourly emission files
+    "BGEXT", "BGVAL", "SUMBACK", "HRQREAD", "HRQEXT",
+    # deposition and plume depletion
+    "VDP", "SCAVRAT", "PRM_PDEP", "PRM_PDEPG", "PDEP", "PDEPG", "DEPLETE", "QATR2", "QG2D2",
+    # platform downwash
+    "PLAT_GRADPLUMADJ", "PLAT_CUBIC",
+    # EVALFILE / event processing
+    "EVALCK", "EVALFL", "EVLINI", "EV_SUMVAL",
+    # averaging, ranking and output (done by the glue layer / pyaermod)
+    "AVER", "HIVALS", "MAXFIL", "MXDLYFL", "POSTFL", "PRTDAY", "RSDUMP", "TOXXFL",
+    "METSUM", "CHK_ENDYR", "HEADER",
+    # error/message handling (the port raises instead)
+    "ERRHDL",
+}
+EXCLUDE_TIER_A = {"PRMCALC", "GAMCALC", "WAKE_INI"}
+
+UNIT_RE = re.compile(
+    r"^ {6,}(?:RECURSIVE +)?(?:(?:DOUBLE PRECISION|INTEGER|LOGICAL|REAL(?:\*\d)?|CHARACTER\*?\d*) +)?"
+    r"(SUBROUTINE|FUNCTION|MODULE|PROGRAM|BLOCK DATA) +([A-Z][A-Z0-9_]*)", re.I)
+CALL_RE = re.compile(r"\bCALL\s+([A-Z][A-Z0-9_]*)", re.I)
 
 
-# Files in scope for Tier A (no building downwash)
-TIER_A_FILES = [
-    'modules.f',
-    'aermod.f',
-    'metext.f',
-    'iblval.f',
-    'siggrid.f',
-    'tempgrid.f',
-    'windgrid.f',
-    'calc1.f',
-    'calc2.f',
-    'prise.f',
-    'sigmas.f',
-]
-
-# Additional files for Tier B (with PRIME)
-TIER_B_ADDITIONAL = [
-    'prime.f',
-]
+@dataclass
+class Unit:
+    name: str
+    kind: str
+    file: str
+    start: int                     # 1-based first line
+    end: int                       # 1-based last line
+    calls: list[str] = field(default_factory=list)
+    called_by: list[str] = field(default_factory=list)
+    tokens: int = 0
 
 
-class FortranPacker:
-    """Pack Fortran source files with subroutine index."""
-    
-    def __init__(self, source_dir: Path):
-        self.source_dir = source_dir
-        self.subroutine_index: Dict[str, Tuple[str, int]] = {}
-    
-    def extract_subroutines(self, filepath: Path) -> List[Tuple[str, int]]:
-        """
-        Extract subroutine/function names and line numbers from Fortran file.
-        
-        Returns:
-            List of (name, line_number) tuples
-        """
-        subroutines = []
-        
-        with open(filepath, 'r', encoding='latin-1', errors='ignore') as f:
-            for line_num, line in enumerate(f, 1):
-                # Match SUBROUTINE or FUNCTION declarations
-                # Fortran is case-insensitive
-                match = re.match(
-                    r'^\s+(SUBROUTINE|FUNCTION)\s+(\w+)',
-                    line,
-                    re.IGNORECASE
-                )
-                if match:
-                    name = match.group(2).upper()
-                    subroutines.append((name, line_num))
-        
-        return subroutines
-    
-    def build_index(self, files: List[str]) -> str:
-        """
-        Build subroutine index for all files.
-        
-        Returns:
-            Formatted index string
-        """
-        self.subroutine_index.clear()
-        
-        index_lines = ["# SUBROUTINE INDEX\n\n"]
-        
-        for filename in files:
-            filepath = self.source_dir / filename
-            if not filepath.exists():
-                print(f"Warning: File not found: {filepath}", file=sys.stderr)
-                continue
-            
-            subs = self.extract_subroutines(filepath)
-            if subs:
-                index_lines.append(f"## {filename}\n\n")
-                for name, line_num in subs:
-                    index_lines.append(f"- {name} (line {line_num})\n")
-                    self.subroutine_index[name] = (filename, line_num)
-                index_lines.append("\n")
-        
-        return "".join(index_lines)
-    
-    def pack_files(
-        self,
-        files: List[str],
-        include_index: bool = True
-    ) -> str:
-        """
-        Pack Fortran files into a single context.
-        
-        Returns:
-            Combined content string
-        """
-        parts = []
-        
-        if include_index:
-            index = self.build_index(files)
-            parts.append(index)
-            parts.append("\n" + "="*70 + "\n")
-            parts.append("# FORTRAN SOURCE FILES\n")
-            parts.append("="*70 + "\n\n")
-        
-        for filename in files:
-            filepath = self.source_dir / filename
-            if not filepath.exists():
-                print(f"Warning: Skipping missing file: {filepath}", file=sys.stderr)
-                continue
-            
-            parts.append(f"\n{'='*70}\n")
-            parts.append(f"FILE: {filename}\n")
-            parts.append(f"{'='*70}\n\n")
-            
-            with open(filepath, 'r', encoding='latin-1', errors='ignore') as f:
-                parts.append(f.read())
-            
-            parts.append("\n")
-        
-        return "".join(parts)
-    
-    def save_packed(self, content: str, output_path: Path) -> None:
-        """Save packed content to file."""
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(content)
-    
-    def count_tokens(self, text: str, use_gemini: bool = True) -> int:
-        """
-        Count tokens using Gemini API or tiktoken proxy.
-        
-        Args:
-            text: Text to count
-            use_gemini: Try Gemini API first (requires GEMINI_API_KEY)
-            
-        Returns:
-            Token count
-        """
-        if use_gemini:
-            try:
-                import google.generativeai as genai
-                
-                api_key = os.environ.get('GEMINI_API_KEY')
-                if api_key:
-                    genai.configure(api_key=api_key)
-                    model = genai.GenerativeModel('gemini-4-argon')
-                    
-                    result = model.count_tokens(text)
-                    return result.total_tokens
-            except Exception as e:
-                print(f"Gemini token count failed: {e}", file=sys.stderr)
-                print("Falling back to tiktoken proxy...", file=sys.stderr)
-        
-        # Fallback to tiktoken o200k proxy
-        try:
+def is_comment(line: str) -> bool:
+    return line[:1] in ("C", "c", "*", "!") or line.lstrip().startswith("!")
+
+
+def scan_file(path: Path) -> list[Unit]:
+    lines = path.read_text(encoding="latin-1").split("\n")
+    heads = []
+    for i, line in enumerate(lines):
+        if is_comment(line) or re.match(r"^\s+END\b", line, re.I):
+            continue
+        m = UNIT_RE.match(line)
+        if m and "MODULE PROCEDURE" not in line.upper():
+            heads.append((i, m.group(1).upper(), m.group(2).upper()))
+    units = []
+    for n, (i, kind, name) in enumerate(heads):
+        end = heads[n + 1][0] if n + 1 < len(heads) else len(lines)
+        units.append(Unit(name, kind, path.name, i + 1, end))
+    return units
+
+
+def unit_text(unit: Unit, cache: dict[str, list[str]], strip_comments: bool = False) -> str:
+    lines = cache.setdefault(unit.file, (SRC / unit.file).read_text(encoding="latin-1").split("\n"))
+    body = lines[unit.start - 1:unit.end]
+    if strip_comments:
+        body = [ln for ln in body if ln.strip() and not is_comment(ln)]
+    return "\n".join(body)
+
+
+def build_index(files: list[str]) -> dict[str, Unit]:
+    index: dict[str, Unit] = {}
+    for f in files:
+        for u in scan_file(SRC / f):
+            index.setdefault(u.name, u)   # first definition wins (internal EXPATH copies)
+    cache: dict[str, list[str]] = {}
+    function_names = {n for n, u in index.items() if u.kind == "FUNCTION"}
+    fn_re = re.compile(r"\b(" + "|".join(sorted(function_names)) + r")\s*\(", re.I) \
+        if function_names else None
+    for u in index.values():
+        code = [ln for ln in unit_text(u, cache).split("\n")[1:] if not is_comment(ln)]
+        found = {c.upper() for ln in code for c in CALL_RE.findall(ln)}
+        if fn_re:
+            found |= {c.upper() for ln in code for c in fn_re.findall(ln)} - {u.name}
+        u.calls = sorted(c for c in found if c in index)
+    return index
+
+
+def reachable(index: dict[str, Unit], exclude: set[str]) -> set[str]:
+    seen: set[str] = set()
+    stack = [r for r in ROOTS if r in index]
+    while stack:
+        name = stack.pop()
+        if name in seen or name in exclude:
+            continue
+        seen.add(name)
+        stack += index[name].calls
+    return seen
+
+
+def select_units(tier: str) -> tuple[list[Unit], dict[str, Unit]]:
+    files = WHOLE_FILES + REDUCED_FILES + (TIER_B_FILES if tier == "B" else [])
+    index = build_index(files)
+    exclude = EXCLUDE_COMMON | (EXCLUDE_TIER_A if tier == "A" else set())
+    keep = reachable(index, exclude)
+    keep |= {u.name for u in index.values() if u.file in WHOLE_FILES}
+    selected = [index[n] for n in keep]
+    order = {f: i for i, f in enumerate(files)}
+    selected.sort(key=lambda u: (order[u.file], u.start))
+    names = {u.name for u in selected}
+    for u in selected:
+        u.calls = [c for c in u.calls if c in names]
+    for u in selected:
+        for c in u.calls:
+            index[c].called_by.append(u.name)
+    return selected, index
+
+
+class TokenCounter:
+    def __init__(self) -> None:
+        self.method = "tiktoken o200k_base (proxy)"
+        self._client = None
+        if os.environ.get("GEMINI_API_KEY"):
+            from google import genai
+            self._client = genai.Client()
+            self.method = f"Gemini count_tokens ({MODEL})"
+        else:
             import tiktoken
-            encoding = tiktoken.get_encoding("o200k_base")
-            return len(encoding.encode(text))
-        except ImportError:
-            print("Warning: tiktoken not available, using rough estimate", 
-                  file=sys.stderr)
-            # Very rough estimate: ~4 chars per token
-            return len(text) // 4
+            self._enc = tiktoken.get_encoding("o200k_base")
+
+    def __call__(self, text: str) -> int:
+        if self._client is not None:
+            return int(self._client.models.count_tokens(model=MODEL, contents=text).total_tokens)
+        return len(self._enc.encode(text, disallowed_special=()))
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description='Pack AERMOD Fortran source for Gemini 4 Argon'
-    )
-    parser.add_argument(
-        '--source-dir',
-        type=Path,
-        default=Path('ref/aermod_source'),
-        help='AERMOD source directory'
-    )
-    parser.add_argument(
-        '--tier',
-        choices=['A', 'B'],
-        default='A',
-        help='Tier: A (no PRIME) or B (with PRIME)'
-    )
-    parser.add_argument(
-        '--output',
-        type=Path,
-        help='Output file path (default: context/tier_{A|B}_packed.txt)'
-    )
-    parser.add_argument(
-        '--no-index',
-        action='store_true',
-        help='Skip subroutine index'
-    )
-    parser.add_argument(
-        '--count-tokens',
-        action='store_true',
-        help='Count tokens after packing'
-    )
-    
-    args = parser.parse_args()
-    
-    # Determine files to pack
-    files = TIER_A_FILES.copy()
-    if args.tier == 'B':
-        files.extend(TIER_B_ADDITIONAL)
-    
-    # Default output path
-    if args.output is None:
-        args.output = Path(f'context/tier_{args.tier}_packed.txt')
-    
-    try:
-        # Find source directory
-        source_dir = args.source_dir
-        
-        # Check common locations
-        if not source_dir.exists():
-            for subdir in ['source', 'src', '']:
-                candidate = args.source_dir / subdir
-                if (candidate / 'modules.f').exists():
-                    source_dir = candidate
-                    break
-        
-        if not (source_dir / 'modules.f').exists():
-            print(f"Error: Cannot find modules.f in {source_dir}", 
-                  file=sys.stderr)
-            print("Run ref/download_aermod.sh first", file=sys.stderr)
-            return 1
-        
-        print(f"Packing Tier {args.tier} source files...")
-        print(f"Source directory: {source_dir}")
-        
-        packer = FortranPacker(source_dir)
-        content = packer.pack_files(files, include_index=not args.no_index)
-        
-        # Save packed content
-        packer.save_packed(content, args.output)
-        
-        print(f"\n✓ Packed {len(files)} files to: {args.output}")
-        print(f"  Size: {len(content):,} bytes")
-        
-        if not args.no_index:
-            print(f"  Subroutines indexed: {len(packer.subroutine_index)}")
-        
-        # Count tokens if requested
-        if args.count_tokens:
-            print("\nCounting tokens...")
-            
-            # Try Gemini first if API key available
-            use_gemini = os.environ.get('GEMINI_API_KEY') is not None
-            token_count = packer.count_tokens(content, use_gemini=use_gemini)
-            
-            method = "Gemini API" if use_gemini else "tiktoken o200k proxy"
-            print(f"  Token count ({method}): {token_count:,}")
-            
-            # Show context utilization for Gemini 4 Argon (1M context)
-            utilization = (token_count / 1_048_576) * 100
-            print(f"  Context utilization: {utilization:.1f}% of 1M")
-        
-        return 0
-        
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        import traceback
-        traceback.print_exc()
-        return 1
+def render(tier: str, units: list[Unit], strip_comments: bool = False) -> str:
+    cache: dict[str, list[str]] = {}
+    out = [f"AERMOD 26135 Fortran, tier {tier} scope ({len(units)} program units"
+           f"{', comment lines removed' if strip_comments else ''}).",
+           "", "SUBROUTINE INDEX (name, file:lines, calls)"]
+    for u in units:
+        out.append(f"  {u.name:14s} {u.file}:{u.start}-{u.end}  calls: {', '.join(u.calls) or '-'}")
+    current = None
+    for u in units:
+        if u.file != current:
+            current = u.file
+            out += ["", f"##### FORTRAN FILE {u.file}"]
+        out += [f"##### UNIT {u.name} ({u.kind}) {u.file}:{u.start}-{u.end}",
+                unit_text(u, cache, strip_comments)]
+    return "\n".join(out) + "\n"
 
 
-if __name__ == '__main__':
+def load_index(tier: str) -> dict[str, dict]:
+    """name -> unit record from context/index_tier_<T>.json."""
+    path = CONTEXT / f"index_tier_{tier}.json"
+    return {u["name"]: u for u in json.loads(path.read_text())}
+
+
+def fortran_unit(name: str, tier: str = "B") -> str:
+    """Source text of one program unit, located through the committed index."""
+    rec = load_index(tier)[name.upper()]
+    lines = (SRC / rec["file"]).read_text(encoding="latin-1").split("\n")
+    return "\n".join(lines[rec["start"] - 1:rec["end"]])
+
+
+def pack(tier: str, counter: TokenCounter | None = None, strip_comments: bool = False) -> dict:
+    units, _ = select_units(tier)
+    counter = counter or TokenCounter()
+    cache: dict[str, list[str]] = {}
+    per_file: dict[str, int] = {}
+    for u in units:
+        u.tokens = counter(unit_text(u, cache))
+        per_file[u.file] = per_file.get(u.file, 0) + u.tokens
+    text = render(tier, units, strip_comments)
+    CONTEXT.mkdir(exist_ok=True)
+    (CONTEXT / f"tier_{tier}.txt").write_text(text)
+    (CONTEXT / f"index_tier_{tier}.json").write_text(
+        json.dumps([asdict(u) for u in units], indent=1) + "\n")
+    with_comments = text if not strip_comments else render(tier, units)
+    code_only = text if strip_comments else render(tier, units, strip_comments=True)
+    return {
+        "tier": tier,
+        "method": counter.method,
+        "packed": "code only" if strip_comments else "with comments",
+        "tokens_with_comments": counter(with_comments),
+        "tokens_code_only": counter(code_only),
+        "units": len(units),
+        "lines": sum(u.end - u.start + 1 for u in units),
+        "per_file_tokens_with_comments": per_file,
+    }
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--tier", choices=["A", "B", "both"], default="both")
+    ap.add_argument("--strip-comments", action="store_true",
+                    help="pack code lines only (Fortran comment and blank lines removed)")
+    args = ap.parse_args()
+    if not SRC.exists():
+        sys.exit(f"missing {SRC}; run ref/fetch.py first")
+    counter = TokenCounter()
+    tiers = ["A", "B"] if args.tier == "both" else [args.tier]
+    report = {t: pack(t, counter, args.strip_comments) for t in tiers}
+    print(f"token counts: {counter.method}")
+    for t, r in report.items():
+        print(f"tier {t}: {r['tokens_with_comments']:,} tokens with comments, "
+              f"{r['tokens_code_only']:,} code only; {r['units']} units, {r['lines']:,} lines; "
+              f"packed {r['packed']} -> context/tier_{t}.txt")
+        for f, n in r["per_file_tokens_with_comments"].items():
+            print(f"    {f:12s} {n:8,}")
+    tokens_path = CONTEXT / "tokens.json"
+    existing = json.loads(tokens_path.read_text()) if tokens_path.exists() else {}
+    existing.update(report)
+    tokens_path.write_text(json.dumps(existing, indent=2) + "\n")
+    return 0
+
+
+if __name__ == "__main__":
     sys.exit(main())
