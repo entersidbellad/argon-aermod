@@ -1,530 +1,266 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AERMOD Port - Gemini 4 Argon</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #f5f5f5;
-            color: #333;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        header {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-        
-        .subtitle {
-            color: #666;
-            font-size: 16px;
-        }
-        
-        nav {
-            background: white;
-            padding: 0;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            display: flex;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        nav button {
-            flex: 1;
-            padding: 15px 30px;
-            border: none;
-            background: white;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            transition: background 0.2s;
-        }
-        
-        nav button:hover {
-            background: #f5f5f5;
-        }
-        
-        nav button.active {
-            background: #1a73e8;
-            color: white;
-        }
-        
-        .screen {
-            display: none;
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .screen.active {
-            display: block;
-        }
-        
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        
-        .case-card {
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            text-align: center;
-            font-weight: 500;
-        }
-        
-        .case-card.pass {
-            background: #e8f5e9;
-            border-color: #4caf50;
-            color: #2e7d32;
-        }
-        
-        .case-card.fail {
-            background: #ffebee;
-            border-color: #f44336;
-            color: #c62828;
-        }
-        
-        .case-card.pending {
-            background: #fff3e0;
-            border-color: #ff9800;
-            color: #e65100;
-        }
-        
-        .section {
-            margin: 30px 0;
-        }
-        
-        .section h2 {
-            font-size: 20px;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e0e0e0;
-        }
-        
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
-        }
-        
-        .info-card {
-            padding: 20px;
-            background: #f5f5f5;
-            border-radius: 6px;
-        }
-        
-        .info-card h3 {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .info-card .value {
-            font-size: 24px;
-            font-weight: 600;
-            color: #1a73e8;
-        }
-        
-        .button {
-            padding: 12px 24px;
-            background: #1a73e8;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        
-        .button:hover {
-            background: #1557b0;
-        }
-        
-        .button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        
-        .commit-list {
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
-            background: #f5f5f5;
-            padding: 20px;
-            border-radius: 6px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .commit {
-            margin-bottom: 10px;
-            padding: 8px;
-            background: white;
-            border-radius: 4px;
-        }
-        
-        .commit-hash {
-            color: #1a73e8;
-            font-weight: 600;
-        }
-        
-        .commit-author {
-            color: #666;
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .status-badge.pass {
-            background: #4caf50;
-            color: white;
-        }
-        
-        .status-badge.fail {
-            background: #f44336;
-            color: white;
-        }
-        
-        .status-badge.pending {
-            background: #ff9800;
-            color: white;
-        }
-        
-        code {
-            background: #f5f5f5;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
-        }
-        
-        .stub-notice {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            color: #856404;
-            padding: 15px;
-            border-radius: 6px;
-            margin: 20px 0;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AERMOD port - Gemini 4 Argon</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f5f7; color: #222; }
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 24px; }
+    header h1 { font-size: 24px; }
+    header p { color: #666; margin-top: 4px; }
+    nav { display: flex; gap: 8px; margin: 20px 0; }
+    nav button { padding: 10px 22px; border: 1px solid #ccd; background: #fff; border-radius: 6px; font-size: 15px; cursor: pointer; }
+    nav button.active { background: #1a73e8; color: #fff; border-color: #1a73e8; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .panel { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .panel h2 { font-size: 17px; margin-bottom: 12px; }
+    .muted { color: #666; font-size: 13px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .card { background: #f7f8fa; border-radius: 6px; padding: 14px; }
+    .card .k { font-size: 12px; text-transform: uppercase; color: #666; letter-spacing: .4px; }
+    .card .v { font-size: 22px; font-weight: 600; margin-top: 4px; }
+    .mono { font-family: Menlo, Consolas, monospace; font-size: 12px; word-break: break-all; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+    th { color: #555; font-weight: 600; background: #fafafa; }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover { background: #f2f6fd; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin: 8px 0 16px; }
+    .case { border: 2px solid #ddd; border-radius: 6px; padding: 10px; font-size: 13px; }
+    .case b { display: block; font-size: 14px; margin-bottom: 4px; }
+    .pass { border-color: #43a047; background: #eef8ef; }
+    .fail { border-color: #e53935; background: #fdeeee; }
+    .pending { border-color: #fb8c00; background: #fff5e8; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; color: #fff; }
+    .badge.ok { background: #43a047; }
+    .badge.no { background: #e53935; }
+    .badge.warn { background: #fb8c00; }
+    .big { font-size: 20px; padding: 6px 18px; }
+    code { background: #f0f1f3; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+    pre { white-space: pre-wrap; font-size: 12px; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>AERMOD Python Port</h1>
-            <p class="subtitle">
-                Gemini 4 Argon full-context migration from Fortran, 
-                verified against EPA test suite
-            </p>
-        </header>
-        
-        <nav>
-            <button class="nav-btn active" data-screen="port">Port</button>
-            <button class="nav-btn" data-screen="proof">Proof</button>
-            <button class="nav-btn" data-screen="decision">Decision</button>
-        </nav>
-        
-        <!-- Port Screen -->
-        <div id="port-screen" class="screen active">
-            <div class="section">
-                <h2>Runs</h2>
-                <div class="stub-notice">
-                    This dashboard is read-only. Start runs from a shell:
-                    <code>python agent/port.py --tier B</code>,
-                    <code>python agent/repair_loop.py --tier B</code>, then
-                    <code>python harness/suite.py --who port --tier all</code>.
-                </div>
-                <div class="info-grid">
-                    <div class="info-card">
-                        <h3>Tier A pack tokens</h3>
-                        <div class="value"><span id="tokens-a">-</span></div>
-                    </div>
-                    <div class="info-card">
-                        <h3>Tier B pack tokens</h3>
-                        <div class="value"><span id="tokens-b">-</span></div>
-                    </div>
-                </div>
-                <p id="tokens-method" style="color: #666;"></p>
-            </div>
-            
-            <div class="section">
-                <h2>Recorded Runs (agent/runs)</h2>
-                <div id="runs-list">
-                    <p style="color: #666;">Loading runs...</p>
-                </div>
+<div class="wrap">
+    <header>
+        <h1>AERMOD 26135 &rarr; Python, ported by Gemini 4 Argon</h1>
+        <p>Read-only view of <code>agent/runs</code>, the suite results and <code>port/aermod_py</code>. Nothing on this page starts a run.</p>
+    </header>
+    <nav>
+        <button class="active" data-screen="port">Port</button>
+        <button data-screen="proof">Proof</button>
+        <button data-screen="decision">Decision</button>
+    </nav>
+
+    <section id="port" class="screen active">
+        <div class="panel">
+            <h2>Fortran in scope</h2>
+            <div class="cards" id="token-cards"></div>
+            <p class="muted" id="token-note" style="margin-top:10px"></p>
+        </div>
+        <div class="panel">
+            <h2>Argon runs (<code>agent/runs</code>)</h2>
+            <div class="cards" style="margin-bottom:12px" id="spend"></div>
+            <div id="runs"></div>
+            <p class="muted" id="prices" style="margin-top:8px"></p>
+            <div id="run-detail" style="margin-top:14px"></div>
+        </div>
+    </section>
+
+    <section id="proof" class="screen">
+        <div class="panel">
+            <h2>Frozen scoring rules</h2>
+            <div class="cards">
+                <div class="card"><div class="k">harness/compare.py sha256</div><div class="mono" id="cmp-now"></div></div>
+                <div class="card"><div class="k">approved (harness/compare.sha256)</div><div class="mono" id="cmp-approved"></div></div>
+                <div class="card"><div class="k">status</div><div class="v" id="cmp-status"></div></div>
             </div>
         </div>
-        
-        <!-- Proof Screen (Priority) -->
-        <div id="proof-screen" class="screen">
-            <div class="section">
-                <h2>Verification Status</h2>
-                
-                <div class="info-grid">
-                    <div class="info-card">
-                        <h3>compare.py sha256</h3>
-                        <div class="value" style="font-size: 12px; font-family: monospace; word-break: break-all;">
-                            <span id="compare-hash">Loading...</span>
-                        </div>
-                        <p id="hash-status" style="margin-top: 8px; color: #666;"></p>
-                    </div>
-                    
-                    <div class="info-card">
-                        <h3>Tier A Pass Rate</h3>
-                        <div class="value">
-                            <span id="tier-a-rate">-/-</span>
-                        </div>
-                    </div>
-                    
-                    <div class="info-card">
-                        <h3>Tier B Pass Rate</h3>
-                        <div class="value">
-                            <span id="tier-b-rate">-/-</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h2>Test Cases</h2>
-                
-                <h3 style="margin-top: 20px; margin-bottom: 10px; color: #666;">
-                    Tier A (No Building Downwash)
-                </h3>
-                <div class="grid" id="tier-a-grid">
-                    <!-- Populated by JS -->
-                </div>
-                
-                <h3 style="margin-top: 30px; margin-bottom: 10px; color: #666;">
-                    Tier B (With PRIME)
-                </h3>
-                <div class="grid" id="tier-b-grid">
-                    <!-- Populated by JS -->
-                </div>
-                
-                <h3 style="margin-top: 30px; margin-bottom: 10px; color: #666;">
-                    Holdout (never shown to the repair loop)
-                </h3>
-                <div class="grid" id="holdout-grid">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-            
-            <div class="section">
-                <h2>Provenance of port/aermod_py</h2>
-                <div id="provenance" class="commit-list">
-                    <p style="color: #666;">Loading...</p>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h2>Git History of port/aermod_py</h2>
-                <div id="commits-list" class="commit-list">
-                    <p style="color: #666;">Loading git history...</p>
-                </div>
-            </div>
+        <div class="panel">
+            <h2>Per-case results</h2>
+            <p class="muted" id="score-source"></p>
+            <div class="cards" style="margin:12px 0" id="rates"></div>
+            <h3 class="muted">Tier A (no building downwash)</h3><div class="grid" id="grid-a"></div>
+            <h3 class="muted">Tier B (adds PRIME)</h3><div class="grid" id="grid-b"></div>
+            <h3 class="muted">Holdout (never shown to the repair loop)</h3><div class="grid" id="grid-h"></div>
         </div>
-        
-        <!-- Decision Screen -->
-        <div id="decision-screen" class="screen">
-            <div class="section">
-                <h2>Certification</h2>
-                <p style="color: #666;">
-                    Computed on every load from <code>out/suite_port.json</code>,
-                    the current <code>harness/compare.py</code> and
-                    <code>split.py --verify</code>. Nothing is stored.
-                </p>
-                <div style="margin-top: 20px;">
-                    <span id="certified" class="status-badge pending">loading</span>
-                </div>
-                <div id="criteria" class="commit-list" style="margin-top: 20px;"></div>
-            </div>
+        <div class="panel">
+            <h2>Provenance: every port file and the Argon interaction that wrote it</h2>
+            <p id="prov-status"></p>
+            <div id="prov-table" style="margin-top:10px"></div>
         </div>
-    </div>
-    
-    <script>
-        // Navigation
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const screen = btn.dataset.screen;
-                
-                // Update nav
-                document.querySelectorAll('.nav-btn').forEach(b => {
-                    b.classList.remove('active');
-                });
-                btn.classList.add('active');
-                
-                // Update screens
-                document.querySelectorAll('.screen').forEach(s => {
-                    s.classList.remove('active');
-                });
-                document.getElementById(`${screen}-screen`).classList.add('active');
-                
-                // Load data for screen
-                if (screen === 'proof') {
-                    loadProofData();
-                } else if (screen === 'port') {
-                    loadPortData();
-                } else if (screen === 'decision') {
-                    loadDecisionData();
-                }
-            });
-        });
-        
-        const esc = s => String(s ?? '').replace(/[&<>"']/g,
-            c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
-        const getJson = async url => {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`${url}: ${response.status}`);
-            return response.json();
-        };
-        const fmt = n => (n === null || n === undefined) ? '-' : Number(n).toLocaleString();
+    </section>
 
-        async function loadPortData() {
-            try {
-                const tokens = await getJson('/api/tokens');
-                document.getElementById('tokens-a').textContent = fmt(tokens.A?.tokens_with_comments);
-                document.getElementById('tokens-b').textContent = fmt(tokens.B?.tokens_with_comments);
-                document.getElementById('tokens-method').textContent = tokens.A
-                    ? `Fortran pack only, ${tokens.A.method}; the full prompt adds the contract, glue, setup table and variable catalogue.`
-                    : 'context/tokens.json missing: run python pack.py';
+    <section id="decision" class="screen">
+        <div class="panel">
+            <h2>Certification</h2>
+            <p class="muted">Computed on every load from the suite results, the current compare.py, the current port and its provenance. Nothing is stored.</p>
+            <p style="margin:16px 0"><span id="certified" class="badge warn big">loading</span></p>
+            <table id="criteria"></table>
+        </div>
+    </section>
+</div>
 
-                const runs = await getJson('/api/runs');
-                const runsList = document.getElementById('runs-list');
-                if (runs.length === 0) {
-                    runsList.innerHTML = '<p style="color: #666;">No runs recorded under agent/runs yet.</p>';
-                    return;
-                }
-                runsList.innerHTML = runs.map(run => `
-                    <div style="padding: 15px; background: #f5f5f5; border-radius: 6px; margin-bottom: 10px;">
-                        <strong>${esc(run.id)}</strong>
-                        <span style="margin-left: 20px; color: #666;">
-                            ${esc(run.kind)} | Tier ${esc(run.tier)} | ${esc(run.model)} | thinking ${esc(run.thinking ?? '-')}
-                            | ${run.replies} replies
-                        </span>
-                        <span style="float: right; color: #666;">
-                            prompt ${fmt(run.prompt_tokens)} | output ${fmt(run.output_tokens)} tokens
-                        </span>
-                    </div>
-                `).join('');
-            } catch (err) {
-                console.error('Failed to load runs:', err);
-            }
-        }
+<script>
+const esc = s => String(s ?? '').replace(/[&<>"']/g,
+    c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const fmt = n => (n === null || n === undefined) ? '-' : Number(n).toLocaleString();
+const num = (x, d = 6) => (x === null || x === undefined) ? '-' : Number(x).toPrecision(d);
+const usd = x => `$${Number(x).toFixed(2)}`;
+const verdict = flag => flag === true ? 'pass' : flag === false ? 'fail' : 'not recorded';
+const badge = (ok, yes = 'ok', no = 'no') => `<span class="badge ${ok ? 'ok' : 'no'}">${ok ? yes : no}</span>`;
+async function getJson(url) {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`${url}: ${r.status}`);
+    return r.json();
+}
+function table(headers, rows) {
+    return `<table><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>${rows.join('')}</table>`;
+}
 
-        async function loadProofData() {
-            try {
-                const data = await getJson('/api/test-results');
-                document.getElementById('compare-hash').textContent = data.compare_hash;
-                document.getElementById('hash-status').textContent = !data.suite_found
-                    ? 'No out/suite_port.json yet.'
-                    : data.hash_matches
-                        ? `Suite from ${data.suite_time} was scored with this compare.py.`
-                        : `STALE: suite from ${data.suite_time} was scored with ${data.suite_compare_hash}.`;
-                if (data.suite_found && !data.port_matches) {
-                    document.getElementById('hash-status').textContent +=
-                        ` STALE PORT: scored ${data.suite_port_hash ?? 'no single port version'}, ` +
-                        `port/aermod_py is now ${data.port_hash ?? 'empty'}.`;
-                }
+async function loadPort() {
+    const tokens = await getJson('/api/tokens');
+    document.getElementById('token-cards').innerHTML = ['A', 'B'].filter(t => tokens[t]).map(t => `
+        <div class="card"><div class="k">Tier ${t}: code only (default)</div><div class="v">${fmt(tokens[t].tokens_code_only)}</div></div>
+        <div class="card"><div class="k">Tier ${t}: with comments</div><div class="v">${fmt(tokens[t].tokens_with_comments)}</div></div>`).join('');
+    document.getElementById('token-note').textContent = tokens.A
+        ? `Tokens of the packed Fortran (${tokens.A.method}); prompts add the contract, glue, setup table and debug catalogue.`
+        : 'context/tokens.json missing: run python pack.py';
 
-                renderTestGrid('tier-a-grid', data.tier_a, data.results);
-                renderTestGrid('tier-b-grid', data.tier_b, data.results);
-                renderTestGrid('holdout-grid', data.holdout, data.results);
-                const passed = cases => cases.filter(c => data.results[c]?.passes === true).length;
-                document.getElementById('tier-a-rate').textContent = `${passed(data.tier_a)}/${data.tier_a.length}`;
-                const tierB = data.tier_a.concat(data.tier_b);
-                document.getElementById('tier-b-rate').textContent = `${passed(tierB)}/${tierB.length}`;
+    const [runs, snapshots] = await Promise.all([getJson('/api/runs'), getJson('/api/results')]);
+    const all = runs.flatMap(r => r.interactions);
+    const sum = k => all.reduce((s, i) => s + (i.usage[k] || 0), 0);
+    const costs = all.map(i => i.cost_usd).filter(c => c !== null && c !== undefined);
+    document.getElementById('spend').innerHTML = [
+        ['Argon interactions', fmt(all.length)],
+        ['billed input tokens', fmt(sum('total_input_tokens'))],
+        ['output + thinking tokens', fmt(sum('total_output_tokens') + sum('total_thought_tokens'))],
+        ['spend', costs.length ? `${usd(costs.reduce((a, b) => a + b, 0))}${costs.length < all.length ? ' (partial)' : ''}` : 'not recorded'],
+    ].map(([k, v]) => `<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+    document.getElementById('prices').innerHTML = snapshots.filter(s => s.prices)
+        .map(s => `Costs from <code>${esc(s.path)}</code>. Prices: ${esc(s.prices)}`).join('<br>');
+    document.getElementById('runs').innerHTML = runs.length === 0
+        ? '<p class="muted">No runs recorded yet.</p>'
+        : table(['run', 'kind', 'tier', 'model / thinking', 'interactions', 'prompt tokens', 'billed input', 'output + thinking', 'cost', 'outcome'],
+            runs.map(r => `<tr class="clickable" data-run="${esc(r.id)}">
+                <td class="mono">${esc(r.id)}</td><td>${esc(r.kind ?? '-')}</td><td>${esc(r.tier ?? '-')}</td>
+                <td>${esc(r.model ?? '-')} / ${esc(r.thinking ?? '-')}</td><td>${r.replies}</td>
+                <td>${fmt(r.prompt_tokens)}${r.expected_input_multiplier > 1 ? ` <span class="badge warn">up to ${r.expected_input_multiplier}x input billing</span>` : ''}</td>
+                <td>${fmt(r.usage.total_input_tokens)}${r.prompt_tokens && r.usage.total_input_tokens > 1.05 * r.prompt_tokens
+                    ? ` <span class="badge warn">${(r.usage.total_input_tokens / r.prompt_tokens).toFixed(1)}x prompt</span>` : ''}</td>
+                <td>${fmt(r.usage.total_output_tokens + r.usage.total_thought_tokens)}</td>
+                <td>${r.cost_usd !== null && r.cost_usd !== undefined ? usd(r.cost_usd) : '-'}</td>
+                <td>${outcome(r)}</td>
+            </tr>`));
+    document.querySelectorAll('tr[data-run]').forEach(tr => tr.onclick = () => showRun(tr.dataset.run));
+}
 
-                const prov = await getJson('/api/provenance');
-                document.getElementById('provenance').innerHTML = prov.python_files.length === 0
-                    ? '<p style="color: #666;">No Python files yet: only the README.</p>'
-                    : `<p><span class="status-badge ${prov.ok ? 'pass' : 'fail'}">${prov.ok ? 'verified' : 'unverified'}</span>
-                       ${prov.python_files.length} Python files</p>`
-                      + prov.problems.map(p => `<div class="commit">${esc(p)}</div>`).join('');
+function outcome(r) {
+    if (r.kind === 'repair') {
+        const parts = [`${fmt(r.iterations)} iteration(s)`, `${fmt(r.patches_kept ?? 0)} patch(es) kept`];
+        if (r.cases_scored) parts.push(`${r.cases_passing}/${r.cases_scored} training cases pass`);
+        if (r.stop_reason) parts.push(esc(r.stop_reason));
+        return parts.join('; ');
+    }
+    const files = new Set(r.interactions.flatMap(i => i.files));
+    return [files.size ? `${files.size} files written` : '', esc(r.fortran_pack ?? '')].filter(Boolean).join('; ') || '-';
+}
 
-                const commits = await getJson('/api/commits');
-                document.getElementById('commits-list').innerHTML = commits.length === 0
-                    ? '<p style="color: #666;">No commits touch port/aermod_py.</p>'
-                    : commits.map(c => `
-                        <div class="commit">
-                            <span class="commit-hash">${esc(c.hash)}</span>
-                            <span class="commit-author">${esc(c.author)} ${esc(c.date)}</span>
-                            <div style="margin-top: 5px;">${esc(c.subject)}</div>
-                        </div>`).join('');
-            } catch (err) {
-                console.error('Failed to load proof data:', err);
-            }
-        }
+async function showRun(id) {
+    const run = await getJson(`/api/runs/${id.split('/').map(encodeURIComponent).join('/')}`);
+    document.getElementById('run-detail').innerHTML = `<h3 style="margin-bottom:8px">${esc(id)}</h3>` +
+        (run.token_method ? `<p class="muted">Prompt tokens: ${fmt(run.prompt_tokens)} by ${esc(run.token_method)}</p>` : '') +
+        table(['Argon interaction', 'step', 'files written', 'billed input', 'output', 'thinking', 'seconds', 'cost', 'decision'],
+            run.interactions.map(i => `<tr><td class="mono">${esc(i.id)}<br><span class="muted">${esc(i.status)}, ${esc(i.path)}</span></td>
+                <td>${esc(i.step ?? '-')}${i.iteration ? ` ${i.iteration}` : ''}</td>
+                <td class="mono">${i.files.map(esc).join(', ') || '-'}</td>
+                <td>${fmt(i.usage.total_input_tokens)}</td><td>${fmt(i.usage.total_output_tokens)}</td>
+                <td>${fmt(i.usage.total_thought_tokens)}</td><td>${i.seconds ? Math.round(i.seconds) : '-'}</td>
+                <td>${i.cost_usd !== null && i.cost_usd !== undefined ? usd(i.cost_usd) : '-'}</td>
+                <td>${i.decision ? `${badge(i.decision.accepted, 'kept', 'rolled back')} ${esc(i.decision.reason ?? '')}
+                    <div class="muted" style="margin-top:4px">${esc(i.decision.hypothesis ?? '')}</div>` : '-'}</td></tr>`));
+}
 
-        async function loadDecisionData() {
-            try {
-                const data = await getJson('/api/certify');
-                const badge = document.getElementById('certified');
-                badge.className = `status-badge ${data.certified ? 'pass' : 'fail'}`;
-                badge.textContent = data.certified ? 'certified' : 'not certified';
-                document.getElementById('criteria').innerHTML = data.criteria.map(c => `
-                    <div class="commit">
-                        <span class="status-badge ${c.ok ? 'pass' : 'fail'}">${c.ok ? 'ok' : 'no'}</span>
-                        <strong style="margin-left: 10px;">${esc(c.name)}</strong>
-                        <div style="margin-top: 5px; color: #666;">${esc(c.detail)}</div>
-                    </div>`).join('');
-            } catch (err) {
-                console.error('Failed to load certification:', err);
-            }
-        }
+function caseCard(name, r) {
+    if (!r) return `<div class="case pending"><b>${esc(name)}</b>not scored</div>`;
+    const lines = r.error ? `<pre>${esc(r.error.trim().split('\n').slice(-2).join('\n'))}</pre>`
+        : r.slope !== null && r.slope !== undefined
+            ? `EPA ${verdict(r.epa_pass)}: slope ${num(r.slope)} / ${num(r.slope_ols)} / ${num(r.mean_ratio)}<br>
+               strict ${verdict(r.strict_pass)}: zero agreement ${r.zero_agreement != null ? (100 * r.zero_agreement).toFixed(3) + '%' : '-'},
+               p99 rel ${num(r.p99_rel_err, 3)}, H4H fails ${esc(r.h4h_fails ?? '-')}`
+            : `<pre>${esc(r.summary ?? '')}</pre>`;
+    return `<div class="case ${r.passes ? 'pass' : 'fail'}"><b>${esc(name)}</b>${lines}</div>`;
+}
 
-        function renderTestGrid(gridId, cases, results) {
-            document.getElementById(gridId).innerHTML = cases.map(caseName => {
-                const result = results[caseName];
-                const status = result === undefined ? 'pending' : (result.passes ? 'pass' : 'fail');
-                const detail = result === undefined ? 'not scored'
-                    : result.error ? esc(result.error)
-                    : `EPA ${result.epa_pass ? 'pass' : 'fail'}, strict ${result.strict_pass ? 'pass' : 'fail'}`;
-                return `
-                    <div class="case-card ${status}">
-                        ${esc(caseName)}
-                        <div style="font-size: 12px; font-weight: 400; margin-top: 5px;">${detail}</div>
-                    </div>
-                `;
-            }).join('');
-        }
+async function loadProof() {
+    const lock = await getJson('/api/frozen');
+    document.getElementById('cmp-now').textContent = lock.compare_hash;
+    document.getElementById('cmp-approved').textContent = lock.approved_hash ?? 'missing';
+    document.getElementById('cmp-status').innerHTML = badge(lock.matches, 'unchanged', 'CHANGED');
 
-        loadPortData();
-    </script>
+    const data = await getJson('/api/test-results');
+    const src = document.getElementById('score-source');
+    if (!data.source) {
+        src.textContent = 'No scores yet: run make suite-port (or a repair run).';
+    } else if (data.suite_found) {
+        src.innerHTML = `Scores from <code>${esc(data.source)}</code> (${esc(data.suite_time)}). ` +
+            (data.hash_matches ? 'Scored with the current compare.py. ' : '<b>Scored with a different compare.py.</b> ') +
+            (data.port_matches ? 'Scored the current port.' : '<b>The port changed since it was scored.</b>');
+    } else if (data.source.startsWith('results/')) {
+        src.innerHTML = `Scores from the committed snapshot <code>${esc(data.source)}</code> (scored ${esc(data.suite_time ?? '?')}), ` +
+            (data.hash_matches ? 'with the current compare.py. ' : '<b>with a different compare.py.</b> ') +
+            'Run <code>make suite-port</code> to rescore this checkout\'s port (needed to certify).';
+    } else {
+        src.innerHTML = `Scores from <code>${esc(data.source)}</code>, the repair loop's last scoring. ` +
+            'Run <code>make suite-port</code> for scores tied to the port version (needed to certify).';
+    }
+    for (const [id, cases] of [['grid-a', data.tier_a], ['grid-b', data.tier_b], ['grid-h', data.holdout]]) {
+        document.getElementById(id).innerHTML = cases.map(c => caseCard(c, data.results[c])).join('');
+    }
+    const passed = cs => cs.filter(c => data.results[c]?.passes === true).length;
+    const tierB = data.tier_a.concat(data.tier_b);
+    document.getElementById('rates').innerHTML = [
+        ['Tier A', passed(data.tier_a), data.tier_a.length],
+        ['Tier B (incl. A)', passed(tierB), tierB.length],
+        ['Holdout', passed(data.holdout), data.holdout.length],
+    ].map(([k, p, n]) => `<div class="card"><div class="k">${k} passing</div><div class="v">${p}/${n}</div></div>`).join('');
+
+    const prov = await getJson('/api/provenance');
+    document.getElementById('prov-status').innerHTML = prov.files.length === 0
+        ? '<span class="muted">port/aermod_py holds only its README.</span>'
+        : `${badge(prov.ok, 'verified', 'unverified')} ${prov.files.length} files from ${prov.interactions.length} Argon interaction(s): ` +
+          prov.interactions.map(i => `<code>${esc(i)}</code>`).join(' ');
+    document.getElementById('prov-table').innerHTML = prov.files.length === 0 ? '' :
+        table(['file', 'Argon interaction', 'reply', 'step', 'status'], prov.files.map(f => `<tr>
+            <td class="mono">aermod_py/${esc(f.file)}</td><td class="mono">${esc(f.interaction_id ?? '-')}</td>
+            <td class="mono">${esc(f.reply ?? '-')}</td><td>${esc(f.step ?? '-')}</td>
+            <td>${f.problem ? `<span class="badge no">no</span> ${esc(f.problem)}` : badge(true)}</td></tr>`));
+}
+
+async function loadDecision() {
+    const data = await getJson('/api/certify');
+    const b = document.getElementById('certified');
+    b.className = `badge big ${data.certified ? 'ok' : 'no'}`;
+    b.textContent = data.certified ? 'CERTIFIED' : 'NOT CERTIFIED';
+    document.getElementById('criteria').innerHTML = '<tr><th>criterion</th><th></th><th>detail</th></tr>' +
+        data.criteria.map(c => `<tr><td>${esc(c.name)}</td><td>${badge(c.ok)}</td><td class="mono">${esc(c.detail)}</td></tr>`).join('');
+}
+
+const loaders = {port: loadPort, proof: loadProof, decision: loadDecision};
+function show(screen) {
+    document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.screen === screen));
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === screen));
+    loaders[screen]().catch(err => {
+        console.error(err);
+        document.getElementById(screen).insertAdjacentHTML('afterbegin',
+            `<div class="panel fail"><b>Could not load:</b> ${esc(err.message)}</div>`);
+    });
+}
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => show(b.dataset.screen));
+show('port');
+</script>
 </body>
 </html>
