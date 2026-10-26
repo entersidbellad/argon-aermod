@@ -111,8 +111,8 @@
     <!-- Model verification -->
     <section id="proof" class="screen" role="tabpanel">
         <p class="lede"><b>Can the Python model be trusted with a permit question?</b> Each EPA test case is run through the Python model
-            and through the original Fortran AERMOD. A case passes only if the Python model gives the same concentrations and the same
-            regulatory design value at every receptor. The scoring script is frozen (its fingerprint is pinned), so the bar cannot move after the results are in.</p>
+            and through the original Fortran AERMOD. A case passes only if the Python model's hourly concentrations match the Fortran's within a strict tolerance
+            and its regulatory design value matches at every receptor. The scoring script is frozen (its fingerprint is pinned), so the bar cannot move after the results are in.</p>
         <div class="kpis" id="rates"><div class="kpi"><div class="loading">Loading scores…</div></div></div>
         <div class="panel">
             <div class="panel-head"><h2>Results by test case</h2><p id="score-source"></p></div>

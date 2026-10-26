@@ -310,6 +310,7 @@ def _suite_row(r: dict) -> dict:
         "error": r.get("error"), "slope": epa.get("slope"), "slope_ols": epa.get("slope_ols"),
         "mean_ratio": epa.get("mean_ratio"), "p99_rel_err": strict.get("p99_rel_err"),
         "zero_agreement": strict.get("zero_agreement"),
+        "max_abs_diff": strict.get("max_abs_diff"),
         "h4h_max_rel_diff": strict.get("h4h_max_rel_diff"),
         "h4h_fails": f"{strict['h4h_n_fail']}/{strict['h4h_n_receptors']}"
         if "h4h_n_fail" in strict else None,

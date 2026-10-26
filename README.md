@@ -132,7 +132,7 @@ make readme                                  # refresh the results block above
 | Tab | Shows | Read from |
 |---|---|---|
 | Fuel & stack check | The cement-kiln what-if below: a verdict card per scenario (% of the NAAQS, pass / near limit / exceeds), gauges against the standard line, the plume footprint | `whatif/kiln.toml`, `whatif/cache/` |
-| Model verification | Per EPA test case, in plain terms (same concentrations, same design value at every receptor), with slope, p99 and H4H one click down under "Technical detail"; the frozen digest; every file's provenance | `out/suite_port.json`, else `results/tier_*.md`; `harness/compare.py`; `split.trace` |
+| Model verification | Per EPA test case, in plain terms (hourly concentrations within the strict tolerance, design value matching at every receptor, "identical" only when the largest difference is exactly 0), with slope, p99 and H4H one click down under "Technical detail"; the frozen digest; every file's provenance | `out/suite_port.json`, else `results/tier_*.md`; `harness/compare.py`; `split.trace` |
 | Certification | Certified or not, for which tiers, with each criterion and why | all of the above, recomputed |
 | How it was built | Argon requests, tokens and cost per run; Fortran in scope; files each reply wrote; repair decisions; git history of the port | `agent/runs/`, `results/tier_*.md`, `context/tokens.json` |
 

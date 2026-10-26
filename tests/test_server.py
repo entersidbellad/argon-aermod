@@ -291,3 +291,9 @@ def test_frozen_reports_compare_thresholds():
     rules = TestClient(server.app).get("/api/frozen").json()["rules"]
     assert rules == {"slope_tolerance": 0.001, "zero_agreement_min": 0.999, "relative_tolerance": 1e-4,
                      "significant_fraction": 0.01, "percentile": 99.0}
+
+
+def test_suite_rows_carry_the_largest_absolute_difference(client):
+    row = {**passing("aertest_nobldg"), "strict": {"passes": True, "max_abs_diff": 0.0, "p99_rel_err": 0.0}}
+    suite([row], server.compare_hash())
+    assert client.get("/api/test-results").json()["results"]["aertest_nobldg"]["max_abs_diff"] == 0.0

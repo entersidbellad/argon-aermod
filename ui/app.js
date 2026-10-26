@@ -88,6 +88,8 @@ function glossary() {
     return {
         relPct: `${+(r.relative_tolerance * 100).toPrecision(3)}%`,
         slopePct: `${+(tol * 100).toPrecision(3)}%`,
+        pctl: `${r.percentile}%`,
+        sigPct: `${+(r.significant_fraction * 100).toPrecision(3)}%`,
         slope: `Plot every hourly concentration from the port against the reference and fit a line. A perfect port lies on a slope of exactly 1. The EPA rule allows 1 ± ${tol} (${+(tol * 100).toFixed(3)}%) and checks all three definitions EPA's kit uses: through the origin, ordinary least squares, and the ratio of the means.`,
         zero: `Share of paired hourly values where the port and the reference agree on whether there is any concentration at all (whether the plume reached the receptor). Must be at least ${pct(r.zero_agreement_min)}.`,
         p99: `Relative error |port − reference| / reference at the ${r.percentile}th percentile, over every value at least ${+(r.significant_fraction * 100).toFixed(2)}% of the case maximum. Must be ≤ ${rel}. 0 means the numbers are identical.`,
@@ -320,10 +322,11 @@ function caseCard(name, r, info, tierStatus, G) {
         const neutralFail = cls === 'prog' ? 'neutral' : 'bad';
         const mark = ok => ok === true ? ic('ok') : ok === false ? ic(neutralFail) : ic('neutral');
         const [fails, receptors] = String(r.h4h_fails ?? '').split('/').map(Number);
-        const exact = Number(r.p99_rel_err) === 0;
+        const identical = isNum(r.max_abs_diff) && Number(r.max_abs_diff) === 0;
         const plain = [
-            [r.strict_pass, exact && r.strict_pass ? 'Hour-by-hour concentrations identical to the Fortran'
-                : r.strict_pass ? `Hour-by-hour concentrations within ${G.relPct} of the Fortran` : 'Hour-by-hour concentrations differ from the Fortran'],
+            [r.strict_pass, identical && r.strict_pass ? 'Every hourly concentration identical to the Fortran'
+                : r.strict_pass ? `${G.pctl} of significant hourly concentrations within ${G.relPct} of the Fortran`
+                    : 'Hourly concentrations outside the strict rule'],
             Number.isFinite(receptors) && receptors > 0
                 ? [fails === 0, fails === 0 ? `Design value matches at all ${fmt(receptors)} receptors` : `Design value differs at ${fmt(fails)} of ${fmt(receptors)} receptors`]
                 : null,
@@ -336,6 +339,7 @@ function caseCard(name, r, info, tierStatus, G) {
             <dt>Strict rule ${tip(G.strict)}</dt><dd>${verdict(r.strict_pass)}</dd>
             <dt>&nbsp; Zero/nonzero agreement ${tip(G.zero)}</dt><dd>${isNum(r.zero_agreement) ? `${(100 * r.zero_agreement).toFixed(3)}%` : '–'}</dd>
             <dt>&nbsp; p99 relative error ${tip(G.p99)}</dt><dd>${p99}</dd>
+            <dt>&nbsp; Largest absolute difference</dt><dd>${isNum(r.max_abs_diff) ? (Number(r.max_abs_diff) === 0 ? '0 (identical)' : `${Number(r.max_abs_diff).toExponential(2)} µg/m³`) : 'not recorded'}</dd>
             <dt>&nbsp; H4H receptors failing ${tip(G.h4h)}</dt><dd>${esc((r.h4h_fails ?? '–').replace('/', ' / '))}</dd>
         </dl></div></details>`;
     } else {
@@ -416,7 +420,7 @@ async function loadProof() {
             <ul>
                 <li>Every hourly result exists in both models.</li>
                 <li>Both agree on where the plume reaches, in at least ${pct(r.zero_agreement_min)} of hours.</li>
-                <li>Concentrations match to within ${G.relPct}.</li>
+                <li>${G.pctl} of significant concentrations (at least ${G.sigPct} of the case maximum) match to within ${G.relPct}.</li>
                 <li>The regulatory design value matches at every receptor.</li>
             </ul>
             <details class="tech"><summary>Technical detail</summary><ul class="body tech-list">
