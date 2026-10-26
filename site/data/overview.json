@@ -1,0 +1,372 @@
+{
+ "tiers": {
+  "A": {
+   "training": {
+    "cases": [
+     "aertest_nobldg",
+     "CAPPED_STACK2",
+     "CAPPED_STACK2C0",
+     "CAPPED_STACK2CE",
+     "HRDOW_STACK1",
+     "FLATELEV_FLAT_STK"
+    ],
+    "scored": 6,
+    "passing": 6
+   },
+   "holdout": {
+    "cases": [
+     "testpm10_stack2"
+    ],
+    "scored": 1,
+    "passing": 1
+   },
+   "status": "passing"
+  },
+  "B": {
+   "training": {
+    "cases": [
+     "AERTEST",
+     "CAPPED_STACK1C0",
+     "ALLSRCS_STACKDW"
+    ],
+    "scored": 3,
+    "passing": 3
+   },
+   "holdout": {
+    "cases": [
+     "TESTPM10"
+    ],
+    "scored": 1,
+    "passing": 1
+   },
+   "status": "passing"
+  }
+ },
+ "scores": {
+  "source": "results/ci_port_suite.json",
+  "suite_found": true,
+  "suite_time": "2026-10-26T05:00:15",
+  "hash_matches": true,
+  "port_matches": true
+ },
+ "argon": {
+  "runs": [
+   {
+    "id": "import_fix_box_20261025",
+    "kind": "edit",
+    "tier": null,
+    "model": "gemini-4-argon",
+    "thinking": "high",
+    "replies": 1,
+    "prompt_tokens": 21751,
+    "usage": {
+     "total_input_tokens": 21756,
+     "total_output_tokens": 20562,
+     "total_thought_tokens": 1757,
+     "total_tokens": 44075
+    },
+    "cost_usd": 0.27,
+    "cost_complete": true
+   },
+   {
+    "id": "port_A_box_20261025",
+    "kind": "port",
+    "tier": "A",
+    "model": "gemini-4-argon",
+    "thinking": "high",
+    "replies": 1,
+    "prompt_tokens": 263773,
+    "usage": {
+     "total_input_tokens": 988112,
+     "total_output_tokens": 85741,
+     "total_thought_tokens": 60591,
+     "total_tokens": 1134444
+    },
+    "cost_usd": 3.44,
+    "cost_complete": true
+   },
+   {
+    "id": "repair_A_box/step_001",
+    "kind": "repair",
+    "tier": "A",
+    "model": null,
+    "thinking": null,
+    "replies": 1,
+    "prompt_tokens": null,
+    "usage": {
+     "total_input_tokens": 1250,
+     "total_output_tokens": 1014,
+     "total_thought_tokens": 11433,
+     "total_tokens": 13697
+    },
+    "cost_usd": 0.13,
+    "cost_complete": true
+   },
+   {
+    "id": "repair_B_box_20261025",
+    "kind": "repair",
+    "tier": "B",
+    "model": "gemini-4-argon",
+    "thinking": "high",
+    "replies": 0,
+    "prompt_tokens": null,
+    "usage": {
+     "total_input_tokens": 0,
+     "total_output_tokens": 0,
+     "total_thought_tokens": 0,
+     "total_tokens": 0
+    },
+    "cost_usd": null,
+    "cost_complete": false
+   },
+   {
+    "id": "tierB_c1_base",
+    "kind": "edit",
+    "tier": null,
+    "model": "gemini-4-argon",
+    "thinking": "high",
+    "replies": 1,
+    "prompt_tokens": 60782,
+    "usage": {
+     "total_input_tokens": 60787,
+     "total_output_tokens": 14386,
+     "total_thought_tokens": 37506,
+     "total_tokens": 112679
+    },
+    "cost_usd": 0.64,
+    "cost_complete": true
+   },
+   {
+    "id": "tierB_c2_wake",
+    "kind": "edit",
+    "tier": null,
+    "model": "gemini-4-argon",
+    "thinking": "high",
+    "replies": 1,
+    "prompt_tokens": 84830,
+    "usage": {
+     "total_input_tokens": 84835,
+     "total_output_tokens": 24553,
+     "total_thought_tokens": 19440,
+     "total_tokens": 128828
+    },
+    "cost_usd": 0.61,
+    "cost_complete": true
+   },
+   {
+    "id": "tierB_c3_rise",
+    "kind": "edit",
+    "tier": null,
+    "model": "gemini-4-argon",
+    "thinking": "high",
+    "replies": 1,
+    "prompt_tokens": 60519,
+    "usage": {
+     "total_input_tokens": 60524,
+     "total_output_tokens": 11821,
+     "total_thought_tokens": 25816,
+     "total_tokens": 98161
+    },
+    "cost_usd": 0.5,
+    "cost_complete": true
+   },
+   {
+    "id": "tierB_c4_prmcalc",
+    "kind": "edit",
+    "tier": null,
+    "model": "gemini-4-argon",
+    "thinking": "high",
+    "replies": 1,
+    "prompt_tokens": 58702,
+    "usage": {
+     "total_input_tokens": 58707,
+     "total_output_tokens": 6034,
+     "total_thought_tokens": 16927,
+     "total_tokens": 81668
+    },
+    "cost_usd": 0.35,
+    "cost_complete": true
+   },
+   {
+    "id": "tierB_c5_wire",
+    "kind": "edit",
+    "tier": null,
+    "model": "gemini-4-argon",
+    "thinking": "high",
+    "replies": 1,
+    "prompt_tokens": 77845,
+    "usage": {
+     "total_input_tokens": 77850,
+     "total_output_tokens": 19595,
+     "total_thought_tokens": 10054,
+     "total_tokens": 107499
+    },
+    "cost_usd": 0.45,
+    "cost_complete": true
+   },
+   {
+    "id": "tierB_fix_debuglabel_box_20261025",
+    "kind": "edit",
+    "tier": null,
+    "model": "gemini-4-argon",
+    "thinking": "low",
+    "replies": 1,
+    "prompt_tokens": 9769,
+    "usage": {
+     "total_input_tokens": 9774,
+     "total_output_tokens": 9198,
+     "total_thought_tokens": 0,
+     "total_tokens": 18972
+    },
+    "cost_usd": 0.11,
+    "cost_complete": true
+   },
+   {
+    "id": "tierB_fix_names_prime_base",
+    "kind": "edit",
+    "tier": null,
+    "model": "gemini-4-argon",
+    "thinking": "low",
+    "replies": 1,
+    "prompt_tokens": 12424,
+    "usage": {
+     "total_input_tokens": 12429,
+     "total_output_tokens": 12027,
+     "total_thought_tokens": 0,
+     "total_tokens": 24456
+    },
+    "cost_usd": 0.15,
+    "cost_complete": true
+   },
+   {
+    "id": "tierB_fix_names_prime_rise",
+    "kind": "edit",
+    "tier": null,
+    "model": "gemini-4-argon",
+    "thinking": "low",
+    "replies": 1,
+    "prompt_tokens": 9600,
+    "usage": {
+     "total_input_tokens": 9605,
+     "total_output_tokens": 9187,
+     "total_thought_tokens": 0,
+     "total_tokens": 18792
+    },
+    "cost_usd": 0.11,
+    "cost_complete": true
+   },
+   {
+    "id": "tierB_fix_names_prime_wake",
+    "kind": "edit",
+    "tier": null,
+    "model": "gemini-4-argon",
+    "thinking": "low",
+    "replies": 1,
+    "prompt_tokens": 22564,
+    "usage": {
+     "total_input_tokens": 22569,
+     "total_output_tokens": 22116,
+     "total_thought_tokens": 0,
+     "total_tokens": 44685
+    },
+    "cost_usd": 0.27,
+    "cost_complete": true
+   },
+   {
+    "id": "tierB_fix_names_prmcalc",
+    "kind": "edit",
+    "tier": null,
+    "model": "gemini-4-argon",
+    "thinking": "low",
+    "replies": 1,
+    "prompt_tokens": 6605,
+    "usage": {
+     "total_input_tokens": 6610,
+     "total_output_tokens": 6052,
+     "total_thought_tokens": 0,
+     "total_tokens": 12662
+    },
+    "cost_usd": 0.07,
+    "cost_complete": true
+   }
+  ],
+  "interactions": 13,
+  "usage": {
+   "total_input_tokens": 1414808,
+   "total_output_tokens": 242286,
+   "total_thought_tokens": 183524,
+   "total_tokens": 1840618
+  },
+  "cost_usd": 7.1,
+  "cost_complete": true,
+  "prices": [
+   {
+    "path": "results/tier_A.md",
+    "prices": "$2 / 1M input, $10 / 1M output incl. thinking (introductory, through 2026-11-30); no cache hits."
+   },
+   {
+    "path": "results/tier_B.md",
+    "prices": "$2 / 1M input, $10 / 1M output incl. thinking (introductory, through 2026-11-30); no cache hits."
+   }
+  ]
+ },
+ "provenance": {
+  "ok": true,
+  "python_files": 18,
+  "interactions": 8
+ },
+ "compare_frozen": true,
+ "tokens": {
+  "A": {
+   "tier": "A",
+   "method": "tiktoken o200k_base (proxy)",
+   "packed": "with comments",
+   "tokens_with_comments": 211866,
+   "tokens_code_only": 125045,
+   "units": 120,
+   "lines": 19027,
+   "per_file_tokens_with_comments": {
+    "modules.f": 55332,
+    "aermod.f": 9425,
+    "metext.f": 39421,
+    "iblval.f": 10927,
+    "siggrid.f": 8579,
+    "tempgrid.f": 8479,
+    "windgrid.f": 9875,
+    "calc1.f": 36241,
+    "calc2.f": 17767,
+    "prise.f": 4407,
+    "sigmas.f": 6304
+   }
+  },
+  "B": {
+   "tier": "B",
+   "method": "tiktoken o200k_base (proxy)",
+   "packed": "with comments",
+   "tokens_with_comments": 283216,
+   "tokens_code_only": 168261,
+   "units": 162,
+   "lines": 25461,
+   "per_file_tokens_with_comments": {
+    "modules.f": 55332,
+    "aermod.f": 9425,
+    "metext.f": 39421,
+    "iblval.f": 10927,
+    "siggrid.f": 8579,
+    "tempgrid.f": 8479,
+    "windgrid.f": 9875,
+    "calc1.f": 44793,
+    "calc2.f": 17767,
+    "prise.f": 5410,
+    "sigmas.f": 6304,
+    "prime.f": 59858
+   }
+  }
+ },
+ "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41",
+ "certified": true,
+ "certified_tiers": [
+  "A",
+  "B"
+ ]
+}

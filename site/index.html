@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kiln permit check · AERMOD in Python, ported by Gemini 4 Argon and verified on EPA's test cases</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232b3138'/%3E%3Cpath d='M6 22c6-10 14-12 20-12' stroke='%23a9bccf' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="top">
+    <div class="wrap">
+        <div>
+            <div class="eyebrow">EPA AERMOD 26135 · Fortran <span aria-hidden="true">→</span> Python · ported by Gemini 4 Argon</div>
+            <h1>Kiln permit check <span class="arrow">·</span> AERMOD in Python</h1>
+            <p class="tagline">Will a fuel or stack change keep the plant inside the air-quality standards?
+                <span class="sub">Answered with EPA's regulatory dispersion model, ported from Fortran with zero hand edits and checked against EPA's own test cases.</span></p>
+        </div>
+        <div class="chips" id="chips" aria-live="polite">
+            <span class="chip"><span class="ic prog" aria-hidden="true">…</span>Loading status…</span>
+        </div>
+    </div>
+</header>
+
+<section class="pipeline" aria-label="How it works">
+    <div class="wrap">
+        <div class="pipeline-title">How the model was built and checked</div>
+        <ol class="steps" id="steps">
+            <li><button class="step" data-go="port"><span class="n"><span class="ic neutral" aria-hidden="true">1</span>Input</span><span class="t">AERMOD Fortran</span><span class="v"><span class="skeleton" style="display:block;width:80%"></span></span></button></li>
+            <li><button class="step" data-go="port"><span class="n"><span class="ic neutral" aria-hidden="true">2</span>Translate</span><span class="t">Gemini 4 Argon</span><span class="v"><span class="skeleton" style="display:block;width:80%"></span></span></button></li>
+            <li><button class="step" data-go="proof"><span class="n"><span class="ic neutral" aria-hidden="true">3</span>Output</span><span class="t">Python model</span><span class="v"><span class="skeleton" style="display:block;width:80%"></span></span></button></li>
+            <li><button class="step" data-go="proof"><span class="n"><span class="ic neutral" aria-hidden="true">4</span>Verify</span><span class="t">EPA test cases</span><span class="v"><span class="skeleton" style="display:block;width:80%"></span></span></button></li>
+            <li><button class="step" data-go="decision"><span class="n"><span class="ic neutral" aria-hidden="true">5</span>Decide</span><span class="t">Certified?</span><span class="v"><span class="skeleton" style="display:block;width:80%"></span></span></button></li>
+        </ol>
+    </div>
+</section>
+
+<main class="wrap">
+    <nav class="tabs" role="tablist">
+        <button role="tab" data-screen="whatif" aria-selected="true">Fuel &amp; stack check <span class="sub">cement kiln what-if</span></button>
+        <button role="tab" data-screen="proof" aria-selected="false">Model verification <span class="sub">against EPA test cases</span></button>
+        <button role="tab" data-screen="decision" aria-selected="false">Certification <span class="sub">can the model be used?</span></button>
+        <button role="tab" data-screen="port" aria-selected="false">How it was built <span class="sub">Argon runs and cost</span></button>
+    </nav>
+
+    <!-- Fuel & stack check -->
+    <section id="whatif" class="screen active" role="tabpanel">
+        <div class="panel wi-intro">
+            <div>
+                <h2 id="wi-title">Fuel &amp; stack check</h2>
+                <p id="wi-story" style="margin-top:6px;color:var(--ink-2)"><span class="loading">Loading scenario config…</span></p>
+            </div>
+            <div class="sources" id="wi-sources"></div>
+        </div>
+        <div class="wi-layout">
+            <div class="panel wi-controls" id="wi-controls">
+                <h2>Plant inputs</h2>
+                <label>Pollutant<select id="wi-pollutant"></select></label>
+                <label>Fuel mix <span class="tag">illustrative</span><select id="wi-fuel"></select></label>
+                <p class="hint">A fuel mix sets the emission rate and exit gas temperature below.</p>
+                <label>Emission rate <span class="tag">illustrative</span> <span class="val" id="wi-emission-v"></span><input type="range" id="wi-emission" step="0.5"></label>
+                <label>Stack height <span class="val" id="wi-height-v"></span><input type="range" id="wi-height"></label>
+                <label>Stack diameter <span class="val" id="wi-diameter-v"></span><input type="range" id="wi-diameter"></label>
+                <label>Exit gas temperature <span class="val" id="wi-temperature-v"></span><input type="range" id="wi-temperature"></label>
+                <label>Exit gas velocity <span class="val" id="wi-velocity-v"></span><input type="range" id="wi-velocity"></label>
+                <fieldset>
+                    <legend>Background already in the air <span class="tag">illustrative</span></legend>
+                    <label>1-hour, µg/m³<input type="number" id="wi-bg1" min="0" step="1"></label>
+                    <label>Annual, µg/m³<input type="number" id="wi-bgA" min="0" step="1"></label>
+                </fieldset>
+                <fieldset>
+                    <legend>Site conditions (scope check)</legend>
+                    <label class="check"><input type="checkbox" id="wi-bldg"> Building near the stack</label>
+                    <div id="wi-bldg-box" style="display:none">
+                        <label>Building height <span class="val" id="wi-bh-v"></span><input type="range" id="wi-bh" min="5" max="80" step="1" value="30"></label>
+                        <label>Building width <span class="val" id="wi-bw-v"></span><input type="range" id="wi-bw" min="5" max="150" step="1" value="40"></label>
+                        <label>Distance from stack <span class="val" id="wi-bd-v"></span><input type="range" id="wi-bd" min="10" max="1000" step="10" value="100"></label>
+                    </div>
+                    <label class="check"><input type="checkbox" id="wi-urban"> Urban site</label>
+                    <label class="check"><input type="checkbox" id="wi-terrain"> Hills or complex terrain nearby</label>
+                </fieldset>
+            </div>
+            <div>
+                <div class="panel">
+                    <div class="panel-head"><h2>Verdict against the NAAQS</h2><p id="wi-verdict-sub">Design value at the worst receptor, kiln plus background</p></div>
+                    <div class="verdicts" id="wi-verdicts"><div class="loading">Computing…</div></div>
+                    <div class="key" id="wi-key"></div>
+                    <p class="note-argon" id="wi-argon"></p>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><h2>Where the plume lands</h2>
+                        <label class="muted small">Show <select id="wi-metric" style="font:inherit;padding:3px 6px;border:1px solid var(--line);border-radius:4px">
+                            <option value="annual" selected>annual mean</option>
+                            <option value="one_hour">1-hour design value</option>
+                            <option value="max_1h">highest single hour</option>
+                        </select></label>
+                    </div>
+                    <div class="maps" id="wi-maps"></div>
+                    <div class="muted small" id="wi-map-note" style="margin-top:8px"></div>
+                </div>
+                <div class="panel standards">
+                    <details class="tech panel-details">
+                        <summary>Standards, method and caveats <span class="muted">how the design value and % of standard are computed</span></summary>
+                        <div class="body muted small" id="wi-standards"></div>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Model verification -->
+    <section id="proof" class="screen" role="tabpanel">
+        <p class="lede"><b>Can the Python model be trusted with a permit question?</b> Each EPA test case is run through the Python model
+            and through the original Fortran AERMOD. A case passes only if the Python model's hourly concentrations match the Fortran's within a strict tolerance
+            and its regulatory design value matches at every receptor. The scoring script is frozen (its fingerprint is pinned), so the bar cannot move after the results are in.</p>
+        <div class="kpis" id="rates"><div class="kpi"><div class="loading">Loading scores…</div></div></div>
+        <div class="panel">
+            <div class="panel-head"><h2>Results by test case</h2><p id="score-source"></p></div>
+            <div id="case-groups"><div class="loading">Loading…</div></div>
+        </div>
+        <div class="panel">
+            <div class="panel-head"><h2>What "pass" means</h2><p id="rules-source"></p></div>
+            <div class="rules" id="rules"><div class="loading">Loading…</div></div>
+        </div>
+        <div class="panel">
+            <details class="tech panel-details">
+                <summary>Technical detail: best-fit slope by case <span class="muted">a slope of 1 means identical output</span></summary>
+                <div class="body" id="slope-chart"><div class="loading">Loading…</div></div>
+            </details>
+        </div>
+        <div class="panel">
+            <div class="panel-head"><h2>Frozen scoring script</h2><p>harness/compare.py against the fingerprint approved in harness/compare.sha256</p></div>
+            <div class="hash-row" id="frozen"><div class="loading">Loading…</div></div>
+        </div>
+        <div class="panel">
+            <div class="panel-head"><h2>Provenance: every model file traces to the Argon request that wrote it</h2></div>
+            <p id="prov-status"><span class="loading">Tracing files…</span></p>
+            <details class="tech"><summary>File-by-file trace</summary><div class="body" id="prov-table"></div></details>
+        </div>
+    </section>
+
+    <!-- Certification -->
+    <section id="decision" class="screen" role="tabpanel">
+        <p class="lede">Certification is recomputed on every page load from the test scores, the scoring script, the current Python model
+            and its provenance. Nothing is stored, so editing any of them by hand revokes it immediately.</p>
+        <div id="verdict" class="verdict"><div class="loading">Checking every criterion…</div></div>
+        <div class="panel" style="margin-top:16px">
+            <div class="panel-head"><h2>Criteria</h2><p>All must hold. Technical detail on the right.</p></div>
+            <ul class="criteria" id="criteria"></ul>
+        </div>
+        <div class="panel" id="scope-note"></div>
+    </section>
+
+    <!-- Port -->
+    <section id="port" class="screen" role="tabpanel">
+        <p class="lede">For the engineers: Gemini 4 Argon read the in-scope AERMOD Fortran in one full-context request and wrote the whole Python package.
+            An automated repair loop then fixed divergences against the reference build. Every request is recorded under
+            <code>agent/runs/</code>; the numbers below are read from those records and <code>results/</code>.</p>
+        <div class="kpis" id="spend"><div class="kpi"><div class="loading">Loading Argon runs…</div></div></div>
+        <div class="cols-port">
+            <div class="panel">
+                <div class="panel-head"><h2>Fortran in scope</h2><p id="token-method"></p></div>
+                <div id="token-table"><div class="loading">Loading…</div></div>
+                <p class="muted small" id="token-note" style="margin-top:10px"></p>
+            </div>
+            <div class="panel">
+                <div class="panel-head"><h2>Where the tokens went</h2><p>per Argon interaction, from the saved replies</p></div>
+                <div id="token-chart"><div class="loading">Loading…</div></div>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-head"><h2>Argon runs <code>agent/runs/</code></h2><p>Click a run for its interactions, files written and repair decisions.</p></div>
+            <div id="runs"><div class="loading">Loading…</div></div>
+            <p class="muted xsmall" id="prices" style="margin-top:8px"></p>
+            <div id="run-detail"></div>
+        </div>
+        <div class="panel">
+            <div class="panel-head"><h2>Port history <code>port/aermod_py</code></h2><p>Every commit that touched the generated package.</p></div>
+            <div id="commits"><div class="loading">Loading…</div></div>
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    <div class="wrap">
+        <span>Read-only dashboard: nothing on this page starts a model run or a test. Data from <code>agent/runs/</code>,
+            <code>results/</code>, <code>out/</code>, <code>port/aermod_py/</code> and <code>whatif/cache/</code>.</span>
+        <span id="footer-port"></span>
+    </div>
+</footer>
+<div id="tooltip" role="tooltip"></div>
+<script src="data/static.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
