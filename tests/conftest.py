@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-for p in (ROOT, ROOT / "harness", ROOT / "agent"):
+for p in (ROOT, ROOT / "harness", ROOT / "agent", ROOT / "whatif", ROOT / "tools"):
     sys.path.insert(0, str(p))
 
 import cases as catalog  # noqa: E402

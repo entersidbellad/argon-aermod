@@ -218,3 +218,82 @@ def test_results_snapshot_supplies_scores_and_costs(client):
 
     server.RESULTS_DIR.joinpath("tier_A.md").write_text(SNAPSHOT.format(digest="0" * 64))
     assert client.get("/api/test-results").json()["hash_matches"] is False
+
+
+def test_holdouts_are_assigned_to_the_tier_their_deck_needs(client):
+    cases = client.get("/api/test-results").json()["cases"]
+    assert cases["TESTPM10"]["tests_tier"] == "B"            # STACK1 carries PRIME building data
+    assert cases["testpm10_stack2"]["tests_tier"] == "A"
+    assert cases["AERTEST"]["tests_tier"] == "B" and cases["HRDOW_STACK1"]["tests_tier"] == "A"
+
+
+def test_overview_keeps_tier_b_in_progress_until_every_tier_b_case_passes(client):
+    overview = client.get("/api/overview").json()
+    assert overview["tiers"]["A"]["status"] == "not_scored"
+    assert overview["tiers"]["B"]["status"] == "in_progress"
+
+    names = client.get("/api/test-results").json()["cases"]
+    tier_a = [n for n, c in names.items() if c["tests_tier"] == "A"]
+    tier_b = [n for n, c in names.items() if c["tests_tier"] == "B"]
+    failing_b = [{"case": c, "passes": False, "epa": {"passes": False}, "strict": {"passes": False}}
+                 for c in tier_b]
+    suite([passing(c) for c in tier_a] + failing_b, server.compare_hash())
+    tiers = client.get("/api/overview").json()["tiers"]
+    assert tiers["A"]["status"] == "passing"
+    assert (tiers["A"]["training"]["passing"], tiers["A"]["holdout"]["passing"]) == (6, 1)
+    assert tiers["B"]["status"] == "in_progress" and tiers["B"]["training"]["scored"] == 3
+
+    suite([passing(c) for c in tier_a + tier_b[:-1]] + failing_b[-1:], server.compare_hash())
+    assert client.get("/api/overview").json()["tiers"]["B"]["status"] == "in_progress"
+    suite([passing(c) for c in tier_a + tier_b], server.compare_hash())
+    assert client.get("/api/overview").json()["tiers"]["B"]["status"] == "passing"
+
+    suite([passing(c) for c in tier_a[1:]], server.compare_hash())
+    assert client.get("/api/overview").json()["tiers"]["A"]["status"] == "failing"
+
+
+def test_tier_b_joins_the_certified_scope_once_every_tier_b_case_passes_on_this_port(client):
+    port_from_argon("port_1", "def run_case(*a, **k): pass\n")
+    cases = client.get("/api/test-results").json()["cases"]
+    tier_a = [n for n, c in cases.items() if c["tests_tier"] == "A"]
+    tier_b = [n for n, c in cases.items() if c["tests_tier"] == "B"]
+    port = server.port_hash()
+
+    suite([passing(c) for c in tier_a], server.compare_hash(), port)
+    overview = client.get("/api/overview").json()
+    assert overview["certified"] and overview["certified_tiers"] == ["A"]
+
+    suite([passing(c) for c in tier_a + tier_b], server.compare_hash(), port)
+    assert client.get("/api/overview").json()["certified_tiers"] == ["A", "B"]
+
+    stale_b = [{**passing(c), "port_sha256": "0" * 64} for c in tier_b]
+    a_here = [{**passing(c), "port_sha256": port} for c in tier_a]
+    suite(a_here + stale_b, server.compare_hash(), None)
+    assert client.get("/api/overview").json()["certified_tiers"] == ["A"]
+
+    port_from_argon("port_2", "def run_case(*a, **k): return None\n")
+    overview = client.get("/api/overview").json()
+    assert not overview["certified"] and overview["certified_tiers"] == []
+
+
+def test_overview_without_the_suite_reads_only_committed_snapshots(client):
+    server.RESULTS_DIR.joinpath("tier_A.md").write_text(SNAPSHOT.format(digest=server.compare_hash()))
+    suite([], server.compare_hash())
+    committed = server.summary(use_suite=False)
+    assert committed["scores"]["source"] == "results/tier_A.md" and committed["certified"] is None
+    assert committed["tiers"]["A"]["holdout"]["passing"] == 1
+    assert committed["argon"]["prices"] == [{"path": "results/tier_A.md",
+                                             "prices": "$2 / 1M input, $10 / 1M output incl. thinking."}]
+    assert client.get("/api/overview").json()["scores"]["source"] == "out/suite_port.json"
+
+
+def test_frozen_reports_compare_thresholds():
+    rules = TestClient(server.app).get("/api/frozen").json()["rules"]
+    assert rules == {"slope_tolerance": 0.001, "zero_agreement_min": 0.999, "relative_tolerance": 1e-4,
+                     "significant_fraction": 0.01, "percentile": 99.0}
+
+
+def test_suite_rows_carry_the_largest_absolute_difference(client):
+    row = {**passing("aertest_nobldg"), "strict": {"passes": True, "max_abs_diff": 0.0, "p99_rel_err": 0.0}}
+    suite([row], server.compare_hash())
+    assert client.get("/api/test-results").json()["results"]["aertest_nobldg"]["max_abs_diff"] == 0.0
