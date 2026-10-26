@@ -1,0 +1,6 @@
+{
+ "accepted": false,
+ "reason": "broke aertest_nobldg, CAPPED_STACK2, CAPPED_STACK2C0, CAPPED_STACK2CE, HRDOW_STACK1, FLATELEV_FLAT_STK, testpm10_stack2",
+ "spent_usd": 0.45219,
+ "interaction_id": "v1_ChdYNUxlYXFxREpOSFBfdU1QZzVYQjJBRRIXWDVMZWFxcURKTkhQX3VNUGc1WEIyQUU"
+}

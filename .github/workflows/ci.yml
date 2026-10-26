@@ -1,0 +1,101 @@
+name: harness
+
+on:
+  push:
+    branches: [main, "cursor/**", "argon/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  fast:
+    # No EPA download: tests that need the binary or its outputs skip with a reason.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q -rs -m "not slow"
+      - name: port/aermod_py provenance
+        run: python split.py --verify
+      - name: compare.py matches its approved digest (harness/compare.sha256)
+        run: make check-frozen
+
+  reference:
+    # Builds our gfortran AERMOD 26135, regenerates every oracle, dump and
+    # DEBUGOPT run, then runs the whole suite and a fuzz batch against them.
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update && sudo apt-get install -y gfortran
+      - run: pip install -r requirements.txt
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ref/aermod_source
+            ref/epa_testcases
+          key: epa-26135-${{ hashFiles('ref/checksums.sha256', 'ref/testcase_manifest.txt') }}
+      - name: Fetch EPA source and test cases (checksummed)
+        run: python ref/fetch.py
+      - name: Build ref/aermod and ref/aermod_dump
+        run: ref/build.sh && ref/build_dump.sh
+      - name: Oracles, setup dumps, DEBUGOPT runs
+        run: make refs dumps debug-refs
+      - name: Oracle checksums vs the committed build (informational across gfortran versions)
+        continue-on-error: true
+        run: python harness/suite.py --check-checksums
+      - name: Ref-vs-ref through compare.py
+        run: python harness/suite.py --who ref2 --tier all
+      - run: python -m pytest -q -rs
+      - name: Fuzz decks against the binary and SETUP.DMP
+        run: |
+          python harness/fuzz.py -n 10 --tier A --seed 1
+          python harness/fuzz.py -n 10 --tier B --seed 2
+      - run: python pack.py
+      - run: python split.py --verify
+
+  port-suite:
+    # The committed port on every EPA case, judged by the frozen compare.py.
+    # TESTPM10 (5 years with PRIME) alone takes ~21 min in Python.
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update && sudo apt-get install -y gfortran
+      - run: pip install -r requirements.txt
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ref/aermod_source
+            ref/epa_testcases
+          key: epa-26135-${{ hashFiles('ref/checksums.sha256', 'ref/testcase_manifest.txt') }}
+      - name: Fetch EPA source and test cases (checksummed)
+        run: python ref/fetch.py
+      - name: Build ref/aermod
+        run: ref/build.sh
+      - name: Oracles
+        run: make refs
+      - name: compare.py matches its approved digest
+        run: make check-frozen
+      - name: Port on every case, longest first
+        run: |
+          printf '%s\n' TESTPM10 testpm10_stack2 FLATELEV_FLAT_STK HRDOW_STACK1 \
+            ALLSRCS_STACKDW CAPPED_STACK1C0 AERTEST CAPPED_STACK2 CAPPED_STACK2C0 \
+            CAPPED_STACK2CE aertest_nobldg \
+            | xargs -P "$(nproc)" -n 1 python harness/run_port.py --who port
+      - name: Judge with compare.py
+        if: ${{ !cancelled() }}
+        run: python harness/suite.py --who port --tier all
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: suite_port
+          path: out/suite_port.json

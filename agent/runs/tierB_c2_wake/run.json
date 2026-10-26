@@ -1,0 +1,36 @@
+{
+ "run_id": "tierB_c2_wake",
+ "kind": "edit",
+ "model": "gemini-4-argon",
+ "thinking": "high",
+ "task": "prompts/tasks/tier_b/c2_wake.md",
+ "shown": [
+  "prime_state.py",
+  "prime_base.py"
+ ],
+ "units": [
+  "WAKE_U_TURB",
+  "WAKE_TURB",
+  "WAKE_U",
+  "WAKE_SIG",
+  "WAKE_DFSN",
+  "WAKE_DFSN2",
+  "WAKE_FQC",
+  "CAV_SRC"
+ ],
+ "fortran_ranges": [],
+ "strip_comments": true,
+ "notes": [
+  "prompts/tasks/tier_b/plan.md"
+ ],
+ "prompt_tokens": 84830,
+ "token_method": "Gemini count_tokens (gemini-4-argon)",
+ "max_output_tokens": 65536,
+ "budget_usd": 49.0,
+ "spent_before_usd": 0.91,
+ "prices_usd_per_mtok": {
+  "input": 2.0,
+  "output": 10.0
+ },
+ "started": "2026-10-25T22:56:15.769041+00:00"
+}

@@ -1,0 +1,34 @@
+{
+  "name": "testpm10_stack2",
+  "tier": "holdout",
+  "kind": "holdout",
+  "group": "ALL",
+  "deck": "inputs/testpm10.inp",
+  "deck_sha256": "b2613daa98cc35397c615c45096b72cc52545a01641820edf4a617b98e43ba94",
+  "epa_postfile": null,
+  "oracle": "our compiled binary (ref/aermod) run on case.inp",
+  "met": [
+    "meteorology/salem_86-90_adju.sfc",
+    "meteorology/salem_86-90_adju.pfl"
+  ],
+  "includes": [],
+  "sources": [
+    "STACK2"
+  ],
+  "origin_sources": [],
+  "removed": {
+    "sources": [
+      "STACK1"
+    ],
+    "keywords": {
+      "LOCATION": 1,
+      "SRCPARAM": 1,
+      "BUILDHGT": 1,
+      "BUILDWID": 6,
+      "BUILDLEN": 6,
+      "XBADJ": 6,
+      "YBADJ": 6
+    }
+  },
+  "notes": "No-PRIME companion: TESTPM10 with only STACK2; oracle is our binary."
+}

@@ -1,0 +1,32 @@
+{
+  "name": "FLATELEV_FLAT_STK",
+  "tier": "A",
+  "kind": "epa",
+  "group": "FLAT_STK",
+  "deck": "inputs/flatelev.inp",
+  "deck_sha256": "4fe862c287c6c0681650e32d43746545bac06d70c9156f3710ad4e8fe836e0ff",
+  "epa_postfile": "postfiles/FLATELEV_FLAT_STK_01H.PST",
+  "oracle": "our compiled binary (ref/aermod) run on case.inp",
+  "met": [
+    "meteorology/lovett.sfc",
+    "meteorology/lovett.pfl"
+  ],
+  "includes": [
+    "inputs/lovett_rec.dat"
+  ],
+  "sources": [
+    "FLAT_STK"
+  ],
+  "origin_sources": [],
+  "removed": {
+    "sources": [
+      "ELEV_STK"
+    ],
+    "keywords": {
+      "LOCATION": 1,
+      "SRCPARAM": 1,
+      "SRCGROUP": 1
+    }
+  },
+  "notes": "FLAT source inside an ELEV run; receptors from INCLUDED lovett_rec.dat."
+}

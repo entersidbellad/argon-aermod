@@ -1,0 +1,42 @@
+{
+  "name": "CAPPED_STACK2",
+  "tier": "A",
+  "kind": "epa",
+  "group": "STACK2",
+  "deck": "inputs/capped.inp",
+  "deck_sha256": "dfc0fe836cd990c60df1da7d7a5fe49b1eb4ab232cdcbb1185e607d065cb6a36",
+  "epa_postfile": "postfiles/CAPPED_STACK2_01H.PST",
+  "oracle": "our compiled binary (ref/aermod) run on case.inp",
+  "met": [
+    "meteorology/aermet2.sfc",
+    "meteorology/aermet2.pfl"
+  ],
+  "includes": [],
+  "sources": [
+    "STACK2"
+  ],
+  "origin_sources": [],
+  "removed": {
+    "sources": [
+      "STACK1",
+      "STACK1C",
+      "STACK1C0",
+      "STACK1H",
+      "STACK2C",
+      "STACK2C0",
+      "STACK2CE",
+      "STACK2H"
+    ],
+    "keywords": {
+      "LOCATION": 8,
+      "SRCPARAM": 8,
+      "BUILDHGT": 4,
+      "BUILDWID": 24,
+      "BUILDLEN": 24,
+      "XBADJ": 24,
+      "YBADJ": 24,
+      "SRCGROUP": 8
+    }
+  },
+  "notes": ""
+}

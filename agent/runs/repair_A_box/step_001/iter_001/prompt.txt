@@ -1,0 +1,99 @@
+# Repair one divergence in the AERMOD Python port
+
+You wrote `aermod_py`, a Python translation of AERMOD 26135's physics, under
+the contract in `prompts/contract.md`. The repair loop ran it on a test case and
+found where it first leaves AERMOD. The input gives you:
+
+- the case and hour, and the first problem in AERMOD's order: either the
+  first debug value that differs from AERMOD by more than one unit in AERMOD's
+  last printed digit (names as in `prompts/debug_vars.md`: Fortran subroutine,
+  pass `PAN`/`PLM`/`PRIME`, variable, source and receptor index), the first
+  debug row the port failed to emit, or the traceback if the port crashed;
+- the met values for that hour;
+- the Fortran source of the unit that printed the value;
+- the current Python files that translate that unit.
+
+Find the single most likely cause and fix it with a minimal patch. Every value
+AERMOD printed before this one matched, so the error is most likely in the
+computation between the last matching value and this one, in the unit shown.
+(Not every intermediate is printed, so it can also sit in a unit that unit
+calls.)
+
+Rules:
+
+- Change at most two files, and only what the fix needs. Keep the contract's
+  translation rules (float64, constants and operation order as in the
+  Fortran, docstrings naming the Fortran unit, no module-level state).
+- Return each changed file complete, not as a diff.
+- Do not add special cases for the test case, hour or receptor.
+
+The patch is kept only if no case that passed before fails afterwards and
+this case's first problem moves later in AERMOD's order (or disappears).
+
+Respond in exactly this format:
+
+```
+=== HYPOTHESIS ===
+<one or two sentences: what is wrong and why>
+=== FILE: aermod_py/<name>.py ===
+<complete file>
+```
+
+
+# Case aertest_nobldg: crash
+
+The port raised an exception on aertest_nobldg:
+
+Traceback (most recent call last):
+  File "/workspace/argon-aermod/harness/run_port.py", line 108, in run_staged
+    port = load_port(package_dir)
+  File "/workspace/argon-aermod/harness/run_port.py", line 65, in load_port
+    module = importlib.import_module(package)
+  File "/usr/lib/python3.13/importlib/__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 1026, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/workspace/argon-aermod/port/aermod_py/__init__.py", line 9, in <module>
+    from .hrloop import hrloop
+  File "/workspace/argon-aermod/port/aermod_py/hrloop.py", line 6, in <module>
+    from .metext import metext
+  File "/workspace/argon-aermod/port/aermod_py/metext.py", line 9, in <module>
+    from .hrloop import cent_date, julian
+ImportError: cannot import name 'cent_date' from partially initialized module 'aermod_py.hrloop' (most likely due to a circular import) (/workspace/argon-aermod/port/aermod_py/hrloop.py)
+
+# Current Python: aermod_py/__init__.py
+
+```python
+"""AERMOD 26135 Python port: package entry point."""
+
+from __future__ import annotations
+
+import numpy as xp
+import glue
+
+from .state import AermodState
+from .hrloop import hrloop
+
+
+def run_case(
+    project: glue.Project,
+    met: glue.Met,
+    setup: dict,
+    *,
+    debug: bool = False,
+) -> glue.Result:
+    """Run HRLOOP and all in-scope AERMOD physics for a prepared case."""
+    state = AermodState.from_setup(project, met, setup, debug=debug)
+    hrloop(state)
+    dates = xp.asarray(state.dates_out, dtype=xp.int64)
+    if len(state.conc_out) > 0:
+        conc = xp.stack(state.conc_out, axis=0).astype(xp.float64)
+    else:
+        conc = xp.zeros((0, state.NUMREC), dtype=xp.float64)
+    return glue.Result(dates=dates, conc=conc, debug=state.debug_rows)
+```

@@ -1,0 +1,30 @@
+{
+ "interaction_id": "v1_ChdscFBlYXRxZEJ1ckktc0FQeTdmbi1BSRIXbHBQZWF0cWRCdXJJLXNBUHk3Zm4tQUk",
+ "usage": {
+  "input_tokens_by_modality": [
+   {
+    "modality": "text",
+    "tokens": 12429
+   }
+  ],
+  "output_tokens_by_modality": [
+   {
+    "modality": "text",
+    "tokens": 12027
+   }
+  ],
+  "total_cached_tokens": 0,
+  "total_input_tokens": 12429,
+  "total_output_tokens": 12027,
+  "total_thought_tokens": 0,
+  "total_tokens": 24456,
+  "total_tool_use_tokens": 0
+ },
+ "cost_usd": 0.145128,
+ "hypothesis": "Renamed `state.L_ORD_TURB` to `state.L_ORD_Turb` in `prime1` so `prime_base.py` reads the mixed-case attribute name defined on `AermodState`.",
+ "accepted": true,
+ "reason": "all checks pass",
+ "files": [
+  "prime_base.py"
+ ]
+}

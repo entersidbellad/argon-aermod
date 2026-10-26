@@ -1,0 +1,25 @@
+{
+  "name": "TESTPM10",
+  "tier": "holdout",
+  "kind": "holdout",
+  "group": "ALL",
+  "deck": "inputs/testpm10.inp",
+  "deck_sha256": "b2613daa98cc35397c615c45096b72cc52545a01641820edf4a617b98e43ba94",
+  "epa_postfile": "postfiles/TESTPM10_01H.PST",
+  "oracle": "our compiled binary (ref/aermod) run on case.inp",
+  "met": [
+    "meteorology/salem_86-90_adju.sfc",
+    "meteorology/salem_86-90_adju.pfl"
+  ],
+  "includes": [],
+  "sources": [
+    "STACK1",
+    "STACK2"
+  ],
+  "origin_sources": [],
+  "removed": {
+    "sources": [],
+    "keywords": {}
+  },
+  "notes": "5 years of Salem met; STACK1 has PRIME building data."
+}

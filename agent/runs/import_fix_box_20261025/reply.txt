@@ -1,0 +1,1639 @@
+=== HYPOTHESIS ===
+Extracted `cent_date` and `julian` (along with `_NDAY` and `_IDYMAX`) into `aermod_py/dateutil.py` so both `hrloop.py` and `metext.py` can import them without a circular dependency, and replaced the custom module loader in `aermod_py/__init__.py` with standard imports.
+=== FILE: aermod_py/dateutil.py ===
+"""SUBROUTINE CENT_DATE (meset.f) and SUBROUTINE JULIAN (aermod.f)."""
+
+from __future__ import annotations
+
+from .state import AermodState, f_idiv, f_mod_int
+
+
+# Lookup tables for JULIAN (aermod.f:1563-1564)
+_NDAY = (0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334)
+_IDYMAX = (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+
+
+def cent_date(iyear: int, istrt_wind: int = 50, istrt_cent: int = 19) -> tuple[int, int]:
+    """SUBROUTINE CENT_DATE (meset.f): convert 2-digit or 4-digit year to (2-digit, 4-digit)."""
+    if istrt_wind <= iyear <= 99:
+        iyr = istrt_cent * 100 + iyear
+    elif iyear < istrt_wind:
+        iyr = (istrt_cent + 1) * 100 + iyear
+    else:
+        iyr = iyear
+        iyear = iyr - 100 * f_idiv(iyr, 100)
+    return iyear, iyr
+
+
+def julian(state: AermodState, inyr: int, inmn: int, indy: int) -> int:
+    """SUBROUTINE JULIAN (aermod.f)."""
+    jdy = 0
+
+    # Check for Invalid Month or Day
+    if inmn < 1 or inmn > 12:
+        state.RUNERR = True
+        raise RuntimeError(f"AERMOD fatal error 203 in JULIAN: MONTH = {inmn:2d}")
+    # Fortran IDYMAX(INMN) -> _IDYMAX[inmn - 1]
+    elif indy > _IDYMAX[inmn - 1]:
+        state.RUNERR = True
+        raise RuntimeError(f"AERMOD fatal error 203 in JULIAN: DAY={indy:2d} MO={inmn:2d}")
+
+    # Determine JULIAN Day Number; For Non-Leap Year First
+    if (f_mod_int(inyr, 4) != 0) or (
+        f_mod_int(inyr, 100) == 0 and f_mod_int(inyr, 400) != 0
+    ):
+        # Not a Leap Year
+        if inmn != 2 or (inmn == 2 and indy <= 28):
+            # Fortran NDAY(INMN) -> _NDAY[inmn - 1]
+            jdy = indy + _NDAY[inmn - 1]
+        else:
+            jdy = 60
+            state.RUNERR = True
+            raise RuntimeError(f"AERMOD fatal error 370 in JULIAN: YR= {inyr:4d}")
+    else:
+        # Leap Year
+        # Fortran NDAY(INMN) -> _NDAY[inmn - 1]
+        jdy = indy + _NDAY[inmn - 1]
+        if inmn > 2:
+            jdy = jdy + 1
+
+    return jdy
+=== FILE: aermod_py/hrloop.py ===
+"""SUBROUTINE HRLOOP and SUBROUTINE JULIAN (aermod.f)."""
+
+from __future__ import annotations
+
+from .state import AermodState, f_idiv, f_mod_int
+from .dateutil import cent_date, julian
+from .metext import metext
+from .calc1 import calc
+
+
+def hrloop(state: AermodState) -> None:
+    """SUBROUTINE HRLOOP (aermod.f)."""
+    state.EOF = False
+    if state.L_MorningTrans is not None:
+        state.L_MorningTrans[:] = False
+    state.KURDAT = 0
+    state.KURPFL = 0
+    state.FULLDATE = 0
+
+    # Begin Hourly LOOP
+    while state.FULLDATE <= state.IEDATE and not state.EOF:
+        # Retrieve One Hour of Meteorology --- CALL METEXT
+        metext(state)
+
+        # Check for runtime error generated in call to METEXT
+        if state.RUNERR:
+            break
+
+        # Fortran IPROC(JDAY) / IPROCL(JDAY) -> state.IPROC[state.JDAY - 1]
+        jday_idx = state.JDAY - 1
+        in_day_range = (
+            (not state.L_LeapYear and state.IPROC[jday_idx] == 1)
+            or (state.L_LeapYear and state.IPROCL[jday_idx] == 1)
+        ) if 1 <= state.JDAY <= 366 else False
+
+        if (
+            state.FULLDATE >= state.ISDATE
+            and state.FULLDATE <= state.IEDATE
+            and in_day_range
+            and not state.EOF
+        ):
+            if not state.L_SkipMessages:
+                state.NTOTHRS = state.NTOTHRS + 1
+        elif (
+            state.FULLDATE < state.IEDATE
+            and state.IEDATE < 2147123124
+            and state.EOF
+        ):
+            # End of met data file(s) reached before user-specified End Date
+            raise RuntimeError("AERMOD fatal error 580 in HRLOOP: MET-DATA")
+        elif state.EOF or state.FULLDATE > state.IEDATE:
+            # End of File or data period has been reached; EXIT hour loop
+            break
+
+        ilsave = state.ILINE
+
+        if state.HOURLY:
+            raise RuntimeError("HOURLY emissions out of scope")
+
+        if state.RUNERR:
+            break
+
+        ilsave = state.ILINE
+
+        if state.L_BACKGRND:
+            if state.L_BGHourly:
+                raise RuntimeError("Hourly BACKGRND out of scope")
+            else:
+                if state.IBGSECT > 0:
+                    # Fortran L_BGValues(IBGSECT) -> state.L_BGValues[state.IBGSECT - 1]
+                    if state.L_BGValues[state.IBGSECT - 1]:
+                        raise RuntimeError("BGVAL out of scope")
+                    else:
+                        state.BGCONC = 0.0
+                else:
+                    state.BGCONC = 0.0
+
+        if state.RUNERR:
+            break
+
+        state.ILINE = ilsave
+
+        if state.PVMRM or state.OLM or state.RUNTTRM or state.GRSM:
+            if state.L_O3Hourly:
+                raise RuntimeError("Hourly O3 out of scope")
+            elif state.IO3SECT > 0:
+                # Fortran IO3SECT -> state.IO3SECT - 1
+                if state.L_O3VALUES[state.IO3SECT - 1]:
+                    raise RuntimeError("OZONVALS out of scope")
+                elif state.L_O3VAL[state.IO3SECT - 1]:
+                    state.O3CONC = float(state.O3BACK[state.IO3SECT - 1])
+                else:
+                    state.O3CONC = 0.0
+            else:
+                state.O3CONC = 0.0
+
+        if state.GRSM:
+            if state.L_NOxHourly:
+                raise RuntimeError("Hourly NOx out of scope")
+            elif state.INOXSECT > 0:
+                # Fortran INOXSECT -> state.INOXSECT - 1
+                if state.L_NOX_VALS[state.INOXSECT - 1]:
+                    raise RuntimeError("VARYNOXVALS out of scope")
+                elif state.L_NOXVALUE[state.INOXSECT - 1]:
+                    state.NOXBGCONC = float(state.NOXBACK[state.INOXSECT - 1])
+                else:
+                    state.NOXBGCONC = 0.0
+            else:
+                state.NOXBGCONC = 0.0
+
+        if state.RUNERR:
+            break
+
+        state.ILINE = ilsave
+
+        if state.SCIM and not state.EOF:
+            state.SCIMHR = False
+            state.NSKIPTOT = state.NSKIPTOT + 1
+            if state.ILINE <= 24 and state.IHOUR == state.NREGSTART:
+                state.IFIRSTHR = state.ILINE
+                state.SCIMHR = True
+            elif (
+                state.ILINE > state.NREGSTART
+                and f_mod_int(state.ILINE - state.IFIRSTHR, state.NREGINT) == 0
+            ):
+                state.SCIMHR = True
+            else:
+                continue
+
+        if (
+            (
+                (not state.RSTINP and state.FULLDATE >= state.ISDATE)
+                or (state.RSTINP and not state.MULTYR and state.FULLDATE > state.ISDATE)
+                or (state.MULTYR and state.FULLDATE >= state.ISDATE)
+            )
+            and state.FULLDATE <= state.IEDATE
+            and in_day_range
+            and not state.EOF
+            and not state.RUNERR
+        ):
+            state.hr_conc[:] = 0.0
+
+            if state.CLMHR and state.CLMPRO:
+                # Check for Calm Hr & Processing and Increment Counters
+                # Fortran IAVE = 1..NUMAVE -> iave in range(state.NUMAVE)
+                for iave in range(state.NUMAVE):
+                    state.NUMHRS[iave] = state.NUMHRS[iave] + 1
+                    state.NUMCLM[iave] = state.NUMCLM[iave] + 1
+                if state.PERIOD or state.ANNUAL:
+                    if not state.SCIM or (state.SCIM and state.SCIMHR):
+                        state.IANHRS = state.IANHRS + 1
+                        state.IANCLM = state.IANCLM + 1
+                if state.SEASONHR:
+                    # Fortran NSEAHR(ISEAS, IHOUR) -> state.NSEAHR[state.ISEAS - 1, state.IHOUR - 1]
+                    state.NSEAHR[state.ISEAS - 1, state.IHOUR - 1] += 1
+                    state.NSEACM[state.ISEAS - 1, state.IHOUR - 1] += 1
+            elif state.MSGHR and state.MSGPRO:
+                # Check for Missing Hour & Processing and Increment Counters
+                # Fortran IAVE = 1..NUMAVE -> iave in range(state.NUMAVE)
+                for iave in range(state.NUMAVE):
+                    state.NUMHRS[iave] = state.NUMHRS[iave] + 1
+                    state.NUMMSG[iave] = state.NUMMSG[iave] + 1
+                if state.PERIOD or state.ANNUAL:
+                    if not state.SCIM or (state.SCIM and state.SCIMHR):
+                        state.IANHRS = state.IANHRS + 1
+                        state.IANMSG = state.IANMSG + 1
+                if state.SEASONHR:
+                    # Fortran NSEAHR(ISEAS, IHOUR) -> state.NSEAHR[state.ISEAS - 1, state.IHOUR - 1]
+                    state.NSEAHR[state.ISEAS - 1, state.IHOUR - 1] += 1
+                    state.NSEACM[state.ISEAS - 1, state.IHOUR - 1] += 1
+            elif state.ZI <= 0.0:
+                # Write Out The Informational Message & Increment Counters
+                # Fortran IAVE = 1..NUMAVE -> iave in range(state.NUMAVE)
+                for iave in range(state.NUMAVE):
+                    state.NUMHRS[iave] = state.NUMHRS[iave] + 1
+                if state.PERIOD or state.ANNUAL:
+                    if not state.SCIM or (state.SCIM and state.SCIMHR):
+                        state.IANHRS = state.IANHRS + 1
+                if state.SEASONHR:
+                    # Fortran NSEAHR(ISEAS, IHOUR) -> state.NSEAHR[state.ISEAS - 1, state.IHOUR - 1]
+                    state.NSEAHR[state.ISEAS - 1, state.IHOUR - 1] += 1
+            else:
+                # Set CALCS Flag, Increment Counters & Calculate HRVAL
+                state.CALCS = True
+                # Fortran IAVE = 1..NUMAVE -> iave in range(state.NUMAVE)
+                for iave in range(state.NUMAVE):
+                    state.NUMHRS[iave] = state.NUMHRS[iave] + 1
+                if state.PERIOD or state.ANNUAL:
+                    if not state.SCIM or (state.SCIM and state.SCIMHR):
+                        state.IANHRS = state.IANHRS + 1
+                if state.SEASONHR:
+                    # Fortran NSEAHR(ISEAS, IHOUR) -> state.NSEAHR[state.ISEAS - 1, state.IHOUR - 1]
+                    state.NSEAHR[state.ISEAS - 1, state.IHOUR - 1] += 1
+
+                # Calculate CONC or DEPOS Values --- CALL CALC
+                calc(state)
+
+            # Record 1-hour POSTFILE concentration for this processed hour
+            state.dates_out.append(int(state.KURDAT))
+            state.conc_out.append(state.hr_conc.copy())
+
+            # Begin Averaging Period LOOP
+            # Fortran IAVE = 1..NUMAVE -> iave in range(state.NUMAVE)
+            for iave in range(state.NUMAVE):
+                state.IAVE = iave + 1
+                kave_val = int(state.KAVE[iave])
+                if f_mod_int(state.IHOUR, kave_val) == 0 or (
+                    kave_val == 720 and state.ENDMON
+                ):
+                    # Flush Block Average Values in AVEVAL Array for This IAVE
+                    state.AVEVAL[:, :, iave, :] = 0.0
+
+            # Flush HRVAL Arrays (1:NUMTYP)
+            state.HRVAL[:] = 0.0
+            state.AERVAL[:] = 0.0
+            state.PRMVAL[:] = 0.0
+
+        if (
+            state.FULLDATE == state.ISDATE
+            and not state.EOF
+            and not state.NOCHKD
+            and not state.L_WARNCHKD
+            and (
+                state.PM25AVE
+                or state.NO2AVE
+                or state.SO2AVE
+                or state.ANNUAL
+                or state.MULTYR
+            )
+        ):
+            state.NREMAIN = state.NREMAIN + 1
+
+        # Reset CALCS and ENDMON Flags
+        state.CALCS = False
+        state.ENDMON = False
+
+        # Save precipitation rates for two previous hours
+        state.PREC2 = state.PREC1
+        state.PREC1 = state.PRATE
+=== FILE: aermod_py/metext.py ===
+"""SUBROUTINE METEXT and meteorological extraction/profiling helpers (metext.f)."""
+
+from __future__ import annotations
+
+import math
+import numpy as xp
+
+from .state import AermodState, f_idiv, f_mod_int, f_nint, f_sign
+from .dateutil import cent_date, julian
+from .iblval import locate
+from .tempgrid import comptg, tginit, grdptg, grdpt, grdden
+from .windgrid import grdws, grdwd
+from .siggrid import grdsv, grdsw
+
+
+_IDYMAX = (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+_NDAY_END = (31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365)
+_ISEA_NDX = (1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 1)
+
+
+def _read_sfc_record(state: AermodState, idx: int) -> int:
+    """Read surface record idx (0-based) into state; return IJDAY."""
+    s = state.met.surface
+    state.IYEAR = int(s["IYEAR"][idx])
+    state.IMONTH = int(s["IMONTH"][idx])
+    state.IDAY = int(s["IDAY"][idx])
+    ijday = int(s["IJDAY"][idx])
+    state.IHOUR = int(s["IHOUR"][idx])
+    state.SFCHF = float(s["SFCHF"][idx])
+    state.USTAR = float(s["USTAR"][idx])
+    state.WSTAR = float(s["WSTAR"][idx])
+    state.VPTGZI = float(s["VPTGZI"][idx])
+    state.ZICONV = float(s["ZICONV"][idx])
+    state.ZIMECH = float(s["ZIMECH"][idx])
+    state.OBULEN = float(s["OBULEN"][idx])
+    state.SFCZ0 = float(s["SFCZ0"][idx])
+    state.BOWEN = float(s["BOWEN"][idx])
+    state.ALBEDO = float(s["ALBEDO"][idx])
+    state.UREF = float(s["UREF"][idx])
+    state.WDREF = float(s["WDREF"][idx])
+    state.UREFHT = float(s["UREFHT"][idx])
+    state.TA = float(s["TA"][idx])
+    state.TREFHT = float(s["TREFHT"][idx])
+    state.IPCODE = int(s["IPCODE"][idx])
+    state.PRATE = float(s["PRATE"][idx])
+    state.RH = float(s["RH"][idx])
+    state.SFCP = float(s["SFCP"][idx])
+    state.NCLOUD = int(s["NCLOUD"][idx])
+    return ijday
+
+
+def metext(state: AermodState) -> None:
+    """SUBROUTINE METEXT (metext.f)."""
+    c1 = 5.31e-13
+    c2 = 60.0
+    c3 = 1.12
+    stefb = 5.67e-08
+
+    state.PATH = "MX"
+
+    # Save Value of Last YR/MN/DY/HR and Previous Hour
+    state.IPDATE = state.KURDAT
+    state.IPYEAR = state.IYR
+    state.IPHOUR = state.IHOUR
+
+    # Initialize USTAR, OBULEN, SFCZ0, QSW, IPCODE, AND PRATE to ZERO for hour
+    state.USTAR = 0.0
+    state.OBULEN = 0.0
+    state.SFCZ0 = 0.0
+    state.QSW = 0.0
+    state.IPCODE = 0
+    state.PRATE = 0.0
+
+    state.RESET_SA = False
+    state.RESET_SW = False
+
+    # Increment line counter for messages related to met data file
+    state.ILINE = state.ILINE + 1
+    state.DUMMY = "SURFFILE"
+
+    # Check for EOF on surface file
+    if state.sfc_cursor >= len(state.met):
+        state.EOF = True
+        if state.ILINE == 1:
+            state.RUNERR = True
+            raise RuntimeError(f"AERMOD fatal error 580 in METEXT: {state.DUMMY}")
+        return
+
+    h_idx = state.sfc_cursor
+    state.sfc_cursor += 1
+    ijday = _read_sfc_record(state, h_idx)
+
+    if state.LDPART or state.LWPART or state.LDGAS or state.LWGAS or state.GRSM:
+        if (
+            state.OBULEN > 0.0
+            or state.OBULEN < -99990.0
+            or state.TA < 0.0
+            or state.ALBEDO == 1.0
+            or state.BOWEN == 0.0
+        ):
+            state.QSW = 0.0
+        else:
+            rn = (1.0 + 1.0 / state.BOWEN) * state.SFCHF / 0.9
+            state.QSW = (
+                rn * (1.0 + c3)
+                - c1 * state.TA**6
+                + stefb * state.TA**4
+                - c2 * 0.1 * float(state.NCLOUD)
+            ) / (1.0 - state.ALBEDO)
+
+        if state.LDPART or state.LDGAS:
+            if state.TA < 0.0 or state.PRATE < 0.0:
+                state.Wnew = state.Wold
+            else:
+                state.EsTa = 0.6112 * math.exp(19.83 - 5417.4 / state.TA)
+                es25 = 3.167
+                state.Wnew = state.Wold + state.PREC1 - 0.5 * state.f2 * state.EsTa / es25
+                state.Wold = state.Wnew
+                state.f2 = state.Wnew / 200.0
+                if state.f2 <= 0.01:
+                    state.f2 = 0.01
+                if state.f2 > 1.0:
+                    state.f2 = 1.0
+
+    # Set the stability logical variables, which are needed in COMPTG
+    if state.OBULEN > 0.0:
+        state.UNSTAB = False
+        state.STABLE = True
+    else:
+        state.UNSTAB = True
+        state.STABLE = False
+
+    # Initialize the profile data to missing; READ profile data
+    pflini(state)
+    level = 1
+    jflag = 0
+    state.DUMMY = "PROFFILE"
+    state.L_TurbData = False
+
+    p_start = int(state.met.profile_start[h_idx])
+    p_end = int(state.met.profile_start[h_idx + 1])
+    p_row = p_start
+    p = state.met.profile
+
+    while jflag == 0:
+        if p_row >= p_end:
+            state.EOF = True
+            if state.ILINE == 1:
+                state.RUNERR = True
+                raise RuntimeError(f"AERMOD fatal error 580 in METEXT: {state.DUMMY}")
+            return
+
+        state.KYEAR = int(p["KYEAR"][p_row])
+        state.KMONTH = int(p["KMONTH"][p_row])
+        state.KDAY = int(p["KDAY"][p_row])
+        state.KHOUR = int(p["KHOUR"][p_row])
+        # Fortran LEVEL = 1..MXPLVL -> level - 1 in 0-based arrays
+        lvl_idx = level - 1
+        state.PFLHT[lvl_idx] = float(p["PFLHT"][p_row])
+        jflag = int(p["JFLAG"][p_row])
+        state.PFLWD[lvl_idx] = float(p["PFLWD"][p_row])
+        state.PFLWS[lvl_idx] = float(p["PFLWS"][p_row])
+        state.PFLTA[lvl_idx] = float(p["PFLTA"][p_row])
+        state.PFLSA[lvl_idx] = float(p["PFLSA"][p_row])
+        state.PFLSW[lvl_idx] = float(p["PFLSW"][p_row])
+        p_row += 1
+
+        # Convert the data to the required units
+        pflcnv(state, level)
+
+        if (0.0 < state.PFLSA[lvl_idx] < 99.0) or (
+            0.0 < state.PFLSW[lvl_idx] < 99.0
+        ):
+            state.L_TurbData = True
+
+        state.NPLVLS = level
+        state.IFLAG[lvl_idx] = jflag
+
+        if jflag == 0:
+            level = level + 1
+            if level > state.MXPLVL:
+                if not state.PFLERR:
+                    state.PFLERR = True
+                    state.RUNERR = True
+                    raise RuntimeError(
+                        f"AERMOD fatal error 465 in METEXT: MXPLVL = {state.MXPLVL:8d}"
+                    )
+                level = state.MXPLVL
+
+        # Fortran LEVEL -> level - 1
+        lvl_idx2 = level - 1
+        if 0.0 < state.PFLSA[lvl_idx2] < 99.0:
+            state.L_TurbData = True
+            state.L_Got_SigA = True
+        if 0.0 < state.PFLSW[lvl_idx2] < 99.0:
+            state.L_TurbData = True
+            state.L_Got_SigW = True
+
+    if state.DFAULT and state.L_TurbData and state.L_AdjUstar:
+        state.RUNERR = True
+        raise RuntimeError("AERMOD fatal error 401 in METEXT: TurbData with ADJ_U*")
+
+    if state.L_TurbData:
+        if state.L_AdjUstar and state.DFAULT:
+            state.RUNERR = True
+            raise RuntimeError("AERMOD fatal error 401 in METEXT: TurbData with ADJ_U*")
+
+    # Compute the vertical potential temperature gradient profile
+    if not state.RUNERR:
+        state.NTGLVL = 0
+        comptg(state)
+
+    if state.ILINE == 1:
+        state.JDAY = ijday
+        if not state.L_SkipMessages:
+            metdat(state, state.IOUNIT)
+        if state.SUMMFILE:
+            if not state.L_SkipMessages:
+                metdat(state, state.ISUMUNT)
+
+    # Set Meteorological Variables for Current Hour
+    set_metdata(state)
+
+    if state.ILINE == 1:
+        if state.IHOUR > 1 and (state.PM25AVE or state.NO2AVE or state.SO2AVE):
+            if state.L_MAXDCONT:
+                state.RUNERR = True
+                raise RuntimeError(
+                    f"AERMOD fatal error 491 in METEXT: First Hr= {state.IHOUR:02d}"
+                )
+
+        # Fortran IMSTAT(7) -> state.IMSTAT[6]
+        if state.IYR != state.ISYEAR and state.IMSTAT[6] == 0:
+            state.ISYEAR = state.IYR
+        elif state.IYR != state.ISYEAR and state.IMSTAT[6] > 0:
+            state.ISYEAR = state.IYR
+            state.RUNERR = True
+            raise RuntimeError(
+                f"AERMOD fatal error 493 in METEXT: StartYR {state.IYR:4d}"
+            )
+
+        if (
+            state.PM25AVE
+            or state.NO2AVE
+            or state.SO2AVE
+            or state.ANNUAL
+            or state.MULTYR
+        ):
+            # Fortran IMSTAT(6) -> state.IMSTAT[5]
+            if state.IMSTAT[5] == 0:
+                state.ISYR = state.IYEAR
+                state.ISHR = state.IHOUR
+                state.ISDY = state.IDAY
+                state.ISMN = state.IMONTH
+
+                _, state.ISYR = cent_date(
+                    state.IYEAR, state.ISTRT_WIND, state.ISTRT_CENT
+                )
+                state.ISJDAY = julian(state, state.ISYR, state.ISMN, state.ISDY)
+
+                if state.IHOUR > 1:
+                    state.IENDHOUR = state.IHOUR - 1
+                    state.IENDDY = state.IDAY
+                    state.IENDMN = state.IMONTH
+                else:
+                    state.IENDHOUR = 24
+                    if state.IDAY > 1:
+                        state.IENDDY = state.IDAY - 1
+                        state.IENDMN = state.IMONTH
+                    else:
+                        state.IENDMN = state.IMONTH - 1
+                        if state.IENDMN == 0:
+                            state.IENDMN = 12
+                        # Fortran IDYMAX(IENDMN) -> _IDYMAX[state.IENDMN - 1]
+                        state.IENDDY = _IDYMAX[state.IENDMN - 1]
+                if not state.RSTINP:
+                    state.ISDATE = state.FULLDATE
+
+        # Fortran IMSTAT(6) -> state.IMSTAT[5]
+        if (
+            not state.MULTYR
+            and state.IMSTAT[5] == 1
+            and state.FULLDATE > state.ISDATE
+        ):
+            state.RUNERR = True
+            raise RuntimeError(
+                f"AERMOD fatal error 483 in METEXT: {state.FULLDATE:010d}"
+            )
+        elif not state.MULTYR and state.RSTINP and state.FULLDATE > state.ISDATE:
+            state.RUNERR = True
+            raise RuntimeError("AERMOD fatal error 484 in METEXT")
+        elif (
+            state.MULTYR
+            and state.RSTINP
+            and state.IMSTAT[5] == 0
+            and state.FULLDATE < state.ISDATE
+        ):
+            state.RUNERR = True
+            raise RuntimeError("AERMOD fatal error 487 in METEXT")
+
+
+def set_metdata(state: AermodState) -> None:
+    """SUBROUTINE SET_METDATA (metext.f)."""
+    # Set lower limit of 1.0 meter for mixing heights
+    if 0.0 <= state.ZICONV < 1.0:
+        state.ZICONV = 1.0
+    if 0.0 <= state.ZIMECH < 1.0:
+        state.ZIMECH = 1.0
+
+    # Set the date variables for this hour
+    set_dates(state)
+
+    if state.MONTH and state.IHOUR == 24:
+        # Fortran NDAY(IMONTH) -> _NDAY_END[state.IMONTH - 1]
+        if (
+            state.IMONTH == 1
+            or (f_mod_int(state.IYR, 4) != 0)
+            or (f_mod_int(state.IYR, 100) == 0 and f_mod_int(state.IYR, 400) != 0)
+        ):
+            if state.JDAY == _NDAY_END[state.IMONTH - 1]:
+                state.ENDMON = True
+        else:
+            if state.JDAY == _NDAY_END[state.IMONTH - 1] + 1:
+                state.ENDMON = True
+
+    # Check Data for Calms, Missing, Out-of-Range Values --- CALL METCHK
+    if not state.L_SkipMessages:
+        metchk(state)
+
+    # Limit ZI to 4000 meters.
+    if state.ZICONV > 4000.0:
+        state.ZICONV = 4000.0
+    if state.ZIMECH > 4000.0:
+        state.ZIMECH = 4000.0
+
+    # Select appropriate mixing height from convective and mechanical values
+    if not state.MSGHR and not state.CLMHR and state.OBULEN < 0.0:
+        state.ZI = max(state.ZICONV, state.ZIMECH)
+    elif not state.MSGHR and not state.CLMHR:
+        state.ZI = state.ZIMECH
+    else:
+        state.ZI = -999.0
+
+    # Set lower limit of 1.0 meter for mixing height
+    if 0.0 <= state.ZI < 1.0:
+        state.ZI = 1.0
+
+    # Assign ZI to ZIRUR for URBAN option
+    if state.URBAN:
+        state.ZIRUR = state.ZI
+
+    # Apply ROTANG Adjustment to Wind Direction
+    if abs(state.ROTANG) > 0.0000001:
+        state.WDREF = state.WDREF - state.ROTANG
+        if state.WDREF <= 0.0:
+            state.WDREF = state.WDREF + 360.0
+        # Fortran NL = 1..NPLVLS -> nl in range(state.NPLVLS)
+        for nl in range(state.NPLVLS):
+            if state.PFLWD[nl] > 0.0:
+                state.PFLWD[nl] = state.PFLWD[nl] - state.ROTANG
+                if state.PFLWD[nl] <= 0.0:
+                    state.PFLWD[nl] = state.PFLWD[nl] + 360.0
+
+    if state.L_BLSOURCE:
+        state.BLTA = state.TA
+
+    if not state.L_SkipMessages:
+        state.URBSTAB = False
+
+    if not state.RUNERR and not state.L_SkipMessages:
+        if not state.CLMHR and not state.MSGHR:
+            if state.OBULEN > 0.0:
+                state.UNSTAB = False
+                state.STABLE = True
+            else:
+                state.UNSTAB = True
+                state.STABLE = False
+
+            # Fortran IPROCL(JDAY) / IPROC(JDAY) -> index state.JDAY - 1
+            jday_idx = state.JDAY - 1
+            in_day = (
+                (state.L_LeapYear and state.IPROCL[jday_idx] == 1)
+                or (not state.L_LeapYear and state.IPROC[jday_idx] == 1)
+            ) if 1 <= state.JDAY <= 366 else False
+
+            if state.FULLDATE >= state.ISDATE and in_day:
+                # Initialize the gridded profile arrays
+                state.GRIDSV[:] = -99.0
+                state.GRIDSW[:] = -99.0
+                state.GRIDWS[:] = -99.0
+                state.GRIDWD[:] = -99.0
+                state.GRIDTG[:] = -99.0
+                state.GRIDPT[:] = -99.0
+                if state.URBAN:
+                    state.GRDSVR[:] = -99.0
+                    state.GRDSVU[:, :] = -99.0
+                    state.GRDSWR[:] = -99.0
+                    state.GRDSWU[:, :] = -99.0
+                    state.GRDTGR[:] = -99.0
+                    state.GRDTGU[:, :] = -99.0
+                    state.GRDPTR[:] = -99.0
+                    state.GRDPTU[:, :] = -99.0
+
+                if state.PVMRM or state.GRSM:
+                    state.GRIDEPS[:] = -99.0
+
+                # Get the index from the array of gridded heights immediately below ZI
+                state.NDX4ZI = locate(state.GRIDHT, 1, state.MXGLVL, state.ZI)
+
+                # Compute THETA_STAR and DTHDZ for the gridded potential temperature gradient
+                tginit(state)
+
+                # Profile all variables here except sv and sw; defer sv and sw until u at zi is known
+                grdws(state)
+                grdwd(state)
+                grdptg(state)
+                grdpt(state)
+
+                # Compute density profile for PRIME
+                grdden(state)
+
+                # Compute the parameter values at ZI
+                if state.NDX4ZI < state.MXGLVL:
+                    # Fortran NDX4ZI -> state.NDX4ZI - 1, NDX4ZI+1 -> state.NDX4ZI
+                    idx = state.NDX4ZI - 1
+                    state.UATZI = gintrp(
+                        float(state.GRIDHT[idx]),
+                        float(state.GRIDWS[idx]),
+                        float(state.GRIDHT[idx + 1]),
+                        float(state.GRIDWS[idx + 1]),
+                        state.ZI,
+                    )
+                    state.PTATZI = gintrp(
+                        float(state.GRIDHT[idx]),
+                        float(state.GRIDPT[idx]),
+                        float(state.GRIDHT[idx + 1]),
+                        float(state.GRIDPT[idx + 1]),
+                        state.ZI,
+                    )
+                else:
+                    # Fortran MXGLVL -> state.MXGLVL - 1
+                    state.UATZI = float(state.GRIDWS[state.MXGLVL - 1])
+                    state.PTATZI = float(state.GRIDPT[state.MXGLVL - 1])
+
+                # Add turbulence variables here
+                grdsv(state)
+
+                # Obtain residual turbulence value before calling GRDSW
+                numsw = 0
+                sumsw = 0.0
+                # Fortran I = 1..NPLVLS -> i in range(state.NPLVLS)
+                for i in range(state.NPLVLS):
+                    if state.PFLHT[i] >= state.ZI and state.PFLSW[i] >= 0.0:
+                        numsw = numsw + 1
+                        sumsw = sumsw + float(state.PFLSW[i])
+
+                if numsw > 0:
+                    state.SWRMAX = sumsw / float(numsw)
+                else:
+                    state.SWRMAX = 0.02 * state.UATZI
+
+                grdsw(state)
+
+                if state.NDX4ZI < state.MXGLVL:
+                    # Fortran NDX4ZI -> state.NDX4ZI - 1, NDX4ZI+1 -> state.NDX4ZI
+                    idx = state.NDX4ZI - 1
+                    state.SVATZI = gintrp(
+                        float(state.GRIDHT[idx]),
+                        float(state.GRIDSV[idx]),
+                        float(state.GRIDHT[idx + 1]),
+                        float(state.GRIDSV[idx + 1]),
+                        state.ZI,
+                    )
+                    state.SWATZI = gintrp(
+                        float(state.GRIDHT[idx]),
+                        float(state.GRIDSW[idx]),
+                        float(state.GRIDHT[idx + 1]),
+                        float(state.GRIDSW[idx + 1]),
+                        state.ZI,
+                    )
+                else:
+                    # Fortran MXGLVL -> state.MXGLVL - 1
+                    state.SVATZI = float(state.GRIDSV[state.MXGLVL - 1])
+                    state.SWATZI = float(state.GRIDSW[state.MXGLVL - 1])
+
+                # Compute the overbar (average) quantities from surface up to ZI
+                state.SVAVG = ziaver(
+                    state.MXGLVL,
+                    state.GRIDHT,
+                    state.GRIDSV,
+                    state.ZI,
+                    state.NDX4ZI,
+                    state.SVATZI,
+                )
+                state.SWAVG = ziaver(
+                    state.MXGLVL,
+                    state.GRIDHT,
+                    state.GRIDSW,
+                    state.ZI,
+                    state.NDX4ZI,
+                    state.SWATZI,
+                )
+                state.UAVG = ziaver(
+                    state.MXGLVL,
+                    state.GRIDHT,
+                    state.GRIDWS,
+                    state.ZI,
+                    state.NDX4ZI,
+                    state.UATZI,
+                )
+
+                if state.PVMRM or state.GRSM:
+                    grdeps(state)
+
+                if state.URBAN:
+                    urbcalc(state)
+                    grdurban(state)
+
+    # Assign sector ID for direction-varying background O3 and NOx
+    if state.WDREF <= 0.0 or state.WDREF > 360.0:
+        state.IO3SECT = 0
+        state.INOXSECT = 0
+    else:
+        fvref = state.WDREF + 180.0
+        if fvref > 360.0:
+            fvref = fvref - 360.0
+        if state.L_O3Sector:
+            if fvref < state.O3SECT[0] or fvref >= state.O3SECT[state.NUMO3Sects - 1]:
+                state.IO3SECT = state.NUMO3Sects
+            else:
+                # Fortran I = 1..NUMO3Sects-1 -> i in range(state.NUMO3Sects - 1)
+                for i in range(state.NUMO3Sects - 1):
+                    if state.O3SECT[i] <= fvref < state.O3SECT[i + 1]:
+                        state.IO3SECT = i + 1
+                        break
+        else:
+            state.IO3SECT = 1
+
+        if state.L_NOXSector:
+            if (
+                fvref < state.NOXSECT[0]
+                or fvref >= state.NOXSECT[state.NumNOxSects - 1]
+            ):
+                state.INOXSECT = state.NumNOxSects
+            else:
+                # Fortran I = 1..NumNOxSects-1 -> i in range(state.NumNOxSects - 1)
+                for i in range(state.NumNOxSects - 1):
+                    if state.NOXSECT[i] <= fvref < state.NOXSECT[i + 1]:
+                        state.INOXSECT = i + 1
+                        break
+        else:
+            state.INOXSECT = 1
+
+    # Assign sector ID for direction-varying background
+    if state.WDREF <= 0.0 or state.WDREF > 360.0:
+        state.IBGSECT = 0
+    else:
+        fvref = state.WDREF + 180.0
+        if fvref > 360.0:
+            fvref = fvref - 360.0
+        if state.L_BGSector:
+            if fvref < state.BGSECT[0] or fvref >= state.BGSECT[state.NUMBGSects - 1]:
+                state.IBGSECT = state.NUMBGSects
+            else:
+                # Fortran I = 1..NUMBGSects-1 -> i in range(state.NUMBGSects - 1)
+                for i in range(state.NUMBGSects - 1):
+                    if state.BGSECT[i] <= fvref < state.BGSECT[i + 1]:
+                        state.IBGSECT = i + 1
+                        break
+        else:
+            state.IBGSECT = 1
+
+    # Set Appropriate Wind Speed Category Index
+    if state.UREF <= state.UCAT[0]:
+        state.IUCAT = 1
+    elif state.UREF <= state.UCAT[1]:
+        state.IUCAT = 2
+    elif state.UREF <= state.UCAT[2]:
+        state.IUCAT = 3
+    elif state.UREF <= state.UCAT[3]:
+        state.IUCAT = 4
+    elif state.UREF <= state.UCAT[4]:
+        state.IUCAT = 5
+    else:
+        state.IUCAT = 6
+
+    if state.FASTAREA or state.L_BLSOURCE:
+        from .calc1 import ltopg
+        state.KST = ltopg(state)
+    else:
+        state.KST = 4
+
+    if state.MSGHR and not state.L_SkipMessages:
+        if not state.MSGPRO:
+            state.RUNERR = True
+            raise RuntimeError(
+                f"AERMOD fatal error 460 in SET_METDATA: {state.FULLDATE:010d}"
+            )
+
+
+def set_dates(state: AermodState) -> None:
+    """SUBROUTINE SET_DATES (metext.f)."""
+    if not state.L_SkipMessages:
+        state.IYEAR, state.IYR = cent_date(
+            state.IYEAR, state.ISTRT_WIND, state.ISTRT_CENT
+        )
+
+        if (f_mod_int(state.IYR, 4) != 0) or (
+            f_mod_int(state.IYR, 100) == 0 and f_mod_int(state.IYR, 400) != 0
+        ):
+            state.L_LeapYear = False
+        else:
+            state.L_LeapYear = True
+
+        if state.JDAY >= 1:
+            state.JDAY_PREV = state.JDAY
+        else:
+            state.JDAY_PREV = 0
+
+        state.JDAY = julian(state, state.IYR, state.IMONTH, state.IDAY)
+
+        state.KURDAT = (
+            state.IYEAR * 1000000
+            + state.IMONTH * 10000
+            + state.IDAY * 100
+            + state.IHOUR
+        )
+        if state.IYR >= 2148:
+            state.RUNERR = True
+            state.FULLDATE = 2147123124
+            raise RuntimeError(f"AERMOD fatal error 365 in SET_DATES: YR= {state.IYR:4d}")
+        else:
+            state.FULLDATE = (
+                state.IYR * 1000000
+                + state.IMONTH * 10000
+                + state.IDAY * 100
+                + state.IHOUR
+            )
+
+        if state.KYEAR >= 100:
+            state.KYEAR = state.KYEAR - 100 * f_idiv(state.KYEAR, 100)
+        state.KURPFL = (
+            state.KYEAR * 1000000
+            + state.KMONTH * 10000
+            + state.KDAY * 100
+            + state.KHOUR
+        )
+
+    # Determine SEASON index
+    # Fortran ISEA_NDX(IMONTH) -> _ISEA_NDX[state.IMONTH - 1]
+    state.ISEAS = _ISEA_NDX[state.IMONTH - 1]
+
+    if state.L_DayOfWeekOpts:
+        ia = f_idiv(14 - state.IMONTH, 12)
+        iy = state.IYR - ia
+        im = state.IMONTH + 12 * ia - 2
+        id_val = f_mod_int(
+            state.IDAY
+            + iy
+            + f_idiv(iy, 4)
+            - f_idiv(iy, 100)
+            + f_idiv(iy, 400)
+            + f_idiv(31 * im, 12),
+            7,
+        )
+        if 1 <= id_val <= 5:
+            state.IDAY_OF_WEEK = 1
+        elif id_val == 6:
+            state.IDAY_OF_WEEK = 2
+        elif id_val == 0:
+            state.IDAY_OF_WEEK = 3
+        if id_val == 0:
+            state.IDAY_OF_WEEK7 = 7
+        else:
+            state.IDAY_OF_WEEK7 = id_val
+    else:
+        state.IDAY_OF_WEEK = 1
+        state.IDAY_OF_WEEK7 = 1
+
+
+def metchk(state: AermodState) -> None:
+    """SUBROUTINE METCHK (metext.f)."""
+    state.CLMHR = False
+    state.MSGHR = False
+
+    if not state.NOCHKD and not state.EVONLY:
+        chkdat(state)
+
+    cmpdat(state)
+    chkclm(state)
+
+    if not state.CLMHR:
+        chkmsg(state)
+
+    metqa(state)
+
+
+def chkdat(state: AermodState) -> None:
+    """SUBROUTINE CHKDAT (metext.f)."""
+    if state.IPDATE > 0:
+        if state.KURDAT <= state.IPDATE:
+            if state.KURDAT != 10101 or state.IPDATE != 99123124:
+                if not state.L_WARNCHKD:
+                    state.RUNERR = True
+                    raise RuntimeError(
+                        f"AERMOD fatal error 450 in CHKDAT: {state.KURDAT:08d}"
+                    )
+        elif state.IHOUR > 1:
+            if (state.KURDAT - state.IPDATE) == 1:
+                pass
+            elif (state.KURDAT - state.IPDATE) < 23:
+                if not state.L_WARNCHKD:
+                    state.RUNERR = True
+                    raise RuntimeError(
+                        f"AERMOD fatal error 450 in CHKDAT: {state.KURDAT:08d}"
+                    )
+            else:
+                if not state.L_WARNCHKD:
+                    state.RUNERR = True
+                    raise RuntimeError(
+                        f"AERMOD fatal error 450 in CHKDAT: {state.KURDAT:08d}"
+                    )
+        elif state.IHOUR == 1 and state.IPHOUR == 24:
+            if (
+                state.JDAY > 1
+                and state.JDAY - state.JDAY_PREV == 1
+                and state.IYR == state.IPYEAR
+            ):
+                pass
+            elif (
+                state.JDAY > 1
+                and state.JDAY - state.JDAY_PREV > 1
+                and state.IYR == state.IPYEAR
+            ):
+                if not state.L_WARNCHKD:
+                    state.RUNERR = True
+                    raise RuntimeError(
+                        f"AERMOD fatal error 450 in CHKDAT: {state.KURDAT:08d}"
+                    )
+            elif (
+                state.JDAY > 1
+                and state.JDAY - state.JDAY_PREV > 1
+                and state.IYR > state.IPYEAR
+            ):
+                if not state.L_WARNCHKD:
+                    state.RUNERR = True
+                    raise RuntimeError(
+                        f"AERMOD fatal error 450 in CHKDAT: {state.KURDAT:08d}"
+                    )
+            elif (
+                state.JDAY > 1
+                and state.JDAY_PREV >= state.JDAY
+                and state.IYR > state.IPYEAR
+            ):
+                if not state.L_WARNCHKD:
+                    state.RUNERR = True
+                    raise RuntimeError(
+                        f"AERMOD fatal error 450 in CHKDAT: {state.KURDAT:08d}"
+                    )
+            elif (
+                state.JDAY == 1
+                and state.JDAY_PREV >= 1
+                and (state.IYR - state.IPYEAR == 1)
+            ):
+                if (f_mod_int(state.IPYEAR, 4) != 0) or (
+                    f_mod_int(state.IPYEAR, 100) == 0
+                    and f_mod_int(state.IPYEAR, 400) != 0
+                ):
+                    if state.JDAY_PREV < 365:
+                        if not state.L_WARNCHKD:
+                            state.RUNERR = True
+                            raise RuntimeError(
+                                f"AERMOD fatal error 450 in CHKDAT: {state.KURDAT:08d}"
+                            )
+                elif state.JDAY_PREV < 366:
+                    if not state.L_WARNCHKD:
+                        state.RUNERR = True
+                        raise RuntimeError(
+                            f"AERMOD fatal error 450 in CHKDAT: {state.KURDAT:08d}"
+                        )
+            elif (
+                state.IHOUR == 1
+                and state.JDAY == 1
+                and state.JDAY_PREV >= 1
+                and (state.IYR - state.IPYEAR) > 1
+            ):
+                if (f_mod_int(state.IPYEAR, 4) != 0) or (
+                    f_mod_int(state.IPYEAR, 100) == 0
+                    and f_mod_int(state.IPYEAR, 400) != 0
+                ):
+                    if state.JDAY_PREV < 365:
+                        if not state.L_WARNCHKD:
+                            state.RUNERR = True
+                            raise RuntimeError(
+                                f"AERMOD fatal error 450 in CHKDAT: {state.KURDAT:08d}"
+                            )
+                elif state.JDAY_PREV < 366:
+                    if not state.L_WARNCHKD:
+                        state.RUNERR = True
+                        raise RuntimeError(
+                            f"AERMOD fatal error 450 in CHKDAT: {state.KURDAT:08d}"
+                        )
+        elif state.IHOUR == 1 and state.IPHOUR != 24:
+            if not state.L_WARNCHKD:
+                state.RUNERR = True
+                raise RuntimeError(
+                    f"AERMOD fatal error 450 in CHKDAT: {state.KURDAT:08d}"
+                )
+
+
+def cmpdat(state: AermodState) -> None:
+    """SUBROUTINE CMPDAT (metext.f)."""
+    if state.KURDAT != state.KURPFL:
+        state.RUNERR = True
+        raise RuntimeError(f"AERMOD fatal error 456 in CMPDAT: {state.KURDAT:08d}")
+
+
+def chkclm(state: AermodState) -> None:
+    """SUBROUTINE CHKCLM (metext.f)."""
+    if state.UREF == 0.0:
+        state.CLMHR = True
+
+
+def chkmsg(state: AermodState) -> None:
+    """SUBROUTINE CHKMSG (metext.f)."""
+    # Wind speed (meters/second)
+    if state.UREF >= 90.0 or state.UREF < 0.0:
+        state.MSGHR = True
+    # Wind direction (degrees from north)
+    elif (state.WDREF > 900.0) or (state.WDREF <= -9.0):
+        state.MSGHR = True
+    # Ambient temperature (kelvins)
+    elif (state.TA > 900.0) or (state.TA <= 0.0):
+        state.MSGHR = True
+    # Monin-Obukhov length (meters)
+    elif state.OBULEN < -99990.0:
+        state.MSGHR = True
+    # Convective Mixing height (meters)
+    elif state.OBULEN < 0.0 and ((state.ZICONV > 90000.0) or (state.ZICONV < 0.0)):
+        state.MSGHR = True
+    # Mechanical Mixing height (meters)
+    elif (state.ZIMECH > 90000.0) or (state.ZIMECH < 0.0):
+        state.MSGHR = True
+    # Surface friction velocity (meters/second)
+    elif state.USTAR < 0.0 or state.USTAR >= 9.0:
+        state.MSGHR = True
+    # Convective velocity scale (meters/second)
+    elif state.WSTAR < 0.0 and (state.OBULEN < 0.0 and state.OBULEN > -99990.0):
+        state.MSGHR = True
+
+
+def metqa(state: AermodState) -> None:
+    """SUBROUTINE METQA (metext.f)."""
+    # Wind direction:
+    if state.WDREF == 0.0:
+        state.WDREF = 360.0
+
+    # Fortran NL = 1..NPLVLS -> nl in range(state.NPLVLS)
+    for nl in range(state.NPLVLS):
+        if state.PFLWD[nl] == 0.0:
+            state.PFLWD[nl] = 360.0
+
+    if not state.L_SkipMessages:
+        if state.UREFHT < 0.001 and not state.CLMHR and not state.MSGHR:
+            state.RUNERR = True
+            raise RuntimeError(f"AERMOD fatal error 474 in METQA: {state.KURDAT:08d}")
+
+    # Convective velocity (meters/second):
+    if state.WSTAR == 0.0:
+        state.WSTAR = 0.001
+
+    # Monin-Obukhov length (meters):
+    if abs(state.OBULEN) < 1.00:
+        if state.OBULEN < 0.0:
+            state.OBULEN = -1.0
+        elif state.OBULEN > 0.0:
+            state.OBULEN = 1.0
+        else:
+            state.OBULEN = -1.0 * f_sign(1.0, state.SFCHF)
+
+    # Vertical potential temperature gradient above ZI (K/m)
+    if (
+        state.ZICONV > 0.0
+        and state.OBULEN < 0.0
+        and state.OBULEN > -99990.0
+        and state.VPTGZI < 0.005
+    ):
+        state.VPTGZI = 0.005
+
+    # Surface roughness length (m):
+    if state.SFCZ0 < 0.0001:
+        state.SFCZ0 = 0.0001
+
+    # Check for precipitation rate out of range
+    if state.PRATE < 0.0 or state.PRATE > 900.0:
+        state.PRATE = 0.0
+    else:
+        state.TOTAL_PRECIP = state.TOTAL_PRECIP + state.PRATE
+
+
+def metdat(state: AermodState, iount: int) -> None:
+    """SUBROUTINE METDAT (metext.f)."""
+    # METDAT prints up to 24 surface records, then rewinds MFUNIT and re-reads record 1.
+    _read_sfc_record(state, 0)
+    state.sfc_cursor = 1
+
+
+def pflcnv(state: AermodState, level: int) -> None:
+    """SUBROUTINE PFLCNV (metext.f)."""
+    # Fortran LEVEL (1-based) -> idx = level - 1 (0-based)
+    idx = level - 1
+
+    # RESET PFLSA AND/OR PFLSW BASED ON TURBULENCE OPTIONS
+    if state.PFLSA[idx] < 99.0 and (
+        state.TURBOPTS[0]
+        or (state.TURBOPTS[1] and state.STABLE)
+        or (state.TURBOPTS[2] and state.UNSTAB)
+        or state.TURBOPTS[3]
+        or (state.TURBOPTS[5] and state.STABLE)
+        or (state.TURBOPTS[7] and state.UNSTAB)
+    ):
+        state.PFLSA[idx] = 99.0
+        if not state.RESET_SA:
+            state.RESET_SA = True
+
+    if state.PFLSW[idx] < 99.0 and (
+        state.TURBOPTS[0]
+        or (state.TURBOPTS[1] and state.STABLE)
+        or (state.TURBOPTS[2] and state.UNSTAB)
+        or state.TURBOPTS[4]
+        or (state.TURBOPTS[6] and state.STABLE)
+        or (state.TURBOPTS[8] and state.UNSTAB)
+    ):
+        state.PFLSW[idx] = 99.0
+        if not state.RESET_SW:
+            state.RESET_SW = True
+
+    # Change the missing value indicator for wind speed to -99.0
+    if state.PFLWS[idx] < 0.0 or state.PFLWS[idx] > 90.0:
+        state.PFLWS[idx] = -99.0
+
+    # Change the wind direction from 0.0 to 360.0 if wind speed is nonzero
+    if (0.0 < state.PFLWS[idx] <= 90.0) and state.PFLWD[idx] == 0.0:
+        state.PFLWD[idx] = 360.0
+
+    if state.PFLWD[idx] > 900.0 or state.PFLWD[idx] < 0.0:
+        state.PFLWD[idx] = -999.0
+
+    if state.PFLWS[idx] == 0.0 and state.PFLWD[idx] == 0.0:
+        state.PFLWS[idx] = -99.0
+        state.PFLWD[idx] = -999.0
+
+    # Compute sigmaV from nonmissing wind speed and sigmaTHETA
+    if state.PFLWS[idx] > 0.0 and 0.0 <= state.PFLSA[idx] < 99.0:
+        sigrad = float(state.PFLSA[idx]) * state.DTORAD
+        epsil = math.sin(sigrad) * (1.0 - state.GSIGV * sigrad)
+        usubv = float(state.PFLWS[idx]) * math.sqrt(1.0 - epsil * epsil)
+        state.PFLSV[idx] = sigrad * usubv
+        state.PFLSV[idx] = max(state.SVMIN, float(state.PFLSV[idx]))
+        state.L_Got_SigA = True
+        state.N_Got_SigA = state.N_Got_SigA + 1
+    else:
+        state.PFLSV[idx] = -99.0
+
+    # Check for sigmaW data
+    if 0.0 < state.PFLSW[idx] < 90.0:
+        state.L_Got_SigW = True
+        state.N_Got_SigW = state.N_Got_SigW + 1
+
+    # Check for turbulence data with ADJ_U
+    if state.L_AdjUstar and state.DFAULT:
+        if state.L_Got_SigA and state.L_Got_SigW:
+            if state.N_Got_SigA == 1 and state.N_Got_SigW == 1:
+                state.FATAL = True
+                raise RuntimeError("AERMOD fatal error 401 in PFLCNV: SigA & SigW")
+        elif state.L_Got_SigA and not state.L_Got_SigW:
+            if state.N_Got_SigA == 1:
+                state.FATAL = True
+                raise RuntimeError("AERMOD fatal error 401 in PFLCNV: SigA Data")
+        elif not state.L_Got_SigA and state.L_Got_SigW:
+            if state.N_Got_SigW == 1:
+                state.FATAL = True
+                raise RuntimeError("AERMOD fatal error 401 in PFLCNV: SigW Data")
+
+    # Convert temperature from degrees Celsius to kelvins
+    if -90.0 < state.PFLTA[idx] < 90.0:
+        state.PFLTA[idx] = state.PFLTA[idx] + state.DCTODK
+    else:
+        state.PFLTA[idx] = -999.0
+
+    # Change the missing value indicator for sigmaW to -99.0
+    if state.PFLSW[idx] < 0.0 or state.PFLSW[idx] > 90.0:
+        state.PFLSW[idx] = -99.0
+    else:
+        state.PFLSW[idx] = max(state.SWMIN, float(state.PFLSW[idx]))
+
+
+def pflini(state: AermodState) -> None:
+    """SUBROUTINE PFLINI (metext.f)."""
+    state.PATH = "MX"
+    state.IFLAG[:] = 0
+    state.PFLHT[:] = -99.0
+    state.PFLWS[:] = -99.0
+    state.PFLWD[:] = -99.0
+    state.PFLTA[:] = -99.0
+    state.PFLSA[:] = -99.0
+    state.PFLSW[:] = -99.0
+    state.PFLSV[:] = -99.0
+    state.PFLTG[:] = -99.0
+    state.PFLTGZ[:] = -99.0
+
+
+def ziaver(
+    nlvls: int,
+    hts: xp.ndarray,
+    parray: xp.ndarray,
+    zi: float,
+    ndxblw: int,
+    valzi: float,
+) -> float:
+    """SUBROUTINE ZIAVER (metext.f)."""
+    sum_val = 0.0
+
+    # Sum over each layer of the gridded profile (PARRAY) to the level immediately below ZI
+    # Fortran I = 2..NDXBLW -> i in range(1, ndxblw)
+    for i in range(1, ndxblw):
+        sum_val = sum_val + (float(hts[i]) - float(hts[i - 1])) * 0.5 * (
+            float(parray[i]) + float(parray[i - 1])
+        )
+
+    if ndxblw < nlvls:
+        # Fortran HTS(NDXBLW) -> hts[ndxblw - 1]
+        sum_val = sum_val + (zi - float(hts[ndxblw - 1])) * 0.5 * (
+            valzi + float(parray[ndxblw - 1])
+        )
+        pblavg = sum_val / zi
+    else:
+        # Fortran HTS(NLVLS) -> hts[nlvls - 1]
+        sum_val = sum_val + (zi - float(hts[nlvls - 1])) * float(parray[nlvls - 1])
+        pblavg = sum_val / zi
+
+    return pblavg
+
+
+def gintrp(
+    htbelo: float, vbelow: float, htabov: float, vabove: float, reqdht: float
+) -> float:
+    """SUBROUTINE GINTRP (metext.f)."""
+    value = vbelow + ((reqdht - htbelo) / (htabov - htbelo)) * (vabove - vbelow)
+    return value
+
+
+def urbcalc(state: AermodState) -> None:
+    """SUBROUTINE URBCALC (metext.f)."""
+    refzi = 400.0
+    cp = 1004.0
+
+    state.RURUSTR = state.USTAR
+    state.RUROBULEN = state.OBULEN
+
+    # Fortran IURB = 1..NUMURB -> iurb in range(state.NUMURB)
+    for iurb in range(state.NUMURB):
+        state.IURB = iurb + 1
+        deltur = state.DELTRUR * (
+            0.1 * math.log(float(state.URBPOP[iurb]) / state.REFPOP) + 1.0
+        )
+
+        if state.STABLE:
+            state.ZIURB[iurb] = refzi * (float(state.URBPOP[iurb]) / state.REFPOP) ** 0.25
+            state.L_MorningTrans[iurb] = False
+        elif state.L_UrbanTransition:
+            state.ZIURB[iurb] = refzi * (float(state.URBPOP[iurb]) / state.REFPOP) ** 0.25
+            if state.ZICONV > state.ZIURB[iurb]:
+                state.L_MorningTrans[iurb] = False
+                continue
+            else:
+                state.L_MorningTrans[iurb] = True
+        else:
+            state.L_MorningTrans[iurb] = False
+            continue
+
+        rho = 101325.0 / (287.04 * state.TA)
+        urbhf = 0.03 * deltur * state.USTAR * rho * cp
+        state.URBWSTR[iurb] = (
+            (state.G / state.TA / rho / cp) * urbhf * float(state.ZIURB[iurb])
+        ) ** state.THIRD
+
+        ht7z0 = 7.0 * max(float(state.URBZ0[iurb]), state.SFCZ0)
+        urbustrsav = (
+            float(state.URBWSTR[iurb])
+            * math.sqrt(
+                1.6 * (ht7z0 / float(state.ZIURB[iurb])) ** (2.0 * state.THIRD)
+            )
+            / (
+                1.3
+                * math.sqrt(
+                    1.0 - ht7z0 / max(float(state.ZIURB[iurb]), state.ZIMECH)
+                )
+            )
+        )
+        state.URBUSTR[iurb] = max(state.USTAR, urbustrsav)
+
+        state.URBOBULEN[iurb] = -(
+            (rho * cp * state.TA * float(state.URBUSTR[iurb]) ** 3)
+            / (0.4 * state.G * urbhf)
+        )
+
+        if state.L_MorningTrans[iurb]:
+            state.URBOBULEN[iurb] = max(
+                float(state.URBOBULEN[iurb]), state.RUROBULEN
+            )
+        else:
+            state.URBOBULEN[iurb] = max(
+                abs(float(state.URBOBULEN[iurb])), state.RUROBULEN
+            )
+
+
+def grdurban(state: AermodState) -> None:
+    """SUBROUTINE GRDURBAN (metext.f)."""
+    state.GRDSVR[:] = state.GRIDSV[:]
+    state.GRDSWR[:] = state.GRIDSW[:]
+    state.GRDTGR[:] = state.GRIDTG[:]
+    state.GRDPTR[:] = state.GRIDPT[:]
+
+    # Fortran IURB = 1..NUMURB -> iurb in range(state.NUMURB)
+    for iurb in range(state.NUMURB):
+        state.IURB = iurb + 1
+        if not state.STABLE and not state.L_MorningTrans[iurb]:
+            continue
+
+        zdcrs = state.AT1PT2 * float(state.ZIURB[iurb])
+
+        # Fortran I = 1..MXGLVL -> i in range(state.MXGLVL)
+        for i in range(state.MXGLVL):
+            sv2 = 0.35 * float(state.URBWSTR[iurb]) ** 2
+            gridht_i = float(state.GRIDHT[i])
+            ziurb_u = float(state.ZIURB[iurb])
+
+            if gridht_i <= ziurb_u:
+                svurb = math.sqrt(sv2)
+            elif ziurb_u < gridht_i <= zdcrs:
+                sv2dcr = min(sv2, 0.25)
+                val2 = gintrp(ziurb_u, sv2, zdcrs, sv2dcr, gridht_i)
+                svurb = math.sqrt(val2)
+            else:
+                atzi = math.sqrt(sv2)
+                svurb = min(atzi, 0.5)
+
+            if gridht_i <= 0.1 * ziurb_u:
+                sw2 = (
+                    1.6
+                    * (gridht_i / ziurb_u) ** (2.0 * state.THIRD)
+                    * float(state.URBWSTR[iurb]) ** 2
+                )
+                swurb = math.sqrt(sw2)
+            elif 0.1 * ziurb_u < gridht_i <= ziurb_u:
+                swurb = math.sqrt(0.35 * float(state.URBWSTR[iurb]) ** 2)
+            else:
+                sw2 = (
+                    0.35
+                    * float(state.URBWSTR[iurb]) ** 2
+                    * math.exp(-(6.0 * (gridht_i - ziurb_u) / ziurb_u))
+                )
+                swurb = math.sqrt(sw2)
+
+            state.GRDSVU[i, iurb] = math.sqrt(
+                float(state.GRIDSV[i]) ** 2 + svurb**2
+            )
+            state.GRDSWU[i, iurb] = math.sqrt(
+                float(state.GRIDSW[i]) ** 2 + swurb**2
+            )
+
+            if gridht_i <= ziurb_u:
+                state.GRDTGU[i, iurb] = 1.0e-5
+            else:
+                state.GRDTGU[i, iurb] = state.GRIDTG[i]
+
+    grdpturb(state)
+
+
+def grdpturb(state: AermodState) -> None:
+    """SUBROUTINE GRDPTURB (metext.f)."""
+    nbelow = locate(state.GRIDHT, 1, state.MXGLVL, state.TREFHT)
+    ptref = state.TA + state.GOVRCP * (state.TREFHT + state.ZBASE)
+
+    # Fortran IURB = 1..NUMURB -> iurb in range(state.NUMURB)
+    for iurb in range(state.NUMURB):
+        state.IURB = iurb + 1
+        if not state.STABLE and not state.L_MorningTrans[iurb]:
+            continue
+
+        # Fortran NBELOW -> nbelow - 1
+        nb_idx = nbelow - 1
+        state.GRDPTU[nb_idx, iurb] = ptref - 0.5 * (
+            float(state.GRDTGU[nb_idx + 1, iurb])
+            + float(state.GRDTGU[nb_idx, iurb])
+        ) * (state.TREFHT - float(state.GRIDHT[nb_idx]))
+
+        # Fortran L = NBELOW-1, 1, -1 -> l_idx in range(nbelow - 2, -1, -1)
+        for l_idx in range(nbelow - 2, -1, -1):
+            state.GRDPTU[l_idx, iurb] = float(
+                state.GRDPTU[l_idx + 1, iurb]
+            ) - 0.5 * (
+                float(state.GRDTGU[l_idx + 1, iurb])
+                + float(state.GRDTGU[l_idx, iurb])
+            ) * (
+                float(state.GRIDHT[l_idx + 1]) - float(state.GRIDHT[l_idx])
+            )
+
+        # Fortran L = NBELOW+1, MXGLVL -> l_idx in range(nbelow, state.MXGLVL)
+        for l_idx in range(nbelow, state.MXGLVL):
+            state.GRDPTU[l_idx, iurb] = float(
+                state.GRDPTU[l_idx - 1, iurb]
+            ) + 0.5 * (
+                float(state.GRDTGU[l_idx, iurb])
+                + float(state.GRDTGU[l_idx - 1, iurb])
+            ) * (
+                float(state.GRIDHT[l_idx]) - float(state.GRIDHT[l_idx - 1])
+            )
+
+
+def metdeb(state: AermodState) -> None:
+    """SUBROUTINE METDEB (metext.f)."""
+    if state.METHDR:
+        # WRITE (DBMUNT, 6115) IYR, IMONTH, IDAY, IHOUR, ZI, TA, USTAR,
+        # WSTAR, OBULEN, SFCZ0, THSTAR, UAVG, SVAVG, SWAVG, UATZI,
+        # SVATZI, SWATZI, VPTGZI
+        state.emit_debug(0, 0, "", "METDEB", "ZI", state.ZI)
+        state.emit_debug(0, 0, "", "METDEB", "TA", state.TA)
+        state.emit_debug(0, 0, "", "METDEB", "USTAR", state.USTAR)
+        state.emit_debug(0, 0, "", "METDEB", "WSTAR", state.WSTAR)
+        state.emit_debug(0, 0, "", "METDEB", "OBULEN", state.OBULEN)
+        state.emit_debug(0, 0, "", "METDEB", "SFCZ0", state.SFCZ0)
+        state.emit_debug(0, 0, "", "METDEB", "THSTAR", state.THSTAR)
+        state.emit_debug(0, 0, "", "METDEB", "UAVG", state.UAVG)
+        state.emit_debug(0, 0, "", "METDEB", "SVAVG", state.SVAVG)
+        state.emit_debug(0, 0, "", "METDEB", "SWAVG", state.SWAVG)
+        state.emit_debug(0, 0, "", "METDEB", "UATZI", state.UATZI)
+        state.emit_debug(0, 0, "", "METDEB", "SVATZI", state.SVATZI)
+        state.emit_debug(0, 0, "", "METDEB", "SWATZI", state.SWATZI)
+        state.emit_debug(0, 0, "", "METDEB", "VPTGZI", state.VPTGZI)
+
+        # DO I = MXGLVL, 1, -1 -> i_lvl in range(state.MXGLVL, 0, -1)
+        for i_lvl in range(state.MXGLVL, 0, -1):
+            # Fortran I (1-based) -> idx = i_lvl - 1
+            idx = i_lvl - 1
+            state.emit_debug(0, i_lvl, "", "METDEB", "GRIDHT", float(state.GRIDHT[idx]))
+            state.emit_debug(0, i_lvl, "", "METDEB", "GRIDWD", float(state.GRIDWD[idx]))
+            state.emit_debug(0, i_lvl, "", "METDEB", "GRIDWS", float(state.GRIDWS[idx]))
+            state.emit_debug(0, i_lvl, "", "METDEB", "GRIDSV", float(state.GRIDSV[idx]))
+            state.emit_debug(0, i_lvl, "", "METDEB", "GRIDSW", float(state.GRIDSW[idx]))
+            state.emit_debug(0, i_lvl, "", "METDEB", "GRIDPT", float(state.GRIDPT[idx]))
+            state.emit_debug(0, i_lvl, "", "METDEB", "GRIDTG", float(state.GRIDTG[idx]))
+
+        state.METHDR = False
+
+    # Adjust for distances larger than output field
+    if abs(state.X) > 999999.0:
+        if state.X < 0.0:
+            ndist = -999999
+        else:
+            ndist = 999999
+    else:
+        ndist = f_nint(state.X)
+
+    irec = state.IREC
+    if state.STABLE or (state.UNSTAB and (state.HS >= state.ZI)):
+        # WRITE (DBMUNT, 6131) IREC, NDIST, UEFF, SVEFF, SWEFF
+        state.emit_debug(0, irec, "", "METDEB", "NDIST", ndist)
+        state.emit_debug(0, irec, "", "METDEB", "UEFF", state.UEFF)
+        state.emit_debug(0, irec, "", "METDEB", "SVEFF", state.SVEFF)
+        state.emit_debug(0, irec, "", "METDEB", "SWEFF", state.SWEFF)
+    elif state.PPF >= 1.0:
+        # WRITE (DBMUNT, 6132) IREC, NDIST, UEFF3, SVEFF3, SWEFF3
+        state.emit_debug(0, irec, "", "METDEB", "NDIST", ndist)
+        state.emit_debug(0, irec, "", "METDEB", "UEFF3", state.UEFF3)
+        state.emit_debug(0, irec, "", "METDEB", "SVEFF3", state.SVEFF3)
+        state.emit_debug(0, irec, "", "METDEB", "SWEFF3", state.SWEFF3)
+    elif state.PPF <= 0.0:
+        # WRITE (DBMUNT, 6133) IREC, NDIST, UEFFD, SVEFFD, SWEFFD, UEFFN, SVEFFN, SWEFFN
+        state.emit_debug(0, irec, "", "METDEB", "NDIST", ndist)
+        state.emit_debug(0, irec, "", "METDEB", "UEFFD", state.UEFFD)
+        state.emit_debug(0, irec, "", "METDEB", "SVEFFD", state.SVEFFD)
+        state.emit_debug(0, irec, "", "METDEB", "SWEFFD", state.SWEFFD)
+        state.emit_debug(0, irec, "", "METDEB", "UEFFN", state.UEFFN)
+        state.emit_debug(0, irec, "", "METDEB", "SVEFFN", state.SVEFFN)
+        state.emit_debug(0, irec, "", "METDEB", "SWEFFN", state.SWEFFN)
+    else:
+        # WRITE (DBMUNT, 6134) IREC, NDIST, UEFFD, SVEFFD, SWEFFD, UEFFN, SVEFFN, SWEFFN, UEFF3, SVEFF3, SWEFF3
+        state.emit_debug(0, irec, "", "METDEB", "NDIST", ndist)
+        state.emit_debug(0, irec, "", "METDEB", "UEFFD", state.UEFFD)
+        state.emit_debug(0, irec, "", "METDEB", "SVEFFD", state.SVEFFD)
+        state.emit_debug(0, irec, "", "METDEB", "SWEFFD", state.SWEFFD)
+        state.emit_debug(0, irec, "", "METDEB", "UEFFN", state.UEFFN)
+        state.emit_debug(0, irec, "", "METDEB", "SVEFFN", state.SVEFFN)
+        state.emit_debug(0, irec, "", "METDEB", "SWEFFN", state.SWEFFN)
+        state.emit_debug(0, irec, "", "METDEB", "UEFF3", state.UEFF3)
+        state.emit_debug(0, irec, "", "METDEB", "SVEFF3", state.SVEFF3)
+        state.emit_debug(0, irec, "", "METDEB", "SWEFF3", state.SWEFF3)
+
+
+def grdeps(state: AermodState) -> None:
+    """SUBROUTINE GRDEPS (metext.f)."""
+    ar1 = 0.46
+
+    # Fortran I = 1..MXGLVL -> i in range(state.MXGLVL)
+    for i in range(state.MXGLVL):
+        gridsw_i = float(state.GRIDSW[i])
+        tsublr = ar1 * state.ZI / gridsw_i
+        state.GRIDEPS[i] = 0.78 * gridsw_i * gridsw_i / tsublr
+=== FILE: aermod_py/__init__.py ===
+"""AERMOD 26135 Python port: package entry point."""
+
+from __future__ import annotations
+
+import numpy as xp
+import glue
+
+from .state import AermodState
+from .hrloop import hrloop
+
+
+def run_case(
+    project: glue.Project,
+    met: glue.Met,
+    setup: dict,
+    *,
+    debug: bool = False,
+) -> glue.Result:
+    """Run HRLOOP and all in-scope AERMOD physics for a prepared case."""
+    state = AermodState.from_setup(project, met, setup, debug=debug)
+    hrloop(state)
+    dates = xp.asarray(state.dates_out, dtype=xp.int64)
+    if len(state.conc_out) > 0:
+        conc = xp.stack(state.conc_out, axis=0).astype(xp.float64)
+    else:
+        conc = xp.zeros((0, state.NUMREC), dtype=xp.float64)
+    return glue.Result(dates=dates, conc=conc, debug=state.debug_rows)

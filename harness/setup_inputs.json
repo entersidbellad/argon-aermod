@@ -1,0 +1,1773 @@
+[
+ {
+  "name": "AAFR",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AALPHA",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AANGLE",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ABA",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ABH",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ABL",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ABW",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ABYPR",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ADS",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ADSBH",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 2,
+  "allocatable": true
+ },
+ {
+  "name": "ADSBL",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 2,
+  "allocatable": true
+ },
+ {
+  "name": "ADSBW",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 2,
+  "allocatable": true
+ },
+ {
+  "name": "ADSFACT",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ADSXADJ",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 2,
+  "allocatable": true
+ },
+ {
+  "name": "ADSYADJ",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 2,
+  "allocatable": true
+ },
+ {
+  "name": "AFP",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AFTSRC",
+  "module": "MAIN1",
+  "type": "C",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AHS",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AMFUEL",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ANNUAL",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "APDEFF",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "APDENS",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 2,
+  "allocatable": true
+ },
+ {
+  "name": "APDIAM",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 2,
+  "allocatable": true
+ },
+ {
+  "name": "APHI",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 2,
+  "allocatable": true
+ },
+ {
+  "name": "AQS",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ARM2",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "ARPWR",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ASRCANGLE",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ASYINI",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ASZINI",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ATHRUST",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ATS",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ATSTOP",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 2,
+  "allocatable": true
+ },
+ {
+  "name": "AVAA",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AVGRAV",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 2,
+  "allocatable": true
+ },
+ {
+  "name": "AVS",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AWMADWDBG",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "AWMADWDBUNT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "AXCNTR",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AXINIT",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AXR",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AXS",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AXVERT",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 2,
+  "allocatable": true
+ },
+ {
+  "name": "AYCNTR",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AYINIT",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AYR",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AYS",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AYVERT",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 2,
+  "allocatable": true
+ },
+ {
+  "name": "AZELEV",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AZFLAG",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AZHILL",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "AZS",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "BGSECT",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": false
+ },
+ {
+  "name": "BIGT",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "CLMPRO",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "CONC",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "DAYTAB",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "DBGUNT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "DBMUNT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "DDEP",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "DEBUG",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "DENOM",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "DEPOS",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "DFAULT",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "DTORAD",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "ELEV",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "EMIFAC",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "EPSEFF",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "EPSEFF3",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "EPSEFFD",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "EVAL",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "EVONLY",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "EXPLIM",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "FASTAREA",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "FNUM",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "FRACSAT",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "FRANMAX",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "FRANMIN",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "FULLHRQ",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "GRSM",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "HENRY",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "HOUREMISARRAY",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "HOURLY",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "IDSURF",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "IDUAIR",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "IDYTAB",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "IEDATE",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "IEVENT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "IGROUP",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 2,
+  "allocatable": true
+ },
+ {
+  "name": "IMIT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "IMSTAT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 1,
+  "allocatable": false
+ },
+ {
+  "name": "INCRST",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "INPD",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "IOERRN",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "IOSTAT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 1,
+  "allocatable": false
+ },
+ {
+  "name": "IOUNIT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "IPAIR",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "IPROCL",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 1,
+  "allocatable": false
+ },
+ {
+  "name": "ISEAHR",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ISJDAY",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "ISUMUNT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "ITOXFL",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "ITXUNT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "IURBGRP",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 2,
+  "allocatable": true
+ },
+ {
+  "name": "IUYEAR",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "IYR",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "I_ALPHA",
+  "module": "RLINE_DATA",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "KAVE",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "LDGAS",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "LDPART",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "LUSERVD",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "LWGAS",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "LWPART",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_ADJUSTAR",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_AWMA_ENTRAIN",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_AWMA_UEFF",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_AWMA_UTURB",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_AWMA_UTURBHX",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_BACKGRND",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_BGHOURLY",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_BGSECTOR",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_BGVALUES",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 1,
+  "allocatable": false
+ },
+ {
+  "name": "L_BLSOURCE",
+  "module": "BUOYANT_LINE",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_BULKRN",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_DAYOFWEEKOPTS",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_EFFSIGY",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_FLATSRC",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "L_HRLYSIG",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "L_MAXDCONT",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_NOXHOURLY",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_NOXSECTOR",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_NOXVALUE",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 1,
+  "allocatable": false
+ },
+ {
+  "name": "L_NOX_VALS",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 1,
+  "allocatable": false
+ },
+ {
+  "name": "L_O3HOURLY",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_O3SECTOR",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_O3VAL",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 1,
+  "allocatable": false
+ },
+ {
+  "name": "L_O3VALUES",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 1,
+  "allocatable": false
+ },
+ {
+  "name": "L_ORD_CAV",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_ORD_TURB",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_ORD_UEFF",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_PBAL",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_RECT_BLDG",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_SKIPMESSAGES",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_STRMLN_BLDG",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_URBANTRANSITION",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_USERFRANMAX",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_USERFRANMIN",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_VECTORWS",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "L_WARNCHKD",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "MAXDIST",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "METEORDBG",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "METFRM",
+  "module": "MAIN1",
+  "type": "C",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "METINP",
+  "module": "MAIN1",
+  "type": "C",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "MFUNIT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "MONTH",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "MPUNIT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "MSGPRO",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "MULTYR",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "MXFILE",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NDX4ZI",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NDXSTK",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "NO2AVE",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NOBID",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NOCHKD",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NOSTD",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NOXBACK",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": false
+ },
+ {
+  "name": "NOXSECT",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": false
+ },
+ {
+  "name": "NREGINT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NREGSTART",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NSEC",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NSRC",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NUMAVE",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NUMBGSECTS",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NUMBLGRPS",
+  "module": "BUOYANT_LINE",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NUMGRP",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NUMNOXSECTS",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NUMO3SECTS",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NUMREC",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NUMSRC",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NUMTYP",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NUMURB",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NUMYRS",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NURB",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "NVERTS",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "NYEARS",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "O3BACK",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": false
+ },
+ {
+  "name": "O3MISS",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "O3SECT",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": false
+ },
+ {
+  "name": "OLM",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "OSPLAT",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "PERIOD",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "PI",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "PLATFMDBG",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "PLATFMDBUNT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "PLATHB",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "PLATWB",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "PLUME_SPREAD",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "PM25AVE",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "POLLUT",
+  "module": "MAIN1",
+  "type": "C",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "PPFILE",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "PRIMEDBG",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "PRMDBUNT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "PROFRM",
+  "module": "MAIN1",
+  "type": "C",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "PROINP",
+  "module": "MAIN1",
+  "type": "C",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "PSDCREDIT",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "PVMRM",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "QFACT",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 2,
+  "allocatable": true
+ },
+ {
+  "name": "QFLAG",
+  "module": "MAIN1",
+  "type": "C",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "RL_GRIDWS",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 2,
+  "allocatable": false
+ },
+ {
+  "name": "ROTANG",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "RSTINP",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "RSTSAV",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "RT2BYPI",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "RTOF2",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "RTOFPI",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "RTPIBY2",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "RUNTTRM",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "RUNTTRM2",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "SCIM",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "SCIMOUT",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "SCREEN",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "SEASONHR",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "SFNAME",
+  "module": "MAIN1",
+  "type": "C",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "SO2AVE",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "SRCID",
+  "module": "MAIN1",
+  "type": "C",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "SRCTYP",
+  "module": "MAIN1",
+  "type": "C",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "SRT2PI",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "SUMMFILE",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "SVAVG",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "SVMIN",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "SWAVG",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "SWMIN",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "SZCOEF",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "TURBOPTS",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 1,
+  "allocatable": false
+ },
+ {
+  "name": "TWOPI",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "TXFILE",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "UANAME",
+  "module": "MAIN1",
+  "type": "C",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "UAVG",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "URBAN",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "URBDBUG",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "URBPOP",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "URBSRC",
+  "module": "MAIN1",
+  "type": "C",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "URBUNT",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "URBUNT1",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "URBUNT2",
+  "module": "MAIN1",
+  "type": "I",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "URBZ0",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "USERVD",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "VDEP",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "WASHOUT",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 1,
+  "allocatable": true
+ },
+ {
+  "name": "WDEP",
+  "module": "MAIN1",
+  "type": "L",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "WSMIN",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "ZBASE",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ },
+ {
+  "name": "ZRDEP",
+  "module": "MAIN1",
+  "type": "D",
+  "rank": 0,
+  "allocatable": false
+ }
+]

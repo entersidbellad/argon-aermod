@@ -1,0 +1,14 @@
+# Core
+numpy>=1.24.0
+pandas>=2.0.0
+pyaermod==2.2.0
+google-genai>=2.3.0
+tiktoken>=0.5.0
+
+# Dashboard (server.py)
+fastapi>=0.104.0
+uvicorn>=0.24.0
+
+# Tests
+pytest>=7.4.0
+httpx>=0.27.0

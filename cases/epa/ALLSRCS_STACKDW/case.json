@@ -1,0 +1,48 @@
+{
+  "name": "ALLSRCS_STACKDW",
+  "tier": "B",
+  "kind": "epa",
+  "group": "STACKDW",
+  "deck": "inputs/allsrcs.inp",
+  "deck_sha256": "0a26aa140e4ba44b232de23619ac4bb8c5534f284f29eb42d5832d91caf0ee38",
+  "epa_postfile": "postfiles/ALLSRCS_STACKDW_01H.PST",
+  "oracle": "our compiled binary (ref/aermod) run on case.inp",
+  "met": [
+    "meteorology/aermet2.sfc",
+    "meteorology/aermet2.pfl"
+  ],
+  "includes": [],
+  "sources": [
+    "STACKDW"
+  ],
+  "origin_sources": [
+    "STACK"
+  ],
+  "removed": {
+    "sources": [
+      "AREA",
+      "AREAP",
+      "BARR",
+      "BASE",
+      "BASE2",
+      "BLINE1",
+      "BLINE2",
+      "BLINE3",
+      "CIRC",
+      "DEP",
+      "LINE1",
+      "OPENPIT",
+      "VOL"
+    ],
+    "keywords": {
+      "LOCATION": 13,
+      "SRCPARAM": 13,
+      "AREAVERT": 2,
+      "BLPINPUT": 1,
+      "RBARRIER": 1,
+      "RDEPRESS": 1,
+      "SRCGROUP": 14
+    }
+  },
+  "notes": ""
+}

@@ -1,0 +1,24 @@
+{
+ "run_id": "tierB_fix_names_prmcalc",
+ "kind": "edit",
+ "model": "gemini-4-argon",
+ "thinking": "low",
+ "task": "prompts/tasks/tier_b/fix_names_prmcalc.md",
+ "shown": [
+  "prmcalc.py"
+ ],
+ "units": [],
+ "fortran_ranges": [],
+ "strip_comments": false,
+ "notes": [],
+ "prompt_tokens": 6605,
+ "token_method": "Gemini count_tokens (gemini-4-argon)",
+ "max_output_tokens": 65536,
+ "budget_usd": 49.0,
+ "spent_before_usd": 2.82,
+ "prices_usd_per_mtok": {
+  "input": 2.0,
+  "output": 10.0
+ },
+ "started": "2026-10-25T23:41:09.356527+00:00"
+}
