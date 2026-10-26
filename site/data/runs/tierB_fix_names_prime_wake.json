@@ -1,0 +1,98 @@
+{
+ "id": "tierB_fix_names_prime_wake",
+ "kind": "edit",
+ "tier": null,
+ "model": "gemini-4-argon",
+ "thinking": "low",
+ "prompt_tokens": 22564,
+ "token_method": "Gemini count_tokens (gemini-4-argon)",
+ "fortran_pack": null,
+ "expected_input_multiplier": null,
+ "replies": 1,
+ "interactions": [
+  {
+   "path": "reply.json",
+   "id": "v1_ChZsWlBlYW82a09zN2Utc0FQNFp1UVNREhZsWlBlYW82a09zN2Utc0FQNFp1UVNR",
+   "status": "completed",
+   "seconds": 171.72044902799826,
+   "usage": {
+    "input_tokens_by_modality": [
+     {
+      "modality": "text",
+      "tokens": 22569
+     }
+    ],
+    "output_tokens_by_modality": [
+     {
+      "modality": "text",
+      "tokens": 22116
+     }
+    ],
+    "total_cached_tokens": 0,
+    "total_input_tokens": 22569,
+    "total_output_tokens": 22116,
+    "total_thought_tokens": 0,
+    "total_tokens": 44685,
+    "total_tool_use_tokens": 0
+   },
+   "errors": [],
+   "step": "edit",
+   "iteration": null,
+   "files": [
+    "prime_wake.py"
+   ],
+   "decision": {
+    "problem": null,
+    "hypothesis": "Renamed `state.L_AWMA_UTURB`, `state.L_AWMA_UTURBHX`, and `state.L_ORD_CAV` in `aermod_py/prime_wake.py` to `state.L_AWMA_UTurb`, `state.L_AWMA_UTurbHX`, and `state.L_ORD_Cav` respectively to match the mixed-case MAIN1 attribute spellings on `AermodState`.",
+    "accepted": true,
+    "reason": "all checks pass"
+   },
+   "cost_usd": 0.27
+  }
+ ],
+ "output_tokens": 22116,
+ "usage": {
+  "total_input_tokens": 22569,
+  "total_output_tokens": 22116,
+  "total_thought_tokens": 0,
+  "total_tokens": 44685
+ },
+ "cost_usd": 0.27,
+ "cost_complete": true,
+ "iterations": null,
+ "patches_kept": null,
+ "cases_passing": null,
+ "cases_scored": null,
+ "stop_reason": null,
+ "spent_usd": 0.266298,
+ "run": {
+  "run_id": "tierB_fix_names_prime_wake",
+  "kind": "edit",
+  "model": "gemini-4-argon",
+  "thinking": "low",
+  "task": "prompts/tasks/tier_b/fix_names_prime_wake.md",
+  "shown": [
+   "prime_wake.py"
+  ],
+  "units": [],
+  "fortran_ranges": [],
+  "strip_comments": false,
+  "notes": [],
+  "prompt_tokens": 22564,
+  "token_method": "Gemini count_tokens (gemini-4-argon)",
+  "max_output_tokens": 65536,
+  "budget_usd": 49.0,
+  "spent_before_usd": 2.82,
+  "prices_usd_per_mtok": {
+   "input": 2.0,
+   "output": 10.0
+  },
+  "started": "2026-10-25T23:41:09.440817+00:00"
+ },
+ "result": {
+  "accepted": true,
+  "reason": "all checks pass",
+  "spent_usd": 0.266298,
+  "interaction_id": "v1_ChZsWlBlYW82a09zN2Utc0FQNFp1UVNREhZsWlBlYW82a09zN2Utc0FQNFp1UVNR"
+ }
+}
