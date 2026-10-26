@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 import pytest
 
@@ -61,3 +62,24 @@ def test_refuses_to_export_a_secret(tmp_path, monkeypatch):
     snapshot_with(tmp_path, monkeypatch, run_url="https://example.invalid/AIza" + "x" * 35)
     with pytest.raises(SystemExit, match="secret"):
         export_static.build()
+
+
+def test_site_is_self_contained():
+    files, _ = export_static.build()
+    fonts = sorted((server.UI_DIR / "fonts").glob("*.woff2"))
+    assert fonts and all(files[f"fonts/{f.name}"] == f.read_bytes() for f in fonts)
+    for name in ("index.html", "app.css", "app.js"):
+        text = files[name]
+        # Nothing third-party is loaded: links out are plain <a href>s, never scripts, styles or fonts.
+        assert not re.search(r"""(src|@import|url)\s*[=(]\s*["']?(https?:)?//""", text), name
+        assert not re.search(r"\son[a-z]+\s*=\s*[\"']", text), f"{name}: inline handler breaks the CSP"
+
+
+def test_vercel_sends_security_headers():
+    config = json.loads((export_static.ROOT / "vercel.json").read_text())
+    headers = {h["key"]: h["value"] for rule in config["headers"] if rule["source"] == "/(.*)" for h in rule["headers"]}
+    csp = dict(d.strip().split(" ", 1) for d in headers["Content-Security-Policy"].split(";") if " " in d.strip())
+    assert csp["default-src"] == csp["script-src"] == "'self'"
+    assert csp["frame-ancestors"] == "'none'"
+    assert headers["X-Content-Type-Options"] == "nosniff"
+    assert "Referrer-Policy" in headers and "camera=()" in headers["Permissions-Policy"]
