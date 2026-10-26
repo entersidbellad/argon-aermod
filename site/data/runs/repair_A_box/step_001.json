@@ -47,7 +47,7 @@
     "accepted": true,
     "reason": "aertest_nobldg passes"
    },
-   "cost_usd": 0.13
+   "cost_usd": 0.12697
   }
  ],
  "output_tokens": 1014,
@@ -57,7 +57,7 @@
   "total_thought_tokens": 11433,
   "total_tokens": 13697
  },
- "cost_usd": 0.13,
+ "cost_usd": 0.12697,
  "cost_complete": true,
  "iterations": 1,
  "patches_kept": 1,

@@ -47,7 +47,7 @@
     "accepted": true,
     "reason": "all checks pass"
    },
-   "cost_usd": 0.27
+   "cost_usd": 0.26629800000000003
   }
  ],
  "output_tokens": 22116,
@@ -57,7 +57,7 @@
   "total_thought_tokens": 0,
   "total_tokens": 44685
  },
- "cost_usd": 0.27,
+ "cost_usd": 0.26629800000000003,
  "cost_complete": true,
  "iterations": null,
  "patches_kept": null,

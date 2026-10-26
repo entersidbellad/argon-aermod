@@ -51,7 +51,7 @@
      "accepted": true,
      "reason": "all checks pass"
     },
-    "cost_usd": 0.27
+    "cost_usd": 0.266702
    }
   ],
   "output_tokens": 20562,
@@ -61,7 +61,7 @@
    "total_thought_tokens": 1757,
    "total_tokens": 44075
   },
-  "cost_usd": 0.27,
+  "cost_usd": 0.266702,
   "cost_complete": true,
   "iterations": null,
   "patches_kept": null,
@@ -125,7 +125,7 @@
      "windgrid.py"
     ],
     "decision": null,
-    "cost_usd": 3.44
+    "cost_usd": 3.439544
    }
   ],
   "output_tokens": 85741,
@@ -135,7 +135,7 @@
    "total_thought_tokens": 60591,
    "total_tokens": 1134444
   },
-  "cost_usd": 3.44,
+  "cost_usd": 3.439544,
   "cost_complete": true,
   "iterations": null,
   "patches_kept": null,
@@ -193,7 +193,7 @@
      "accepted": true,
      "reason": "aertest_nobldg passes"
     },
-    "cost_usd": 0.13
+    "cost_usd": 0.12697
    }
   ],
   "output_tokens": 1014,
@@ -203,7 +203,7 @@
    "total_thought_tokens": 11433,
    "total_tokens": 13697
   },
-  "cost_usd": 0.13,
+  "cost_usd": 0.12697,
   "cost_complete": true,
   "iterations": 1,
   "patches_kept": 1,
@@ -290,7 +290,7 @@
      "accepted": true,
      "reason": "all checks pass"
     },
-    "cost_usd": 0.64
+    "cost_usd": 0.640494
    }
   ],
   "output_tokens": 14386,
@@ -300,7 +300,7 @@
    "total_thought_tokens": 37506,
    "total_tokens": 112679
   },
-  "cost_usd": 0.64,
+  "cost_usd": 0.640494,
   "cost_complete": true,
   "iterations": null,
   "patches_kept": null,
@@ -359,7 +359,7 @@
      "accepted": true,
      "reason": "all checks pass"
     },
-    "cost_usd": 0.61
+    "cost_usd": 0.6096
    }
   ],
   "output_tokens": 24553,
@@ -369,7 +369,7 @@
    "total_thought_tokens": 19440,
    "total_tokens": 128828
   },
-  "cost_usd": 0.61,
+  "cost_usd": 0.6096,
   "cost_complete": true,
   "iterations": null,
   "patches_kept": null,
@@ -428,7 +428,7 @@
      "accepted": true,
      "reason": "all checks pass"
     },
-    "cost_usd": 0.5
+    "cost_usd": 0.497418
    }
   ],
   "output_tokens": 11821,
@@ -438,7 +438,7 @@
    "total_thought_tokens": 25816,
    "total_tokens": 98161
   },
-  "cost_usd": 0.5,
+  "cost_usd": 0.497418,
   "cost_complete": true,
   "iterations": null,
   "patches_kept": null,
@@ -496,7 +496,7 @@
      "accepted": true,
      "reason": "all checks pass"
     },
-    "cost_usd": 0.35
+    "cost_usd": 0.347024
    }
   ],
   "output_tokens": 6034,
@@ -506,7 +506,7 @@
    "total_thought_tokens": 16927,
    "total_tokens": 81668
   },
-  "cost_usd": 0.35,
+  "cost_usd": 0.347024,
   "cost_complete": true,
   "iterations": null,
   "patches_kept": null,
@@ -565,7 +565,7 @@
      "accepted": false,
      "reason": "broke aertest_nobldg, CAPPED_STACK2, CAPPED_STACK2C0, CAPPED_STACK2CE, HRDOW_STACK1, FLATELEV_FLAT_STK, testpm10_stack2"
     },
-    "cost_usd": 0.45
+    "cost_usd": 0.45219000000000004
    }
   ],
   "output_tokens": 19595,
@@ -575,7 +575,7 @@
    "total_thought_tokens": 10054,
    "total_tokens": 107499
   },
-  "cost_usd": 0.45,
+  "cost_usd": 0.45219000000000004,
   "cost_complete": true,
   "iterations": null,
   "patches_kept": null,
@@ -633,7 +633,7 @@
      "accepted": true,
      "reason": "all checks pass"
     },
-    "cost_usd": 0.11
+    "cost_usd": 0.111528
    }
   ],
   "output_tokens": 9198,
@@ -643,7 +643,7 @@
    "total_thought_tokens": 0,
    "total_tokens": 18972
   },
-  "cost_usd": 0.11,
+  "cost_usd": 0.111528,
   "cost_complete": true,
   "iterations": null,
   "patches_kept": null,
@@ -701,7 +701,7 @@
      "accepted": true,
      "reason": "all checks pass"
     },
-    "cost_usd": 0.15
+    "cost_usd": 0.145128
    }
   ],
   "output_tokens": 12027,
@@ -711,7 +711,7 @@
    "total_thought_tokens": 0,
    "total_tokens": 24456
   },
-  "cost_usd": 0.15,
+  "cost_usd": 0.145128,
   "cost_complete": true,
   "iterations": null,
   "patches_kept": null,
@@ -769,7 +769,7 @@
      "accepted": true,
      "reason": "all checks pass"
     },
-    "cost_usd": 0.11
+    "cost_usd": 0.11108000000000001
    }
   ],
   "output_tokens": 9187,
@@ -779,7 +779,7 @@
    "total_thought_tokens": 0,
    "total_tokens": 18792
   },
-  "cost_usd": 0.11,
+  "cost_usd": 0.11108000000000001,
   "cost_complete": true,
   "iterations": null,
   "patches_kept": null,
@@ -837,7 +837,7 @@
      "accepted": true,
      "reason": "all checks pass"
     },
-    "cost_usd": 0.27
+    "cost_usd": 0.26629800000000003
    }
   ],
   "output_tokens": 22116,
@@ -847,7 +847,7 @@
    "total_thought_tokens": 0,
    "total_tokens": 44685
   },
-  "cost_usd": 0.27,
+  "cost_usd": 0.26629800000000003,
   "cost_complete": true,
   "iterations": null,
   "patches_kept": null,
@@ -905,7 +905,7 @@
      "accepted": true,
      "reason": "all checks pass"
     },
-    "cost_usd": 0.07
+    "cost_usd": 0.07374
    }
   ],
   "output_tokens": 6052,
@@ -915,7 +915,7 @@
    "total_thought_tokens": 0,
    "total_tokens": 12662
   },
-  "cost_usd": 0.07,
+  "cost_usd": 0.07374,
   "cost_complete": true,
   "iterations": null,
   "patches_kept": null,

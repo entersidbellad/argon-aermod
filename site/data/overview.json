@@ -65,7 +65,7 @@
      "total_thought_tokens": 1757,
      "total_tokens": 44075
     },
-    "cost_usd": 0.27,
+    "cost_usd": 0.266702,
     "cost_complete": true
    },
    {
@@ -82,7 +82,7 @@
      "total_thought_tokens": 60591,
      "total_tokens": 1134444
     },
-    "cost_usd": 3.44,
+    "cost_usd": 3.439544,
     "cost_complete": true
    },
    {
@@ -99,7 +99,7 @@
      "total_thought_tokens": 11433,
      "total_tokens": 13697
     },
-    "cost_usd": 0.13,
+    "cost_usd": 0.12697,
     "cost_complete": true
    },
    {
@@ -133,7 +133,7 @@
      "total_thought_tokens": 37506,
      "total_tokens": 112679
     },
-    "cost_usd": 0.64,
+    "cost_usd": 0.640494,
     "cost_complete": true
    },
    {
@@ -150,7 +150,7 @@
      "total_thought_tokens": 19440,
      "total_tokens": 128828
     },
-    "cost_usd": 0.61,
+    "cost_usd": 0.6096,
     "cost_complete": true
    },
    {
@@ -167,7 +167,7 @@
      "total_thought_tokens": 25816,
      "total_tokens": 98161
     },
-    "cost_usd": 0.5,
+    "cost_usd": 0.497418,
     "cost_complete": true
    },
    {
@@ -184,7 +184,7 @@
      "total_thought_tokens": 16927,
      "total_tokens": 81668
     },
-    "cost_usd": 0.35,
+    "cost_usd": 0.347024,
     "cost_complete": true
    },
    {
@@ -201,7 +201,7 @@
      "total_thought_tokens": 10054,
      "total_tokens": 107499
     },
-    "cost_usd": 0.45,
+    "cost_usd": 0.45219000000000004,
     "cost_complete": true
    },
    {
@@ -218,7 +218,7 @@
      "total_thought_tokens": 0,
      "total_tokens": 18972
     },
-    "cost_usd": 0.11,
+    "cost_usd": 0.111528,
     "cost_complete": true
    },
    {
@@ -235,7 +235,7 @@
      "total_thought_tokens": 0,
      "total_tokens": 24456
     },
-    "cost_usd": 0.15,
+    "cost_usd": 0.145128,
     "cost_complete": true
    },
    {
@@ -252,7 +252,7 @@
      "total_thought_tokens": 0,
      "total_tokens": 18792
     },
-    "cost_usd": 0.11,
+    "cost_usd": 0.11108000000000001,
     "cost_complete": true
    },
    {
@@ -269,7 +269,7 @@
      "total_thought_tokens": 0,
      "total_tokens": 44685
     },
-    "cost_usd": 0.27,
+    "cost_usd": 0.26629800000000003,
     "cost_complete": true
    },
    {
@@ -286,7 +286,7 @@
      "total_thought_tokens": 0,
      "total_tokens": 12662
     },
-    "cost_usd": 0.07,
+    "cost_usd": 0.07374,
     "cost_complete": true
    }
   ],
@@ -297,7 +297,7 @@
    "total_thought_tokens": 183524,
    "total_tokens": 1840618
   },
-  "cost_usd": 7.1,
+  "cost_usd": 7.087716,
   "cost_complete": true,
   "prices": [
    {

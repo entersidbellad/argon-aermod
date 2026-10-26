@@ -48,7 +48,7 @@
     "accepted": false,
     "reason": "broke aertest_nobldg, CAPPED_STACK2, CAPPED_STACK2C0, CAPPED_STACK2CE, HRDOW_STACK1, FLATELEV_FLAT_STK, testpm10_stack2"
    },
-   "cost_usd": 0.45
+   "cost_usd": 0.45219000000000004
   }
  ],
  "output_tokens": 19595,
@@ -58,7 +58,7 @@
   "total_thought_tokens": 10054,
   "total_tokens": 107499
  },
- "cost_usd": 0.45,
+ "cost_usd": 0.45219000000000004,
  "cost_complete": true,
  "iterations": null,
  "patches_kept": null,

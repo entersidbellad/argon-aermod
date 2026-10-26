@@ -53,7 +53,7 @@
     "windgrid.py"
    ],
    "decision": null,
-   "cost_usd": 3.44
+   "cost_usd": 3.439544
   }
  ],
  "output_tokens": 85741,
@@ -63,7 +63,7 @@
   "total_thought_tokens": 60591,
   "total_tokens": 1134444
  },
- "cost_usd": 3.44,
+ "cost_usd": 3.439544,
  "cost_complete": true,
  "iterations": null,
  "patches_kept": null,
