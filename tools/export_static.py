@@ -19,7 +19,8 @@ committed port/aermod_py.
 from __future__ import annotations
 
 import argparse
-import filecmp
+import difflib
+import itertools
 import json
 import re
 import shutil
@@ -138,14 +139,19 @@ def write(files: dict[str, str], out: Path) -> None:
 
 
 def stale(out: Path) -> list[str]:
-    """Paths under out that differ from a fresh export (missing, changed or extra)."""
-    with tempfile.TemporaryDirectory() as tmp:
-        fresh = Path(tmp)
-        write(build()[0], fresh)
-        have = {p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file()} if out.is_dir() else set()
-        want = {p.relative_to(fresh).as_posix() for p in fresh.rglob("*") if p.is_file()}
-        return sorted((have ^ want) | {p for p in have & want
-                                       if not filecmp.cmp(out / p, fresh / p, shallow=False)})
+    """A line per file under out that is missing, changed or extra against a fresh export,
+    each followed by the start of its diff."""
+    want = build()[0]
+    have = {p.relative_to(out).as_posix(): p.read_text() for p in out.rglob("*") if p.is_file()} \
+        if out.is_dir() else {}
+    report = []
+    for rel in sorted(have.keys() | want.keys()):
+        if have.get(rel) != want.get(rel):
+            report.append(f"stale: {out.name}/{rel}")
+            diff = difflib.unified_diff((have.get(rel) or "").splitlines(), (want.get(rel) or "").splitlines(),
+                                        "committed", "fresh", n=1, lineterm="")
+            report += [f"    {line}" for line in itertools.islice(diff, 12)]
+    return report
 
 
 def fetch_ci(run_id: str | None) -> None:
@@ -188,12 +194,11 @@ def main() -> int:
         fetch_ci(args.fetch_ci or None)
         return 0
     if args.check:
-        diff = stale(args.out)
-        for path in diff:
-            print(f"stale: {args.out.name}/{path}")
-        if diff:
+        report = stale(args.out)
+        if report:
+            print("\n".join(report))
             print("run make export-static and commit the result", file=sys.stderr)
-        return 1 if diff else 0
+        return 1 if report else 0
     files, meta = build()
     write(files, args.out)
     print(f"{len(files)} files in {args.out}: {meta['label']}")
