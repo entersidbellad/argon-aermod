@@ -22,6 +22,10 @@
   - On this machine, `split.py --verify` traces all 12 files.
   - `run_port.py` plus `suite.py` reproduce 7/7: the six tier A cases and `testpm10_stack2`, at slope 1.000000 and p99 relative error 0.
   - The dashboard certifies that port when pointed at that checkout.
+- **Kiln what-if demo** (`whatif/`, on branch `cursor/kiln-whatif`).
+  - Its statistics match ref/aermod's PLOTFILE outputs on the same deck to within print precision: the period mean, the highest 1-hour value and the 4th-highest daily maximum.
+  - The excluded hours equal AERMOD's calm plus missing count.
+  - On the port, concentration scales with emission rate to 1e-12.
 
 ## Token counts (tiktoken o200k proxy)
 
@@ -42,3 +46,7 @@
 - The fixed-scope setup values hold only for the options the glue accepts; other options are rejected, not handled.
 - The chunked baseline has only been dry-run tested.
 - The CI workflow has not run on GitHub yet.
+- **What-if demo inputs are illustrative.** Its fuel-mix factors, emission rates and backgrounds are invented example values.
+  - It uses one year of met where the NAAQS forms average three, and 128 receptors where a permit study would use a dense grid.
+  - NOx is compared as NO2 with full conversion.
+  - Stacks are limited to the 108 precomputed in `whatif/kiln.toml`.
