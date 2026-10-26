@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # the static export lists git history of port/aermod_py
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -21,6 +23,8 @@ jobs:
         run: python split.py --verify
       - name: compare.py matches its approved digest (harness/compare.sha256)
         run: make check-frozen
+      - name: Static export in site/ is up to date (make export-static)
+        run: python tools/export_static.py --check
 
   reference:
     # Builds our gfortran AERMOD 26135, regenerates every oracle, dump and
