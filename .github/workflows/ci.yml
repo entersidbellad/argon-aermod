@@ -92,6 +92,7 @@ jobs:
             CAPPED_STACK2CE aertest_nobldg \
             | xargs -P "$(nproc)" -n 1 python harness/run_port.py --who port
       - name: Judge with compare.py
+        if: ${{ !cancelled() }}
         run: python harness/suite.py --who port --tier all
       - uses: actions/upload-artifact@v4
         if: always()
