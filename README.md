@@ -5,7 +5,7 @@
 **Try it: [argon-aermod.vercel.app](https://argon-aermod.vercel.app)** (works on a phone; example plant data, read-only)
 
 - **Pick a fuel mix and get a plain answer:** within the limit, close to it, or over it, as a share of the federal limit at the worst spot around the plant, next to today's operation.
-- **Trust the number:** the model gives the same answers as EPA's own version on EPA's official test cases, hour by hour and location by location, and an independent build server rechecks this on every change.
+- **Trust the number:** the model passes the documented checks on EPA's official test cases: fitted comparisons against EPA's published results where EPA ships them, plus stricter hour-by-hour, location-by-location checks against EPA's Fortran code compiled here. An independent build server rechecks this on every change.
 - **Built by AI, with nothing tuned by hand:** Gemini 4 Argon translated EPA's model into modern code. Every file traces back to the AI request that wrote it, and the pass mark is locked.
 
 ![Fuel & Permit Check: a 50/50 alternative-fuel mix reaches 63% of the federal 1-hour SO2 limit, within the limit, compared with 53% today](docs/screenshots/whatif.png)

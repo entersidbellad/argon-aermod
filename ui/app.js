@@ -863,7 +863,7 @@ function renderTrust() {
     const checked = STATIC?.ci ? `Last check: ${extLink(STATIC.ci.run_url, esc(longDate(STATIC.ci.completed_at)))}, passed.` : '';
     $('trust-grid').innerHTML = [
         item(match ? 'ok' : 'bad', match ? `Same answers as EPA's own model` : 'Not all EPA test cases match yet',
-            `On ${match ? 'all' : `${c.passing} of`} ${c.total} of EPA's official ${term('aermod', 'AERMOD')} test cases, this model reproduces EPA's results hour by hour, at every location.`),
+            `On ${match ? 'all' : `${c.passing} of`} ${c.total} of EPA's official ${term('aermod', 'AERMOD')} test cases, this model matches EPA's Fortran code, compiled here from EPA's source, hour by hour at every location, and agrees with EPA's published results where EPA ships them.`),
         item(o.certified ? 'ok' : STATIC ? 'bad' : 'neutral', o.certified ? 'Checked automatically, every time' : 'Automatic check not passed here',
             `Every change to the model reruns all of EPA's test cases on an ${term('ci', 'independent build server')}. ${checked}`),
         p.ok && p.python_files
