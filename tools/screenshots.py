@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Full-page screenshots of every dashboard tab, for docs/ and reviews.
+"""Full-page screenshots of every dashboard section, for docs/ and reviews.
 
   python server.py &                      # or: make demo
   python tools/screenshots.py [--url http://127.0.0.1:8000] [--width 1280] [--out docs/screenshots]
@@ -17,7 +17,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-TABS = ("whatif", "proof", "decision", "port")
+TABS = ("whatif", "proof", "port", "about")
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -29,7 +29,7 @@ def main() -> int:
     ap.add_argument("--out", type=Path, default=ROOT / "docs" / "screenshots")
     ap.add_argument("--suffix", default="", help="appended to each file name, e.g. -1920")
     ap.add_argument("--whatif-fuel", default="coal_50_alt_50",
-                    help="fuel-mix preset (whatif/kiln.toml) to select so the What-if shot differs from its baseline")
+                    help="fuel-mix preset (whatif/kiln.toml) to select so the Fuel & Permit Check shot differs from today")
     ap.add_argument("--chrome", default=shutil.which("google-chrome") or shutil.which("chromium"))
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
@@ -39,10 +39,11 @@ def main() -> int:
         for tab in TABS:
             page.goto(f"{args.url}/#{tab}")
             page.wait_for_load_state("networkidle")
-            page.wait_for_function("!document.querySelector('.screen.active .loading')", timeout=60_000)
+            page.wait_for_selector('.screen.active .loading', state='detached', timeout=60_000)
             if tab == "whatif" and args.whatif_fuel:
-                page.select_option("#wi-fuel", args.whatif_fuel)
+                page.locator(f'#wi-fuel input[value="{args.whatif_fuel}"]').check(force=True)
                 page.wait_for_load_state("networkidle")
+            page.mouse.wheel(0, -100_000)  # back to the top, so the sticky header sits there in the full-page shot
             page.wait_for_timeout(500)
             path = args.out / f"{tab}{args.suffix}.png"
             page.screenshot(path=str(path), full_page=True)
