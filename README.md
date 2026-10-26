@@ -35,6 +35,10 @@ The first live run is on branch [`argon/port-tier-a`](https://github.com/entersi
 - `split.py --verify` traces all 12 files to recorded Argon interactions.
 - The total Gemini spend was $3.57.
 
+On branch `argon/import-fix`, one recorded Argon edit moved CENT_DATE/JULIAN into `dateutil.py` and removed the `__init__.py` import workaround ($0.27).
+
+On branch `argon/port-tier-b`, PRIME was ported in five chunked requests plus four small name fixes (`agent/edit_step.py`, `prompts/tasks/tier_b/`). All 9 tier B training cases and both holdouts (including TESTPM10) pass the strict compare with no repair iterations; tier B cost $3.15. See `results/tier_B.md`.
+
 To browse that run: `git worktree add ../argon argon/port-tier-a && python server.py --root ../argon`.
 
 ## Cost controls
