@@ -193,8 +193,9 @@ function renderTrustPills() {
 // --- How it was built ------------------------------------------------------------------
 async function loadPort() {
     await refreshShared();
-    const [runs, snapshots, tokens] = await Promise.all([getJson('/api/runs'), getJson('/api/results'), getJson('/api/tokens')]);
-    const G = glossary(), o = OVERVIEW.argon, p = OVERVIEW.provenance;
+    const [runs, snapshots, tokens, prov] = await Promise.all([getJson('/api/runs'), getJson('/api/results'), getJson('/api/tokens'), getJson('/api/provenance')]);
+    const G = glossary(), o = OVERVIEW.argon;
+    const pyFiles = prov.files.filter(f => f.file.endsWith('.py')), traced = pyFiles.filter(f => !f.problem).length;
     const all = runs.flatMap(r => r.interactions);
     const tier = OVERVIEW.tiers.B.status === 'passing' && tokens.B ? 'B' : 'A', tok = tokens[tier];
     const kpi = (v, k, d, t) => `<div class="kpi"><div class="v">${v}</div><div class="k">${k}${t ? ' ' + tip(t) : ''}</div><div class="d">${d}</div></div>`;
@@ -203,7 +204,8 @@ async function loadPort() {
             'The in-scope part of AERMOD: the dispersion physics for stacks, with and without building wake. Reading inputs and writing reports is handled by separate, human-written and separately checked code.'),
         kpi(fmt(o.interactions), 'AI requests in total', `across ${runs.length} recorded runs`, ''),
         kpi(o.cost_usd === null ? '–' : usd(o.cost_usd), 'total AI cost', o.cost_complete ? 'every request priced' : 'partial: some requests unpriced', ''),
-        kpi(p.python_files ? `${p.python_files}/${p.python_files}` : '–', 'model files traced to the AI', p.ok ? 'zero hand edits' : 'some files untraced', G.provenance),
+        kpi(pyFiles.length ? `${prov.ok ? '' : ic('bad')}${traced}/${pyFiles.length}` : '–', 'model files traced to the AI',
+            prov.ok ? 'zero hand edits' : `trace check failed: ${prov.problems.length} problem${prov.problems.length === 1 ? '' : 's'}, hand edits not ruled out`, G.provenance),
     ].join('');
 
     const by = kind => runs.filter(r => r.kind === kind && r.replies > 0);
@@ -514,7 +516,7 @@ async function loadProof() {
 
     $('check-steps').innerHTML = [
         ['Run both models', 'Each EPA test case goes through EPA\'s original Fortran AERMOD and through the Python version, with identical inputs and weather.'],
-        ['Compare every number', `Every hourly result at every location is compared. ${G.pctl} of them must agree within ${G.relPct}, and the number regulators compare with the limit must match at every location.`],
+        ['Compare every number', `Every hourly result at every location is compared. ${G.pctl} of significant concentrations (at least ${G.sigPct} of the case maximum) must agree within ${G.relPct}, and the number regulators compare with the limit must match at every location.`],
         ['Lock the rules', 'The scoring script is locked with a digital fingerprint, so the pass mark cannot be loosened after seeing results. An independent server reruns everything on every change.'],
     ].map(([t, d], i) => `<li><span class="num">${i + 1}</span><div><b>${t}</b><p>${esc(d)}</p></div></li>`).join('');
 
@@ -798,9 +800,19 @@ function answerSentence(r, pol) {
     return `${lead} That is over the limit: as modelled, this would need a taller stack or lower emissions to pass.`;
 }
 
+// Today's operation means every model input matches the baseline, not just the fuel mix.
+function compareInputs(data) {
+    const flat = ({stack, stack_key, ...rest}) => ({...stack, ...rest});
+    const s = flat(data.scenario.inputs), b = flat(data.baseline.inputs), p = WI.presets[pollutant()][fuel()];
+    const preset = {...b, emission_rate_gs: p.emission_rate_gs, temperature_k: p.exit_temperature_k};
+    const isToday = Object.keys(b).every(k => s[k] === b[k]);
+    const adjusted = Object.keys(preset).some(k => s[k] !== preset[k]);
+    return {isToday, label: `${mixShort(fuel())}${adjusted ? ' (adjusted)' : ''}`};
+}
+
 function renderAnswer(data) {
-    const pol = pollutant(), r = data.scenario, base = data.baseline, isToday = fuel() === WI.defaults.fuel_mix;
-    const forWhat = `<p class="ans-for">Answer for <b>${esc(mixShort(fuel()))}</b> · ${term(POL_TERM[pol], `${esc(POL_NAME[pol])} (${polShort(pol)}${POL_NOTE[pol] ?? ''})`)}</p>`;
+    const pol = pollutant(), r = data.scenario, base = data.baseline, {isToday, label} = compareInputs(data);
+    const forWhat = `<p class="ans-for">Answer for <b>${esc(label)}</b> · ${term(POL_TERM[pol], `${esc(POL_NAME[pol])} (${polShort(pol)}${POL_NOTE[pol] ?? ''})`)}</p>`;
     if (!r.certified) {
         const unavailable = r.status === 'unavailable';
         $('wi-answer').innerHTML = `<div class="card answer neutral"><div class="ans-main">${forWhat}
@@ -854,8 +866,11 @@ function renderTrust() {
             `On ${match ? 'all' : `${c.passing} of`} ${c.total} of EPA's official ${term('aermod', 'AERMOD')} test cases, this model reproduces EPA's results hour by hour, at every location.`),
         item(o.certified ? 'ok' : STATIC ? 'bad' : 'neutral', o.certified ? 'Checked automatically, every time' : 'Automatic check not passed here',
             `Every change to the model reruns all of EPA's test cases on an ${term('ci', 'independent build server')}. ${checked}`),
-        item(p.ok && p.python_files ? 'ok' : 'bad', 'Nothing tuned by hand',
-            'Every line of the model was written by AI from EPA\'s source code and traced to the request that wrote it. The pass mark is locked.'),
+        p.ok && p.python_files
+            ? item('ok', 'Nothing tuned by hand',
+                'Every line of the model was written by AI from EPA\'s source code and traced to the request that wrote it. The pass mark is locked.')
+            : item('bad', 'Model trace check failed',
+                'Some model files do not trace to a recorded AI request, so a hand edit cannot be ruled out. The pass mark is still locked.'),
     ].join('');
 }
 
@@ -913,9 +928,9 @@ function renderMaps(data) {
     const what = {annual: 'yearly average', one_hour: '1-hour design value', max_1h: 'single worst hour'}[metric];
     const legend = `<div class="map-legend"><span>0</span><span class="ramp" style="background:linear-gradient(90deg,${PALETTE.map(c => `rgb(${c.join(',')})`).join(',')})"></span>
         <span>${ug(vmax)}</span></div>`;
-    const isToday = fuel() === WI.defaults.fuel_mix;
+    const {isToday, label} = compareInputs(data);
     $('wi-maps').innerHTML = polarMap(`Today: ${mixShort(WI.defaults.fuel_mix)}`, data.baseline, metric, vmax)
-        + (isToday ? '' : polarMap(`With ${mixShort(fuel())}`, data.scenario, metric, vmax));
+        + (isToday ? '' : polarMap(`With ${label}`, data.scenario, metric, vmax));
     $('wi-maps').classList.toggle('single', isToday);
     $('wi-map-note').innerHTML = legend + `<p class="muted small">The plant's share only (no background), ${esc(what)}, in ${term('ugm3', 'µg/m³')}; both maps share one colour scale.
         Each cell is one point: ${WI.receptors.directions} directions, rings at ${WI.receptors.distances_m.map(km).join(', ')} (drawn evenly spaced). Hover a cell for its value.</p>`;
