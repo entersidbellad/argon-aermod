@@ -13,7 +13,10 @@ const short = n => !isNum(n) ? '–' : n >= 1e6 ? `${+(n / 1e6).toFixed(2)}M` : 
     : n >= 1e3 ? `${+(n / 1e3).toFixed(1)}K` : String(n);
 const pct = x => `${+(100 * x).toFixed(3)}%`;
 const tip = text => `<span class="tip" tabindex="0" data-tip="${esc(text)}">i</span>`;
-const badge = (cls, text) => `<span class="badge ${cls}">${esc(text)}</span>`;
+// Status is never colour alone: every status colour comes with its own icon and a text label.
+const ICON = {ok: '✓', bad: '✕', warn: '!', prog: '…', neutral: '–'};
+const ic = cls => `<span class="ic ${cls}" aria-hidden="true">${ICON[cls] ?? ''}</span>`;
+const badge = (cls, text) => `<span class="badge ${cls}">${ic(cls)}${esc(text)}</span>`;
 const loading = text => `<div class="loading">${esc(text)}</div>`;
 const empty = html => `<div class="empty">${html}</div>`;
 
@@ -65,22 +68,26 @@ document.addEventListener('focusout', hideTip);
 window.addEventListener('scroll', hideTip, {passive: true});
 
 // --- shared state: overview (/api/overview) and the frozen rules (/api/frozen) --------
+// Refetched with every tab load, so the header, the strip and the tab always agree.
 let OVERVIEW = null, FROZEN = null;
-const ready = Promise.all([getJson('/api/overview'), getJson('/api/frozen')]).then(([o, f]) => {
-    OVERVIEW = o;
-    FROZEN = f;
+async function refreshShared() {
+    try {
+        [OVERVIEW, FROZEN] = await Promise.all([getJson('/api/overview'), getJson('/api/frozen')]);
+    } catch (err) {
+        $('chips').innerHTML = `<span class="chip">${ic('bad')}${esc(err.message)}</span>`;
+        throw err;
+    }
     renderChips();
     renderSteps();
-    $('footer-port').innerHTML = o.port_sha256 ? `port/aermod_py <code>${esc(o.port_sha256.slice(0, 12))}</code>` : '';
-});
-ready.catch(err => {
-    $('chips').innerHTML = `<span class="chip bad"><span class="dot"></span>${esc(err.message)}</span>`;
-});
+    $('footer-port').innerHTML = OVERVIEW.port_sha256 ? `Python model <code>${esc(OVERVIEW.port_sha256.slice(0, 12))}</code>` : '';
+}
 
 // Plain-English explanations of the metrics, with the thresholds read from compare.py.
 function glossary() {
     const r = FROZEN.rules, tol = r.slope_tolerance, rel = Number(r.relative_tolerance).toExponential(0);
     return {
+        relPct: `${+(r.relative_tolerance * 100).toPrecision(3)}%`,
+        slopePct: `${+(tol * 100).toPrecision(3)}%`,
         slope: `Plot every hourly concentration from the port against the reference and fit a line. A perfect port lies on a slope of exactly 1. The EPA rule allows 1 ± ${tol} (${+(tol * 100).toFixed(3)}%) and checks all three definitions EPA's kit uses: through the origin, ordinary least squares, and the ratio of the means.`,
         zero: `Share of paired hourly values where the port and the reference agree on whether there is any concentration at all (whether the plume reached the receptor). Must be at least ${pct(r.zero_agreement_min)}.`,
         p99: `Relative error |port − reference| / reference at the ${r.percentile}th percentile, over every value at least ${+(r.significant_fraction * 100).toFixed(2)}% of the case maximum. Must be ≤ ${rel}. 0 means the numbers are identical.`,
@@ -100,51 +107,54 @@ const tierCount = t => {
             scored: t.training.scored + t.holdout.scored};
 };
 
+const certifiedScope = o => o.certified_tiers.length ? `Tier ${o.certified_tiers.join(' + ')}` : '';
+
 function renderChips() {
     const o = OVERVIEW, a = tierCount(o.tiers.A), b = tierCount(o.tiers.B);
     const chips = [];
-    const chip = (cls, text, why) => chips.push(`<span class="chip ${cls}"${why ? ` data-tip="${esc(why)}"` : ''}><span class="dot"></span>${esc(text)}</span>`);
+    const chip = (cls, text, why) => chips.push(`<span class="chip"${why ? ` data-tip="${esc(why)}"` : ''}>${ic(cls)}${esc(text)}</span>`);
     const aStatus = o.tiers.A.status;
-    chip(aStatus === 'passing' ? 'ok' : aStatus === 'failing' ? 'bad' : '',
-         aStatus === 'not_scored' ? 'Tier A: not scored' : `Tier A: ${a.passing}/${a.total} cases pass`,
-         `Tier A (no building downwash): ${o.tiers.A.training.passing}/${o.tiers.A.training.cases.length} training cases and ${o.tiers.A.holdout.passing}/${o.tiers.A.holdout.cases.length} holdout, from ${o.scores.source ?? 'no scores yet'}.`);
+    chip(aStatus === 'passing' ? 'ok' : aStatus === 'failing' ? 'bad' : 'neutral',
+         aStatus === 'not_scored' ? 'Tier A: not scored' : `Tier A: ${a.passing}/${a.total} EPA cases match`,
+         `Tier A (one stack, no building downwash): ${o.tiers.A.training.passing}/${o.tiers.A.training.cases.length} training cases and ${o.tiers.A.holdout.passing}/${o.tiers.A.holdout.cases.length} holdout, from ${o.scores.source ?? 'no scores yet'}.`);
     chip(o.tiers.B.status === 'passing' ? 'ok' : 'prog',
-         o.tiers.B.status === 'passing' ? `Tier B: ${b.passing}/${b.total} cases pass` : 'Tier B: in progress',
+         o.tiers.B.status === 'passing' ? `Tier B: ${b.passing}/${b.total} EPA cases match` : 'Tier B: in progress',
          o.tiers.B.status === 'passing' ? 'Tier B adds PRIME building downwash.'
              : 'Tier B adds PRIME building downwash. It is being ported now; no Tier B result is claimed until its cases pass.');
     const p = o.provenance;
-    chip(p.python_files && p.ok ? 'ok' : p.python_files ? 'bad' : '',
-         !p.python_files ? 'No port yet' : p.ok ? 'Provenance verified' : 'Provenance broken',
+    chip(p.python_files && p.ok ? 'ok' : p.python_files ? 'bad' : 'neutral',
+         !p.python_files ? 'No model yet' : p.ok ? 'Provenance verified' : 'Provenance broken',
          `${p.python_files} Python files, traced to ${p.interactions} Argon interaction(s) by split.py --verify.`);
     chip(o.certified ? 'ok' : 'bad',
-         o.certified ? 'Certified' : o.scores.suite_found ? 'Not certified' : 'Not yet certified here',
-         o.certified ? 'Every certification criterion holds now (Decision tab).'
-             : o.scores.suite_found ? 'Some certification criterion fails: see the Decision tab.'
-                 : 'Certification needs the port scored on this machine: run make ref refs suite-tier-a, then reload.');
+         o.certified ? `Certified: ${certifiedScope(o)}` : o.scores.suite_found ? 'Not certified' : 'Not yet certified here',
+         o.certified ? 'Every certification criterion holds now (Certification tab).'
+             : o.scores.suite_found ? 'Some certification criterion fails: see the Certification tab.'
+                 : 'Certification needs the model scored on this machine: run make ref refs suite-tier-a, then reload.');
     $('chips').innerHTML = chips.join('');
 }
 
 function renderSteps() {
-    const o = OVERVIEW, a = tierCount(o.tiers.A), tier = o.tiers.B.status === 'passing' ? 'B' : 'A';
+    const o = OVERVIEW, a = tierCount(o.tiers.A), b = tierCount(o.tiers.B), tier = o.tiers.B.status === 'passing' ? 'B' : 'A';
     const tok = o.tokens[tier], p = o.provenance, g = o.argon;
     const values = [
-        [tok ? 'ok' : '', tok ? `Tier ${tier} slice: <b>${fmt(tok.units)}</b> units, <b>${short(tok.tokens_code_only)}</b> tokens` : 'run python pack.py'],
-        [g.interactions ? 'ok' : '', g.interactions ? `<b>${g.interactions}</b> interactions, <b>${usd(g.cost_usd)}</b>${g.cost_complete ? '' : ' (partial)'}` : 'no runs recorded yet'],
-        [p.python_files ? (p.ok ? 'ok' : 'bad') : '', p.python_files ? `<b>${p.python_files}</b> files, ${p.ok ? 'all traced to Argon' : '<b>untraced files</b>'}` : 'no port yet'],
-        [o.tiers.A.status === 'passing' ? 'ok' : o.tiers.A.status === 'failing' ? 'bad' : '',
+        [tok ? 'ok' : 'neutral', tok ? `Tier ${tier} slice: <b>${fmt(tok.units)}</b> routines, <b>${short(tok.tokens_code_only)}</b> tokens` : 'run python pack.py'],
+        [g.interactions ? 'ok' : 'neutral', g.interactions ? `<b>${g.interactions}</b> requests, <b>${usd(g.cost_usd)}</b>${g.cost_complete ? '' : ' (partial)'}` : 'no runs recorded yet'],
+        [p.python_files ? (p.ok ? 'ok' : 'bad') : 'neutral', p.python_files ? `<b>${p.python_files}</b> files, ${p.ok ? 'all traced to Argon' : '<b>untraced files</b>'}` : 'no model yet'],
+        [o.tiers.A.status === 'passing' ? 'ok' : o.tiers.A.status === 'failing' ? 'bad' : 'neutral',
          o.tiers.A.status === 'not_scored' ? 'not scored yet'
-             : `Tier A <b>${a.passing}/${a.total}</b> pass · Tier B ${o.tiers.B.status === 'passing' ? '<b>passes</b>' : 'in progress'}`],
-        [o.certified ? 'ok' : 'bad', o.certified ? '<b>Yes</b>: every criterion holds' : o.scores.suite_found ? '<b>No</b>: see Decision' : '<b>Not yet</b>: score on this machine'],
+             : `Tier A <b>${a.passing}/${a.total}</b> · Tier B ${o.tiers.B.status === 'passing' ? `<b>${b.passing}/${b.total}</b>` : 'in progress'}`],
+        [o.certified ? 'ok' : 'bad', o.certified ? `<b>Yes</b>: ${certifiedScope(o)}` : o.scores.suite_found ? '<b>No</b>: see Certification' : '<b>Not yet</b>: score on this machine'],
     ];
     document.querySelectorAll('#steps .step').forEach((el, i) => {
-        el.className = `step ${values[i][0]}`;
-        el.querySelector('.v').innerHTML = values[i][1];
+        const [cls, html] = values[i];
+        el.querySelector('.n .ic').outerHTML = ic(cls);
+        el.querySelector('.v').innerHTML = html;
     });
 }
 
 // --- Port ------------------------------------------------------------------------
 async function loadPort() {
-    await ready;
+    await refreshShared();
     const [runs, snapshots, tokens] = await Promise.all([getJson('/api/runs'), getJson('/api/results'), getJson('/api/tokens')]);
     const G = glossary(), o = OVERVIEW.argon;
     const all = runs.flatMap(r => r.interactions);
@@ -206,10 +216,10 @@ async function loadPort() {
 }
 
 const TOKEN_SERIES = [
-    ['prompt', 'Prompt sent', '#2c4a75'],
-    ['billed', 'Billed input', '#9db8dc'],
-    ['output', 'Output', '#2f8a63'],
-    ['thinking', 'Thinking', '#a8cdb9'],
+    ['prompt', 'Prompt sent', '#2f5f8a'],
+    ['billed', 'Billed input', '#a9bccf'],
+    ['output', 'Output', '#3f4650'],
+    ['thinking', 'Thinking', '#b7bec7'],
 ];
 
 function tokenChart(runs, calls, W) {
@@ -307,14 +317,27 @@ function caseCard(name, r, info, tierStatus, G) {
     } else if (isNum(r.slope)) {
         const slopes = `origin ${fixed(r.slope, 6)}, OLS ${fixed(r.slope_ols, 6)}, mean ratio ${fixed(r.mean_ratio, 6)}`;
         const p99 = !isNum(r.p99_rel_err) ? '–' : Number(r.p99_rel_err) === 0 ? '0 (exact)' : Number(r.p99_rel_err).toExponential(2);
-        body = `<dl>
+        const neutralFail = cls === 'prog' ? 'neutral' : 'bad';
+        const mark = ok => ok === true ? ic('ok') : ok === false ? ic(neutralFail) : ic('neutral');
+        const [fails, receptors] = String(r.h4h_fails ?? '').split('/').map(Number);
+        const exact = Number(r.p99_rel_err) === 0;
+        const plain = [
+            [r.strict_pass, exact && r.strict_pass ? 'Hour-by-hour concentrations identical to the Fortran'
+                : r.strict_pass ? `Hour-by-hour concentrations within ${G.relPct} of the Fortran` : 'Hour-by-hour concentrations differ from the Fortran'],
+            Number.isFinite(receptors) && receptors > 0
+                ? [fails === 0, fails === 0 ? `Design value matches at all ${fmt(receptors)} receptors` : `Design value differs at ${fmt(fails)} of ${fmt(receptors)} receptors`]
+                : null,
+            [r.epa_pass, r.epa_pass ? `Overall agreement within ±${G.slopePct} (EPA rule)` : r.epa_pass === false ? `Overall agreement outside ±${G.slopePct} (EPA rule)` : 'EPA rule not recorded'],
+        ].filter(Boolean);
+        body = `<ul class="plain">${plain.map(([ok, text]) => `<li>${mark(ok)}<span>${esc(text)}</span></li>`).join('')}</ul>
+        <details class="tech"><summary>Technical detail</summary><div class="body"><dl>
             <dt>EPA rule ${tip(G.epa)}</dt><dd>${verdict(r.epa_pass)}</dd>
             <dt>&nbsp; Best-fit slope ${tip(G.slope)}</dt><dd data-tip="${esc(slopes)}">${fixed(r.slope, 6)}</dd>
             <dt>Strict rule ${tip(G.strict)}</dt><dd>${verdict(r.strict_pass)}</dd>
             <dt>&nbsp; Zero/nonzero agreement ${tip(G.zero)}</dt><dd>${isNum(r.zero_agreement) ? `${(100 * r.zero_agreement).toFixed(3)}%` : '–'}</dd>
             <dt>&nbsp; p99 relative error ${tip(G.p99)}</dt><dd>${p99}</dd>
             <dt>&nbsp; H4H receptors failing ${tip(G.h4h)}</dt><dd>${esc((r.h4h_fails ?? '–').replace('/', ' / '))}</dd>
-        </dl>`;
+        </dl></div></details>`;
     } else {
         body = `<pre style="color:var(--ink-2)">${esc(r.summary ?? '')}</pre>`;
     }
@@ -327,7 +350,7 @@ function slopeChart(rows, tol, W) {
     const H = top + rows.length * rowH + axisH;
     const lo = 1 - 4 * tol, hi = 1 + 4 * tol;
     const x = v => left + (W - left - right) * (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo);
-    const kinds = [['slope', 'through origin', 'circle', '#1f5fa8'], ['slope_ols', 'OLS (EPA R script)', 'square', '#2f8a63'], ['mean_ratio', 'ratio of means', 'diamond', '#b06a00']];
+    const kinds = [['slope', 'through origin', 'circle', '#2f5f8a'], ['slope_ols', 'OLS (EPA R script)', 'square', '#1c2127'], ['mean_ratio', 'ratio of means', 'diamond', '#7d9bb8']];
     const plotBottom = top + rows.length * rowH;
     let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Best-fit slope by case">`;
     s += `<rect x="${x(1 - tol)}" y="${top - 6}" width="${x(1 + tol) - x(1 - tol)}" height="${plotBottom - top + 6}" fill="#e7f4ed" data-tip="Pass band: 1 ± ${tol}"/>`;
@@ -362,7 +385,7 @@ function slopeChart(rows, tol, W) {
 }
 
 async function loadProof() {
-    await ready;
+    await refreshShared();
     const G = glossary(), r = FROZEN.rules, tol = r.slope_tolerance, rel = Number(r.relative_tolerance).toExponential(0);
     const data = await getJson('/api/test-results');
     const tiers = OVERVIEW.tiers;
@@ -370,29 +393,37 @@ async function loadProof() {
     const cnt = t => `${t.passing}/${t.cases.length}`;
     const kpi = (cls, k, v, d, t) => `<div class="kpi ${cls}"><div class="k">${esc(k)}${t ? ' ' + tip(t) : ''}</div><div class="v">${v}</div><div class="d">${d}</div></div>`;
     const tierCls = st => st === 'passing' ? 'ok' : st === 'failing' ? 'bad' : 'prog';
+    const val = (cls, text) => `${ic(cls === 'prog' ? 'neutral' : cls)}${text}`;
     $('rates').innerHTML = [
-        kpi(tierCls(tiers.A.status), 'Tier A training cases', tiers.A.training.scored ? cnt(tiers.A.training) : '–', 'pass both rules', ''),
-        kpi(tierCls(tiers.A.status), 'Tier A holdout', tiers.A.holdout.scored ? cnt(tiers.A.holdout) : '–', 'never seen by the repair loop', G.holdout),
+        kpi(tierCls(tiers.A.status), 'Tier A test cases', tiers.A.training.scored ? val(tierCls(tiers.A.status), cnt(tiers.A.training)) : '–', 'one stack, no buildings: match EPA', ''),
+        kpi(tierCls(tiers.A.status), 'Tier A holdout', tiers.A.holdout.scored ? val(tierCls(tiers.A.status), cnt(tiers.A.holdout)) : '–', 'unseen during repair: match EPA', G.holdout),
         tiers.B.status === 'passing'
-            ? kpi('ok', 'Tier B (PRIME)', cnt({passing: tiers.B.training.passing + tiers.B.holdout.passing, cases: [...tiers.B.training.cases, ...tiers.B.holdout.cases]}), 'training and holdout pass', '')
-            : kpi('prog', 'Tier B (PRIME)', 'In progress', `${tiers.B.training.cases.length} training + ${tiers.B.holdout.cases.length} holdout case(s) to port`, 'Tier B adds PRIME building downwash and is being ported now. Its results appear here once results/tier_B.md or out/suite_port.json has Tier B passes.'),
-        kpi(OVERVIEW.compare_frozen ? 'ok' : 'bad', 'Scoring script', OVERVIEW.compare_frozen ? 'Frozen' : 'CHANGED', 'compare.py matches its pinned sha256', G.frozen),
+            ? kpi('ok', 'Tier B: building downwash', val('ok', cnt({passing: tiers.B.training.passing + tiers.B.holdout.passing, cases: [...tiers.B.training.cases, ...tiers.B.holdout.cases]})), 'training and holdout match EPA', '')
+            : kpi('prog', 'Tier B: building downwash', val('prog', 'In progress'), `${tiers.B.training.cases.length} training + ${tiers.B.holdout.cases.length} holdout case(s) to port`, 'Tier B adds PRIME building downwash and is being ported now. Its results appear here once results/tier_B.md or out/suite_port.json has Tier B passes.'),
+        kpi(OVERVIEW.compare_frozen ? 'ok' : 'bad', 'Scoring script', val(OVERVIEW.compare_frozen ? 'ok' : 'bad', OVERVIEW.compare_frozen ? 'Frozen' : 'CHANGED'), 'matches its pinned fingerprint', G.frozen),
     ].join('');
 
     $('rules-source').innerHTML = 'thresholds read from <code>harness/compare.py</code>';
     $('rules').innerHTML = `
         <div class="rule"><h3>EPA rule ${tip(G.epa)}</h3>
-            <div class="against">Against EPA's own shipped output where the case has one, otherwise our gfortran build.</div>
-            <ul><li>The port's numbers, plotted against the reference, lie on a line of slope 1 ± ${tol}: within ${+(tol * 100).toFixed(3)}%.
-                <span class="tech">three slope definitions, all must pass: through origin, OLS, ratio of means</span></li></ul></div>
+            <div class="against">Against EPA's own published output where the case has one, otherwise our build of the Fortran.</div>
+            <ul><li>Across every hour and receptor, the Python model's concentrations agree with EPA's within ±${G.slopePct} overall.</li></ul>
+            <details class="tech"><summary>Technical detail</summary><ul class="body tech-list">
+                <li>best-fit slope of port vs reference = 1 ± ${tol}</li>
+                <li>three slope definitions, all must pass: through origin, OLS, ratio of means</li></ul></details></div>
         <div class="rule"><h3>Strict rule ${tip(G.strict)}</h3>
-            <div class="against">Always against our gfortran build of the same Fortran, hour by hour, receptor by receptor.</div>
+            <div class="against">Always against our build of the same Fortran, hour by hour, receptor by receptor.</div>
             <ul>
-                <li>Every output row exists in both files.<span class="tech">no missing (x, y, date, averaging, group) rows</span></li>
-                <li>They agree on where the plume is: zero vs nonzero in at least ${pct(r.zero_agreement_min)} of values.<span class="tech">zero/nonzero agreement ≥ ${r.zero_agreement_min}</span></li>
-                <li>Almost every significant value matches to ${rel} relative.<span class="tech">p${r.percentile} of |port − ref| / ref ≤ ${rel}, values ≥ ${+(r.significant_fraction * 100).toFixed(2)}% of case max</span></li>
-                <li>The regulatory design value (H4H) matches at every receptor. ${tip(G.h4h)}<span class="tech">per-receptor H4H within ${rel} relative</span></li>
-            </ul></div>`;
+                <li>Every hourly result exists in both models.</li>
+                <li>Both agree on where the plume reaches, in at least ${pct(r.zero_agreement_min)} of hours.</li>
+                <li>Concentrations match to within ${G.relPct}.</li>
+                <li>The regulatory design value matches at every receptor.</li>
+            </ul>
+            <details class="tech"><summary>Technical detail</summary><ul class="body tech-list">
+                <li>no missing (x, y, date, averaging, group) rows</li>
+                <li>zero/nonzero agreement ≥ ${r.zero_agreement_min}</li>
+                <li>p${r.percentile} of |port − ref| / ref ≤ ${rel}, over values ≥ ${+(r.significant_fraction * 100).toFixed(2)}% of the case maximum</li>
+                <li>per-receptor H4H (high fourth-high design value) within ${rel} relative</li></ul></details></div>`;
 
     const src = $('score-source');
     if (!data.source) {
@@ -459,63 +490,82 @@ const CRITERIA = {
 };
 
 async function loadDecision() {
-    await ready;
+    await refreshShared();
     const data = await getJson('/api/certify');
     const failing = data.criteria.filter(c => !c.ok);
     const needsScoring = failing.length > 0 && failing.every(c => ['suite_found', 'scored_this_port'].includes(c.name));
+    const withB = data.certified && OVERVIEW.certified_tiers.includes('B');
     const v = $('verdict');
     v.className = `verdict ${data.certified ? 'ok' : 'bad'}`;
-    v.innerHTML = `<div class="seal" aria-hidden="true">${data.certified ? '✓' : '!'}</div><div>
-        <h2>${data.certified ? 'Certified for Tier A' : 'Not certified'}</h2>
+    v.innerHTML = `${ic(data.certified ? 'ok' : 'bad')}<div>
+        <h2>${data.certified ? `Certified for ${OVERVIEW.certified_tiers.map(t => `Tier ${t}`).join(' and ')}` : 'Not certified'}</h2>
         <p>${data.certified
-            ? `All ${data.criteria.length} criteria hold right now: the frozen script scored this exact port, every Tier A training case passes both rules, and every file traces to Argon.`
+            ? `All ${data.criteria.length} criteria hold right now: the frozen script scored this exact model, every Tier A training case passes both rules${withB ? ', every Tier B case passes in the same scoring' : ''}, and every file traces to Argon.`
             : `${failing.length} of ${data.criteria.length} criteria fail: ${failing.map(c => esc((CRITERIA[c.name] ?? [c.name])[0].toLowerCase())).join('; ')}.`
               + (needsScoring ? ' On a fresh checkout this is expected: run <code>make ref refs suite-tier-a</code> to score the port on this machine, then reload.' : '')}</p></div>`;
     $('criteria').innerHTML = data.criteria.map(c => {
         const [title, why] = CRITERIA[c.name] ?? [c.name, ''];
-        return `<li><span class="icon ${c.ok ? 'ok' : 'bad'}" aria-label="${c.ok ? 'pass' : 'fail'}">${c.ok ? '✓' : '✗'}</span>
+        return `<li><span role="img" aria-label="${c.ok ? 'pass' : 'fail'}">${ic(c.ok ? 'ok' : 'bad')}</span>
             <div><div class="title">${esc(title)}</div><div class="why">${esc(why)}</div></div>
             <div class="detail"><span class="muted">${esc(c.name)}:</span> ${esc(c.detail)}</div></li>`;
     }).join('');
     const b = OVERVIEW.tiers.B;
     $('scope-note').innerHTML = `<h2>What certification covers</h2>
-        <p class="small" style="margin-top:8px;color:var(--ink-2)">Tier A: POINT sources on flat, rural terrain, 1-hour averages, no building downwash.
-        The holdout cases are reported on the Proof tab but are not certification criteria, so the repair loop can never be tuned to them.</p>
-        <p class="small" style="color:var(--ink-2)">Tier B (PRIME building downwash): ${b.status === 'passing'
-            ? 'all its cases pass on the Proof tab; certification criteria still cover Tier A only.'
-            : 'in progress. Nothing on this page claims a Tier B result.'}</p>
+        <p class="small" style="margin-top:8px;color:var(--ink-2)">Tier A: point sources (stacks) on flat, rural terrain, 1-hour averages, no building downwash.
+        The holdout cases are reported on the Model verification tab but are not certification criteria, so the repair loop can never be tuned to them.</p>
+        <p class="small" style="color:var(--ink-2)">Tier B (PRIME building downwash): ${withB
+            ? 'every Tier B case, training and holdout, passes in the same scoring of this exact model, so the certification extends to Tier B.'
+            : b.status === 'passing'
+                ? 'all its cases pass on the Model verification tab, but not in a scoring of this exact model on this machine; run <code>make suite-port</code> to extend certification to Tier B.'
+                : 'in progress. Nothing on this page claims a Tier B result.'}</p>
         <p class="small" style="color:var(--ink-2)">Not ported by design: input parsing and output writing. The human-written <code>harness/glue.py</code>
         builds every setup value the physics reads and is checked bit for bit against an instrumented AERMOD build.</p>`;
 }
 
-// --- What-if --------------------------------------------------------------------------
+// --- Fuel & stack check (what-if) -------------------------------------------------------
 const WI_SLIDERS = {height: 'stack_height_m', diameter: 'stack_diameter_m',
                     temperature: 'exit_temperature_k', velocity: 'exit_velocity_ms'};
 const WI_FMT = {height: v => `${v} m`, diameter: v => `${v} m`,
-                temperature: v => `${v} K (${Math.round(v - 273.15)} °C)`, velocity: v => `${v} m/s`};
+                temperature: v => `${Math.round(v - 273.15)} °C <small>(${v} K)</small>`, velocity: v => `${v} m/s`};
+const LB_PER_HR_PER_G_S = 3600 / 453.59237;
+const gs = v => `${fixed(v, 1)} g/s <small>(${fmt(Math.round(v * LB_PER_HR_PER_G_S))} lb/hr)</small>`;
+// Amber "near limit" is this dashboard's screening margin, not a regulatory threshold.
+const NEAR_LIMIT_PCT = 80;
 const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
 const compass = deg => COMPASS[Math.round((deg % 360) / 22.5) % 16];
 const ug = x => `${Number(x).toLocaleString('en-US', {maximumFractionDigits: x < 10 ? 2 : 1})} µg/m³`;
 const ordinal = n => `${n}${n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}`;
+const POL_SHORT = {SO2: 'SO₂', NOX: 'NO₂'};
+const polShort = k => POL_SHORT[k] ?? k;
+const STD_NAME = {one_hour: '1-hour', annual: 'Annual'};
+const levelOf = s => !s.passes ? 'bad' : s.percent_of_limit >= NEAR_LIMIT_PCT ? 'warn' : 'ok';
+const LEVEL_TEXT = {ok: 'PASS', warn: 'NEAR LIMIT', bad: 'EXCEEDS'};
 let WI = null, wiTimer = null, wiLast = null;
 
 const gridValue = id => WI.grid[WI_SLIDERS[id]][Number($(`wi-${id}`).value)];
 
 async function loadWhatif() {
+    const shared = refreshShared();
     if (!WI) {
         WI = await getJson('/api/whatif/config');
         initWhatif();
     }
-    await updateWhatif();
+    await Promise.all([shared, updateWhatif()]);
 }
 
 function initWhatif() {
     const far = Math.max(...WI.receptors.distances_m) / 1000;
-    $('wi-title').textContent = WI.title;
-    $('wi-story').innerHTML = `A cement plant wants to burn part of its kiln fuel as alternative fuels or plastics, or change its stack.
-        Pick a fuel mix and stack to see whether the air around the plant still meets the US limits (NAAQS).
-        One kiln stack on flat, rural ground; a full year of hourly weather from ${esc(WI.met.label)};
-        concentrations at ${WI.receptors.directions} directions × ${WI.receptors.distances_m.length} distances out to ${far} km.`;
+    $('wi-title').textContent = 'Cement kiln: does a fuel or stack change stay inside the standards?';
+    $('wi-story').innerHTML = `A cement plant wants to burn part of its kiln fuel as alternative fuels (tyres, plastics, refuse-derived fuel)
+        or change its stack. Pick a fuel mix and stack: the cards compare today's operation with the change, as a percentage of the
+        US National Ambient Air Quality Standards (NAAQS). One kiln stack on flat, rural ground, with concentrations at
+        ${WI.receptors.directions} directions × ${WI.receptors.distances_m.length} distances out to ${far} km.`;
+    $('wi-sources').innerHTML = `
+        <div class="source"><span class="lab">Real</span>Dispersion computed by the Argon-ported AERMOD; a full year of hourly weather
+            from ${esc(WI.met.label)}; NAAQS limits from 40 CFR part 50.</div>
+        <div class="source illus"><span class="lab">Illustrative</span>Fuel-mix factors, emission rates, stack defaults and background
+            concentrations are example values, not plant data. Inputs marked <span class="tag">illustrative</span> come from
+            <code>${esc(WI.config_path ?? 'whatif/kiln.toml')}</code>.</div>`;
     $('wi-pollutant').innerHTML = Object.entries(WI.pollutants)
         .map(([k, p]) => `<option value="${esc(k)}">${esc(p.label)}</option>`).join('');
     $('wi-pollutant').value = WI.defaults.pollutant;
@@ -527,6 +577,11 @@ function initWhatif() {
         el.min = 0; el.max = WI.grid[key].length - 1; el.step = 1;
         el.value = Math.max(0, WI.grid[key].indexOf(WI.defaults[key]));
     }
+    $('wi-key').innerHTML = `<span><i class="bg"></i>background already in the air (illustrative)</span>
+        <span>${ic('ok')}kiln adds, total within ${NEAR_LIMIT_PCT}% of the standard</span>
+        <span>${ic('warn')}near limit: ${NEAR_LIMIT_PCT}–100%</span>
+        <span>${ic('bad')}exceeds the standard</span>
+        <span><i class="std"></i>NAAQS</span><span><i class="near"></i>${NEAR_LIMIT_PCT}% of NAAQS</span>`;
     applyPollutant();
     $('wi-pollutant').onchange = () => { applyPollutant(); scheduleWhatif(); };
     $('wi-fuel').onchange = () => { applyPreset(); scheduleWhatif(); };
@@ -553,8 +608,8 @@ function applyPollutant() {
 }
 
 function wiLabels() {
-    for (const id of Object.keys(WI_SLIDERS)) $(`wi-${id}-v`).textContent = WI_FMT[id](gridValue(id));
-    $('wi-emission-v').textContent = `${Number($('wi-emission').value)} g/s`;
+    for (const id of Object.keys(WI_SLIDERS)) $(`wi-${id}-v`).innerHTML = WI_FMT[id](gridValue(id));
+    $('wi-emission-v').innerHTML = gs(Number($('wi-emission').value));
     $('wi-bh-v').textContent = `${$('wi-bh').value} m`;
     $('wi-bw-v').textContent = `${$('wi-bw').value} m`;
     $('wi-bd-v').textContent = `${$('wi-bd').value} m`;
@@ -579,8 +634,7 @@ async function updateWhatif() {
     });
     const data = await getJson(`/api/whatif?${q}`);
     wiLast = data;
-    renderCompare(data);
-    renderBars(data);
+    renderVerdicts(data);
     renderMaps(data);
     renderStandards();
     renderArgonNote(data);
@@ -588,83 +642,64 @@ async function updateWhatif() {
 
 function stackText(i) {
     const s = i.stack;
-    return `${s.height_m} m stack, ${s.diameter_m} m wide, ${s.temperature_k} K, ${s.velocity_ms} m/s, ${i.emission_rate_gs} g/s`;
+    return `${s.height_m} m stack, ${s.diameter_m} m diameter, ${Math.round(s.temperature_k - 273.15)} °C, ${s.velocity_ms} m/s · ` +
+        `${fixed(i.emission_rate_gs, 1)} g/s (${fmt(Math.round(i.emission_rate_gs * LB_PER_HR_PER_G_S))} lb/hr)`;
 }
 
-function scenCard(title, r) {
-    if (r.status === 'unavailable') {
-        return `<div class="scen"><h3>${esc(title)}</h3><div class="warnbox neutral" style="margin-top:8px">
-            <b>No result for this scenario</b><ul>${r.issues.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div></div>`;
-    }
+function gauge(pol, key, s) {
+    const std = WI.naaqs[pol][key], level = levelOf(s);
+    const max = Math.max(120, s.percent_of_limit * 1.08);
+    const at = pctOfLimit => `${(100 * pctOfLimit / max).toFixed(2)}%`;
+    const bgPct = 100 * s.background_ugm3 / s.limit_ugm3;
+    const name = `${STD_NAME[key]} ${polShort(pol)}`;
+    return `<div class="gauge">
+        <div class="gl"><span class="name">${ic(level)}${esc(name)} <span class="muted" style="font-weight:500">${LEVEL_TEXT[level]}</span></span>
+            <span class="val"><b>${fixed(s.total_ugm3, 1)}</b> / ${fixed(s.limit_ugm3, 1)} µg/m³ · <b>${s.percent_of_limit.toFixed(0)}%</b></span></div>
+        <div class="bar" role="img" aria-label="${esc(`${name}: ${s.percent_of_limit.toFixed(0)}% of the standard, ${LEVEL_TEXT[level]}`)}">
+            <div class="seg bg" style="width:${at(bgPct)}" data-tip="${esc(`Background (illustrative): ${ug(s.background_ugm3)}`)}"></div>
+            <div class="seg kiln ${level}" style="left:${at(bgPct)};width:${at(Math.max(0, s.percent_of_limit - bgPct))}"
+                data-tip="${esc(`Kiln adds ${ug(s.total_ugm3 - s.background_ugm3)}`)}"></div>
+            <div class="line near" style="left:${at(NEAR_LIMIT_PCT)}"></div>
+            <div class="line" style="left:${at(100)}" data-tip="${esc(`NAAQS ${std.ppb} ppb = ${ug(std.limit_ugm3)}`)}"></div>
+        </div>
+        <div class="scale"><span style="left:0;transform:none">0</span>${max <= 125 ? `<span style="left:${at(NEAR_LIMIT_PCT)}">${NEAR_LIMIT_PCT}%</span>` : ''}
+            <span class="std" style="left:${at(100)}">NAAQS ${std.ppb} ppb</span></div>
+    </div>`;
+}
+
+function verdictCard(who, what, r, pol) {
+    const head = `<div class="vhead"><div class="who">${esc(who)}</div><div class="what">${esc(what)}</div>
+        <div class="stack">${esc(stackText(r.inputs))}</div></div>`;
     if (!r.certified) {
-        return `<div class="scen"><h3>${esc(title)}</h3><div class="warnbox" style="margin-top:8px"><b>Not certified for this scenario</b>
-            <ul>${r.issues.map(i => `<li>${esc(i)}</li>`).join('')}</ul>
-            <p style="margin-top:8px">No number is shown: the Argon-ported AERMOD is only certified for Tier A
-            (one stack, flat rural terrain, no building downwash).</p></div></div>`;
+        const unavailable = r.status === 'unavailable';
+        return `<div class="vcard">${head}<div class="big"><span class="vstatus neutral">${ic('neutral')}${unavailable ? 'NO RESULT' : 'OUTSIDE SCOPE'}</span></div>
+            <div class="outscope"><ul>${r.issues.map(i => `<li>${esc(i)}</li>`).join('')}</ul>
+            ${unavailable ? '' : '<p style="margin-top:8px">No number is shown. This demo covers one stack on flat, rural terrain with no building close enough to cause downwash.</p>'}</div></div>`;
     }
-    const verdict = c => `${badge(c.passes ? 'ok' : 'bad', c.passes ? 'PASS' : 'FAIL')}`;
-    const m = r.max_1h, rank = ordinal(r.one_hour.rank);
-    return `<div class="scen"><h3>${esc(title)}</h3><div class="stack">${esc(stackText(r.inputs))}</div>
-        <div class="metric"><span class="lab">1-hour standard ${tip(`The ${rank}-highest daily maximum 1-hour concentration at the worst receptor, plus the 1-hour background. With one year of weather this stands in for the standard's multi-year percentile form.`)}</span>
-            <span class="val"><span class="num">${ug(r.one_hour.total_ugm3)}</span> ${verdict(r.one_hour)}<span class="pct">${r.one_hour.percent_of_limit.toFixed(0)}% of the ${ug(r.one_hour.limit_ugm3)} limit</span></span></div>
-        <div class="metric"><span class="lab">Annual mean ${tip('The highest receptor\'s mean over the year (calm and missing hours excluded, as AERMOD does), plus the annual background.')}</span>
-            <span class="val"><span class="num">${ug(r.annual.total_ugm3)}</span> ${verdict(r.annual)}<span class="pct">${r.annual.percent_of_limit.toFixed(0)}% of the ${ug(r.annual.limit_ugm3)} limit</span></span></div>
-        <div class="metric"><span class="lab">Highest single hour ${tip('The single highest hourly concentration anywhere on the grid, from the kiln alone (no background). Not a standard; shown for context.')}</span><span class="val"><span class="num">${ug(m.value_ugm3)}</span></span></div>
-        <div class="metric"><span class="lab">Where it occurs</span>
-            <span class="val"><span class="num">${(m.distance_m / 1000).toFixed(1)} km ${compass(m.direction_deg)}</span></span></div>
-        </div>`;
+    const worst = ['one_hour', 'annual'].reduce((a, k) => r[k].percent_of_limit > r[a].percent_of_limit ? k : a, 'one_hour');
+    const s = r[worst], level = levelOf(s), m = r.max_1h;
+    const allPass = r.one_hour.passes && r.annual.passes;
+    return `<div class="vcard ${level}">${head}
+        <div class="big"><span class="pctv">${s.percent_of_limit.toFixed(0)}%</span>
+            <span class="pctl">of the <b>${STD_NAME[worst]}&nbsp;${polShort(pol)} NAAQS</b><br><span class="muted">limiting standard</span></span>
+            <span class="vstatus ${level}" data-tip="${esc(allPass ? (level === 'warn' ? `Within both standards, but at or above ${NEAR_LIMIT_PCT}% of one: little margin for a bad weather year or higher background.` : 'Within both standards.') : 'Above at least one standard.')}">${ic(level)}${LEVEL_TEXT[level]}</span></div>
+        <div class="gauges">${gauge(pol, 'one_hour', r.one_hour)}${gauge(pol, 'annual', r.annual)}</div>
+        <dl class="facts">
+            <dt>Kiln contribution, 1-hour design value</dt><dd>${ug(r.one_hour.total_ugm3 - r.one_hour.background_ugm3)}</dd>
+            <dt>Highest single hour, kiln only</dt><dd>${ug(m.value_ugm3)}</dd>
+            <dt>Where it lands, from the stack</dt><dd>${(m.distance_m / 1000).toFixed(1)} km ${compass(m.direction_deg)}</dd>
+        </dl></div>`;
 }
 
-function renderCompare(data) {
-    const mix = WI.fuel_mix[$('wi-fuel').value].label;
-    $('wi-compare').innerHTML = scenCard(`Baseline: ${WI.fuel_mix[WI.defaults.fuel_mix].label}, current stack`, data.baseline)
-        + scenCard(`Scenario: ${mix}`, data.scenario);
+function renderVerdicts(data) {
+    const pol = $('wi-pollutant').value;
+    $('wi-verdicts').innerHTML =
+        verdictCard('Today (baseline)', `${WI.fuel_mix[WI.defaults.fuel_mix].label}, current stack`, data.baseline, pol)
+        + verdictCard('Proposed change', WI.fuel_mix[$('wi-fuel').value].label, data.scenario, pol);
+    $('wi-verdict-sub').textContent = `Design value at the worst receptor, kiln plus background, as % of the ${polShort(pol)} NAAQS`;
 }
 
-function barChart(title, rows, limit, limitLabel, W) {
-    const left = 76, right = 24, rowH = 32, top = 34, axisH = 40, H = top + rows.length * rowH + axisH;
-    const ticks = niceTicks(Math.max(limit * 1.15, ...rows.filter(r => r.total !== null).map(r => r.total * 1.05)));
-    const vmax = ticks[ticks.length - 1];
-    const x = v => left + (W - left - right) * v / vmax;
-    const plotBottom = top + rows.length * rowH;
-    let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" style="max-width:${W}px"><text class="title" x="0" y="14">${esc(title)}</text>`;
-    ticks.forEach(t => {
-        s += `<line class="grid" x1="${x(t)}" x2="${x(t)}" y1="${top - 4}" y2="${plotBottom}"/>`;
-        s += `<text x="${x(t)}" y="${plotBottom + 15}" text-anchor="middle" font-size="11">${fmt(t)}</text>`;
-    });
-    s += `<line class="tick" x1="${left}" x2="${W - right}" y1="${plotBottom}" y2="${plotBottom}"/>`;
-    s += `<text class="axis-title" x="${left + (W - left - right) / 2}" y="${H - 4}" text-anchor="middle">concentration, µg/m³</text>`;
-    rows.forEach((r, i) => {
-        const y = top + i * rowH;
-        s += `<text x="${left - 8}" y="${y + 20}" text-anchor="end" font-size="12">${esc(r.label)}</text>`;
-        if (r.total === null) {
-            s += `<text x="${left + 4}" y="${y + 20}" font-size="12" fill="#b3261e">${esc(r.why)}</text>`;
-            return;
-        }
-        s += `<rect x="${left}" y="${y + 6}" width="${Math.max(0, x(r.background) - left)}" height="20" fill="#9fadbd" data-tip="${esc(`Background ${ug(r.background)}`)}"/>`;
-        s += `<rect x="${x(r.background)}" y="${y + 6}" width="${Math.max(0, x(r.total) - x(r.background))}" height="20" fill="${r.ok ? '#2f8a63' : '#b3261e'}" data-tip="${esc(`Kiln contribution ${ug(r.total - r.background)}`)}"/>`;
-        s += `<text x="${x(r.total) + 5}" y="${y + 20}" font-size="12" font-weight="600">${ug(r.total)}</text>`;
-    });
-    s += `<line x1="${x(limit)}" x2="${x(limit)}" y1="${top - 8}" y2="${plotBottom}" stroke="#b3261e" stroke-width="2" stroke-dasharray="5,3"/>`;
-    s += `<text x="${x(limit)}" y="${top - 12}" font-size="11" fill="#b3261e" text-anchor="middle">${esc(limitLabel)}</text>`;
-    return s + '</svg>';
-}
-
-function renderBars(data) {
-    const pol = $('wi-pollutant').value, std = WI.naaqs[pol];
-    const row = (label, r, key) => r.certified
-        ? {label, total: r[key].total_ugm3, background: r[key].background_ugm3, ok: r[key].passes}
-        : {label, total: null, why: r.status === 'unavailable' ? 'not precomputed: no value' : 'not certified for this scenario: no value'};
-    const legend = `<div class="legend"><span><i style="background:#9fadbd"></i>background (illustrative)</span>
-        <span><i style="background:#2f8a63"></i>kiln, within the limit</span><span><i style="background:#b3261e"></i>kiln, over the limit</span>
-        <span><i style="background:none;border-top:2px dashed #b3261e;height:0;width:14px"></i>NAAQS limit</span></div>`;
-    $('wi-bars').innerHTML = legend + [['one_hour', '1-hour standard'], ['annual', 'Annual standard']].map(([key, name]) =>
-        barChart(name, [row('Baseline', data.baseline, key), row('Scenario', data.scenario, key)],
-            std[key].limit_ugm3, `NAAQS ${std[key].ppb} ppb = ${std[key].limit_ugm3.toFixed(1)} µg/m³`,
-            widthOf('wi-bars', 480, 900))).join('');
-}
-
-const PALETTE = [[255, 255, 229], [254, 227, 145], [254, 153, 41], [217, 95, 14], [153, 52, 4], [80, 20, 90]];
+const PALETTE = [[244, 245, 247], [208, 219, 230], [160, 184, 207], [103, 140, 176], [47, 95, 138], [22, 50, 77]];
 function color(t) {
     t = Math.max(0, Math.min(1, t)) * (PALETTE.length - 1);
     const i = Math.min(Math.floor(t), PALETTE.length - 2), f = t - i;
@@ -679,9 +714,9 @@ function polarMap(title, r, metric, vmax) {
     const pt = (rad, ang) => [cx + rad * Math.sin(ang), cy - rad * Math.cos(ang)];
     let s = `<svg class="chart" viewBox="0 0 ${S} ${S + 44}"><text class="title" x="${cx}" y="14" text-anchor="middle">${esc(title)}</text>`;
     if (!r.certified) {
-        const msg = r.status === 'unavailable' ? 'not precomputed' : 'not certified for this scenario';
-        return s + `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#fcecea" stroke="#efb5b0"/>
-            <text x="${cx}" y="${cy}" text-anchor="middle" font-size="14" fill="#b3261e">${msg}</text></svg>`;
+        const msg = r.status === 'unavailable' ? 'not precomputed' : 'outside the demo scope';
+        return s + `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#eceef1" stroke="#c3c8cf"/>
+            <text x="${cx}" y="${cy}" text-anchor="middle" font-size="14" fill="#4d5560">${msg}</text></svg>`;
     }
     const vals = r.field[metric];
     r.field.x.forEach((x, i) => {
@@ -694,19 +729,20 @@ function polarMap(title, r, metric, vmax) {
         s += `<path d="M${p[0]} A${ro},${ro} 0 0 1 ${p[1]} L${p[2]} A${ri},${ri} 0 0 0 ${p[3]} Z" fill="${color(vals[i] / vmax)}" stroke="#fff" stroke-width="0.5" data-tip="${esc(`${where}: ${ug(vals[i])}`)}"/>`;
     });
     dists.forEach((d, k) => {
-        s += `<text x="${cx + 3}" y="${cy - (r0 + (k + 1) * w) + 10}" font-size="8.5" fill="#14202e" paint-order="stroke" stroke="#fff" stroke-width="3">${d >= 1000 ? d / 1000 + ' km' : d + ' m'}</text>`;
+        s += `<text x="${cx + 3}" y="${cy - (r0 + (k + 1) * w) + 10}" font-size="8.5" fill="#1c2127" paint-order="stroke" stroke="#fff" stroke-width="3">${d >= 1000 ? d / 1000 + ' km' : d + ' m'}</text>`;
     });
     const best = vals.indexOf(Math.max(...vals));
     const bx = r.field.x[best], by = r.field.y[best], bd = Math.hypot(bx, by);
     const bring = dists.findIndex(v => Math.abs(v - bd) < 1);
     const [mx, my] = pt(r0 + (bring + 0.5) * w, Math.atan2(bx, by));
-    s += `<circle cx="${mx}" cy="${my}" r="6" fill="none" stroke="#1f5fa8" stroke-width="2.5" data-tip="${esc(`Highest: ${ug(vals[best])}`)}"/>`;
-    s += `<circle cx="${cx}" cy="${cy}" r="4" fill="#14202e" data-tip="Kiln stack"/>`;
+    s += `<circle cx="${mx}" cy="${my}" r="7" fill="none" stroke="#fff" stroke-width="4"/>`;
+    s += `<circle cx="${mx}" cy="${my}" r="7" fill="none" stroke="#1c2127" stroke-width="2" data-tip="${esc(`Highest: ${ug(vals[best])}`)}"/>`;
+    s += `<rect x="${cx - 4}" y="${cy - 4}" width="8" height="8" fill="#1c2127" data-tip="Kiln stack"/>`;
     for (const [lab, ang] of [['N', 0], ['E', 90], ['S', 180], ['W', 270]]) {
         const [tx, ty] = pt(R + 14, ang * Math.PI / 180);
-        s += `<text x="${tx}" y="${ty + 4}" font-size="12" font-weight="600" text-anchor="middle" fill="#3b4a5c">${lab}</text>`;
+        s += `<text x="${tx}" y="${ty + 4}" font-size="12" font-weight="600" text-anchor="middle" fill="#3f4650">${lab}</text>`;
     }
-    s += `<text x="${cx}" y="${S + 38}" font-size="12" text-anchor="middle">highest ${ug(vals[best])} (blue ring)</text>`;
+    s += `<text x="${cx}" y="${S + 38}" font-size="12" text-anchor="middle">highest ${ug(vals[best])} (circled)</text>`;
     return s + '</svg>';
 }
 
@@ -714,12 +750,12 @@ function renderMaps(data) {
     const metric = $('wi-metric').value;
     const shown = [data.baseline, data.scenario].filter(r => r.certified);
     const vmax = Math.max(1e-12, ...shown.flatMap(r => r.field[metric]));
-    const what = {annual: 'annual mean', one_hour: '1-hour NAAQS statistic', max_1h: 'highest 1-hour value'}[metric];
+    const what = {annual: 'annual mean', one_hour: '1-hour design value', max_1h: 'highest single hour'}[metric];
     const legend = `<svg class="chart" viewBox="0 0 640 40" style="max-width:640px">${[...Array(50).keys()].map(i =>
         `<rect x="${70 + i * 10}" y="4" width="10" height="12" fill="${color(i / 49)}"/>`).join('')}
         <text x="64" y="14" font-size="11" text-anchor="end">0</text><text x="576" y="14" font-size="11">${ug(vmax)}</text>
-        <text x="70" y="32" font-size="11" fill="#64748a">kiln contribution only (no background), ${esc(what)}, µg/m³; same scale for both maps</text></svg>`;
-    $('wi-maps').innerHTML = polarMap('Baseline', data.baseline, metric, vmax) + polarMap('Scenario', data.scenario, metric, vmax);
+        <text x="70" y="32" font-size="11" fill="#59606b">kiln contribution only (no background), ${esc(what)}, µg/m³; same scale for both maps</text></svg>`;
+    $('wi-maps').innerHTML = polarMap('Today (baseline)', data.baseline, metric, vmax) + polarMap('Proposed change', data.scenario, metric, vmax);
     $('wi-map-note').innerHTML = legend + `<p>Each cell is one receptor (${WI.receptors.directions} directions, rings at
         ${WI.receptors.distances_m.map(d => d >= 1000 ? d / 1000 + ' km' : d + ' m').join(', ')}).
         Rings are drawn evenly spaced, so read distance from the labels. Hover a cell for its value.</p>`;
@@ -732,17 +768,20 @@ function renderStandards() {
     $('wi-standards').innerHTML = `<ul>
         ${line('1-hour', std.one_hour)}${line('Annual', std.annual)}</ul>
         <p>Source: US EPA, <a href="https://www.epa.gov/criteria-air-pollutants/naaqs-table" target="_blank" rel="noopener">NAAQS Table</a>
-        (40 CFR part 50). Converted with µg/m³ = ppb × ${mw} / 24.45 (25 °C, 1 atm, 40 CFR 50.3).</p>
+        (40 CFR part 50). Converted with µg/m³ = ppb × ${mw} / 24.45 (25 °C, 1 atm, 40 CFR 50.3).
+        Emission rates convert at 1 g/s = ${LB_PER_HR_PER_G_S.toFixed(2)} lb/hr.</p>
         <ul style="margin-top:8px">
-        <li>The 1-hour standard's form is a percentile of daily maximum 1-hour values averaged over 3 years. With one year of
-            weather this demo uses the ${ordinal(std.one_hour.rank)}-highest daily maximum at each receptor, the single-year stand-in
-            used in EPA modelling practice. The annual standard is compared with the one-year mean.</li>
+        <li>Design value: the 1-hour standard's form is a percentile of daily maximum 1-hour values averaged over 3 years. With one year of
+            weather this demo uses the ${ordinal(std.one_hour.rank)}-highest daily maximum at each receptor (the high-${ordinal(std.one_hour.rank)}-high),
+            the single-year stand-in used in EPA modelling practice. The annual standard is compared with the one-year mean.</li>
+        <li>% of standard = (kiln design value + background) / NAAQS at the worst receptor. "Near limit" (amber) marks ${NEAR_LIMIT_PCT}% or more:
+            a screening margin used by this dashboard, not a regulatory threshold.</li>
         ${pol === 'NOX' ? '<li>All NOx is treated as NO2 (EPA Tier 1 full conversion), which overstates NO2.</li>' : ''}
         <li>Background values are illustrative. A permit study uses monitored background for the site.</li>
         <li>Stack values snap to the ${WI.stacks} precomputed stacks. Emission rate is continuous, because AERMOD's
             concentrations scale exactly with emission rate.</li>
         <li>A real study uses a denser receptor grid, several years of local weather, nearby buildings (downwash) and terrain.
-            Those are outside the certified Tier A scope, so the demo refuses them.</li></ul>`;
+            This demo covers one stack on flat, rural terrain with no nearby buildings, and refuses anything else.</li></ul>`;
 }
 
 function renderArgonNote(data) {
@@ -750,10 +789,10 @@ function renderArgonNote(data) {
     const coverage = WI.cached < WI.stacks ? ` <b>Only ${WI.cached} of ${WI.stacks} stacks are precomputed.</b>` : '';
     $('wi-argon').innerHTML = !p ? `No precomputed results.${coverage}` :
         `Computed by the Argon-ported AERMOD (<code>port/aermod_py</code>, version <code>${esc(p.port_sha256.slice(0, 12))}</code>),
-        the same package scored on the <a href="#proof" onclick="show('proof');return false">Proof tab</a>. Each stack is ${fmt(p.hours)} hours of weather
+        the same Python model scored on the <a href="#proof" onclick="show('proof');return false">Model verification tab</a>. Each stack is ${fmt(p.hours)} hours of weather
         (${fmt(p.excluded_hours)} calm or missing) on ${WI.receptors.directions * WI.receptors.distances_m.length} receptors,
         run once at 1 g/s (${Math.round(p.seconds)} s for this stack) and scaled to the chosen emission rate.` +
-        (p.port_is_current ? '' : ` ${badge('bad', 'computed with a different port version: rerun make whatif')}`) + coverage;
+        (p.port_is_current ? '' : ` ${badge('bad', 'computed with a different model version: rerun make whatif')}`) + coverage;
 }
 
 // --- tabs ----------------------------------------------------------------------------
@@ -779,9 +818,8 @@ window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
         const screen = document.querySelector('.screen.active')?.id;
-        if (screen === 'whatif') wiLast && renderBars(wiLast);
-        else if (screen && screen !== 'decision') show(screen);
+        if (screen && screen !== 'decision' && screen !== 'whatif') show(screen);
     }, 250);
 });
 window.addEventListener('hashchange', () => loaders[location.hash.slice(1)] && show(location.hash.slice(1)));
-show(loaders[location.hash.slice(1)] ? location.hash.slice(1) : 'port');
+show(loaders[location.hash.slice(1)] ? location.hash.slice(1) : 'whatif');

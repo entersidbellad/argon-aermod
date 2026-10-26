@@ -17,7 +17,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-TABS = ("port", "proof", "decision", "whatif")
+TABS = ("whatif", "proof", "decision", "port")
 ROOT = Path(__file__).resolve().parent.parent
 
 
