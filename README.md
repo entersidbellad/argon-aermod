@@ -54,7 +54,7 @@ Scores from `results/tier_A.md, results/tier_B.md`, scored 2026-10-25 14:09 PDT 
 | `tierB_fix_names_prime_rise` | edit | - | gemini-4-argon (low) | 1 | 9,605 | 9,187 | $0.11 |
 | `tierB_fix_names_prime_wake` | edit | - | gemini-4-argon (low) | 1 | 22,569 | 22,116 | $0.27 |
 | `tierB_fix_names_prmcalc` | edit | - | gemini-4-argon (low) | 1 | 6,610 | 6,052 | $0.07 |
-| **Total** | | | | 13 | 1,414,808 | 425,810 | **$7.10** |
+| **Total** | | | | 13 | 1,414,808 | 425,810 | **$7.09** |
 
 Costs from `results/tier_A.md`: $2 / 1M input, $10 / 1M output incl. thinking (introductory, through 2026-11-30); no cache hits.
 Costs from `results/tier_B.md`: $2 / 1M input, $10 / 1M output incl. thinking (introductory, through 2026-11-30); no cache hits.

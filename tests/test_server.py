@@ -195,18 +195,49 @@ Prices: $2 / 1M input, $10 / 1M output incl. thinking.
 """
 
 
+@pytest.mark.parametrize("call,expected", [
+    ({"billed_input_tokens": 9774, "output_tokens": 9198, "thought_tokens": 0, "cost_usd": 0.11},
+     0.111528),
+    ({"billed_input_tokens": 9774, "output_tokens": 9198, "thought_tokens": 0, "cost_usd": 0.50},
+     0.50),
+    ({"billed_input_tokens": 9774, "output_tokens": 9198, "thought_tokens": None, "cost_usd": 0.11},
+     0.11),
+    ({"billed_input_tokens": 9774, "output_tokens": 9198, "thought_tokens": 0, "cost_usd": None},
+     None),
+])
+def test_call_cost_is_unrounded_only_when_it_agrees_with_the_cell(call, expected):
+    rates = server._rates("$2 / 1M input, $10 / 1M output incl. thinking (introductory)")
+    assert rates == {"input": 2e-6, "output": 1e-5}
+    assert server._call_cost(call, rates) == pytest.approx(expected)
+    assert server._call_cost(call, {}) == call["cost_usd"]
+
+
+@pytest.mark.parametrize("path,calls,total", [
+    ("results/tier_A.md", 3, 3.833216),
+    ("results/tier_B.md", 10, 3.2545),
+])
+def test_committed_costs_total_the_unrounded_calls(path, calls, total):
+    snaps = {s["path"]: s for s in server.results_snapshots()}
+    if path not in snaps:
+        pytest.skip(f"{path} is not committed")
+    snap = snaps[path]
+    assert len(snap["calls"]) == calls
+    assert sum(c["cost_usd"] for c in snap["calls"]) == pytest.approx(total)
+
+
 def test_results_snapshot_supplies_scores_and_costs(client):
     box_repair_run(server.RUNS_DIR)
     server.RESULTS_DIR.joinpath("tier_A.md").write_text(SNAPSHOT.format(digest=server.compare_hash()))
     (snap,) = client.get("/api/results").json()
     assert (snap["path"], snap["harness"], snap["prices"]) == \
         ("results/tier_A.md", "f53f81f", "$2 / 1M input, $10 / 1M output incl. thinking.")
+    # Unrounded: 1,250 x $2/1M + (1,014 + 11,433) x $10/1M, which the table shows as $0.13.
     assert snap["calls"] == [{"step": "Repair 1: circular import hrloop <-> metext (`__init__.py`)",
                               "interaction_id": "v1_fix", "packet_tokens": 1245,
                               "billed_input_tokens": 1250, "output_tokens": 1014,
-                              "thought_tokens": 11433, "cost_usd": 0.13}]
+                              "thought_tokens": 11433, "cost_usd": pytest.approx(0.12697)}]
     (run,) = client.get("/api/runs").json()
-    assert run["cost_usd"] == 0.13 and run["cost_complete"]
+    assert run["cost_usd"] == pytest.approx(0.12697) and run["cost_complete"]
 
     data = client.get("/api/test-results").json()
     assert data["source"] == "results/tier_A.md" and data["hash_matches"]
