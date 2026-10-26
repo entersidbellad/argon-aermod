@@ -430,10 +430,10 @@ def numrise(
     if ldb:
         # Fortran I=1..NTR -> i in range(ntr)
         for i in range(ntr):
-            p.emit_debug(state, "NUMRISE", "XTR", float(xtr[i]))
-            p.emit_debug(state, "NUMRISE", "YTR", float(ytr[i]))
-            p.emit_debug(state, "NUMRISE", "ZTR", float(ztr[i]))
-            p.emit_debug(state, "NUMRISE", "RTR", float(rtr[i]))
+            p.emit_debug(state, "WAKE_DFSN2", "XTR", float(xtr[i]))
+            p.emit_debug(state, "WAKE_DFSN2", "YTR", float(ytr[i]))
+            p.emit_debug(state, "WAKE_DFSN2", "ZTR", float(ztr[i]))
+            p.emit_debug(state, "WAKE_DFSN2", "RTR", float(rtr[i]))
 
     return linwake, numwake, ierr
 

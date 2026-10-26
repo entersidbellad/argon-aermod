@@ -40,11 +40,12 @@ see README); against our binary the strict rule is exact (p99 0).
 | Name fix: prime_wake.py | `v1_ChZsWlBlYW82a09zN2Utc0FQNFp1UVNREhZsWlBlYW82a09zN2Utc0FQNFp1UVNR` | 22,564 | 22,569 | 22,116 | 0 | $0.27 |
 | Name fix: prime_rise.py | `v1_ChdscFBlYXAtbUFjRy14ZElQcTYyTjZBcxIXbHBQZWFwLW1BY0cteGRJUHE2Mk42QXM` | 9,600 | 9,605 | 9,187 | 0 | $0.11 |
 | Name fix: prmcalc.py | `v1_ChdsWlBlYXR1ME5QYjctc0FQNTh6TDJBWRIXbFpQZWF0dTBOUGI3LXNBUDU4ekwyQVk` | 6,605 | 6,610 | 6,052 | 0 | $0.07 |
-| **Total** | | 393,871 | 393,916 | 125,771 | 109,743 | **$3.14** |
+| Debug relabel: prime_rise.py WAKE_DFSN2 emits (PR #3 review) | `v1_ChZ2SzNlYW95NEhOV2oxTWtQM3BtYUNBEhZ2SzNlYW95NEhOV2oxTWtQM3BtYUNB` | 9,769 | 9,774 | 9,198 | 0 | $0.11 |
+| **Total** | | 403,640 | 403,690 | 134,969 | 109,743 | **$3.25** |
 
 Prices: $2 / 1M input, $10 / 1M output incl. thinking (introductory, through 2026-11-30); no cache hits.
 Every request stayed under 64K output tokens, so no continuation re-billing (billed input = prompt + 5).
-Project total so far: $3.57 (tier A) + $0.27 (import fix) + $3.14 (tier B) = $6.98.
+Project total so far: $3.57 (tier A) + $0.27 (import fix) + $3.25 (tier B) = $7.09.
 
 ## How it was ported
 

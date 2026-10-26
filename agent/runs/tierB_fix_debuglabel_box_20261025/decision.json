@@ -1,0 +1,39 @@
+{
+ "interaction_id": "v1_ChZ2SzNlYW95NEhOV2oxTWtQM3BtYUNBEhZ2SzNlYW95NEhOV2oxTWtQM3BtYUNB",
+ "usage": {
+  "input_tokens_by_modality": [
+   {
+    "modality": "text",
+    "tokens": 9774
+   }
+  ],
+  "output_tokens_by_modality": [
+   {
+    "modality": "text",
+    "tokens": 9198
+   }
+  ],
+  "total_cached_tokens": 0,
+  "total_input_tokens": 9774,
+  "total_output_tokens": 9198,
+  "total_thought_tokens": 0,
+  "total_tokens": 18972,
+  "total_tool_use_tokens": 0
+ },
+ "cost_usd": 0.111528,
+ "hypothesis": "Relabel the four trajectory debug emits (`XTR`, `YTR`, `ZTR`, `RTR`) after the `wake_dfsn2` call in `numrise` from `\"NUMRISE\"` to `\"WAKE_DFSN2\"` to match the debug-variable contract for trajectory arrays after `CALL WAKE_DFSN2`.",
+ "accepted": true,
+ "reason": "all checks pass",
+ "files": [
+  "prime_rise.py"
+ ],
+ "tier_a": {
+  "aertest_nobldg": "aertest_nobldg       PASS  slope 1.000000/1.000000/1.000000 [ok]  zero 100.000%  p99 0.00e+00  H4H fail 0/144  stab 100.00%(64h) conv 100.00%(32h)",
+  "CAPPED_STACK2": "CAPPED_STACK2        PASS  slope 1.000000/1.000000/1.000000 [ok]  zero 100.000%  p99 0.00e+00  H4H fail 0/288  stab 100.00%(64h) conv 100.00%(32h)",
+  "CAPPED_STACK2C0": "CAPPED_STACK2C0      PASS  slope 1.000000/1.000000/1.000000 [ok]  zero 100.000%  p99 0.00e+00  H4H fail 0/288  stab 100.00%(64h) conv 100.00%(32h)",
+  "CAPPED_STACK2CE": "CAPPED_STACK2CE      PASS  slope 1.000000/1.000000/1.000000 [ok]  zero 100.000%  p99 0.00e+00  H4H fail 0/288  stab 100.00%(64h) conv 100.00%(32h)",
+  "HRDOW_STACK1": "HRDOW_STACK1         PASS  slope 1.000000/1.000000/1.000000 [ok]  zero 100.000%  p99 0.00e+00  H4H fail 0/36  stab 100.00%(3520h) conv 100.00%(5264h)",
+  "FLATELEV_FLAT_STK": "FLATELEV_FLAT_STK    PASS  slope 1.000000/1.000000/1.000000 [ok]  zero 100.000%  p99 0.00e+00  H4H fail 0/11  stab 100.00%(5144h) conv 100.00%(3640h)",
+  "testpm10_stack2": "testpm10_stack2      PASS  slope 1.000000/1.000000/1.000000 [ok]  zero 100.000%  p99 0.00e+00  H4H fail 0/36  stab 100.00%(20926h) conv 100.00%(22898h)"
+ }
+}
