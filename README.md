@@ -2,7 +2,7 @@
 
 EPA's regulatory air-dispersion model (AERMOD 26135, Fortran) ported to Python by Gemini 4 Argon with **zero hand edits**, and verified against **EPA's own test cases** by a frozen, strict scoring script.
 
-![Fuel & stack check: baseline and proposed fuel mix as % of the 1-hour SO2 NAAQS, with pass / near-limit / exceeds verdicts](docs/screenshots/whatif.png)
+![Fuel & Permit Check: a 50/50 alternative-fuel mix reaches 63% of the federal 1-hour SO2 limit, within the limit, compared with 53% today](docs/screenshots/whatif.png)
 
 ## Why this matters
 
@@ -105,7 +105,7 @@ flowchart LR
 - **H4H ("high fourth-high").** At each receptor, the 4th-highest daily maximum 1-hour concentration in a year: the design value regulators compare with the 1-hour SO2 standard (`pyaermod.design_values`).
 - **Holdout.** `testpm10_stack2` and `TESTPM10` are never shown to the repair loop, so passing them is evidence the port generalises rather than being tuned. `testpm10_stack2` needs no downwash and tests Tier A; `TESTPM10` has PRIME building data and tests Tier B.
 - **Provenance.** `split.py` writes each file Argon produces into `port/aermod_py` and records its sha256 in `files.json` next to the saved reply. `split.py --verify` re-splits every recorded reply and fails unless each file is byte-identical to one, and that reply's `reply.json` records a completed Argon interaction. `port/aermod_py/README.md` is the only human-owned file there.
-- **Certification** (the Certification tab, recomputed on every load): the approved `compare.py` scored *this exact* port version on this machine, every Tier A training case passes both rules, and provenance is clean. Tier B joins the certified scope automatically once every Tier B case passes in the same scoring of the same port; nothing is hard-coded.
+- **Certification** (the certification panel on the Proof page, recomputed on every load): the approved `compare.py` scored *this exact* port version on this machine, every Tier A training case passes both rules, and provenance is clean. Tier B joins the certified scope automatically once every Tier B case passes in the same scoring of the same port; nothing is hard-coded.
 
 ## Quickstart
 
@@ -122,7 +122,7 @@ make test-fast      # unit tests; tests that need the EPA download skip with a r
 make demo           # dashboard on http://127.0.0.1:8000 (Ctrl-C to stop)
 ```
 
-`make demo` alone is enough for a live demo: it installs if needed, runs the provenance check and serves the dashboard from the committed results. It runs offline and loads nothing from a CDN. It opens on the Fuel & stack check. Until you score the port on your machine, the Certification tab says "not yet certified here".
+`make demo` alone is enough for a live demo: it installs if needed, runs the provenance check and serves the dashboard from the committed results. It runs offline and loads nothing from a CDN. It opens on the Fuel & Permit Check. Until you score the port on your machine, the Proof page says "Not yet verified on this computer".
 
 **Reproduce the scores** (downloads about 10 MB from EPA, builds AERMOD with gfortran, then runs the Python port on every Tier A case; the 5-year holdout takes a few minutes):
 
@@ -130,10 +130,10 @@ make demo           # dashboard on http://127.0.0.1:8000 (Ctrl-C to stop)
 make ref            # fetch EPA source + test cases (checksummed), build ref/aermod and ref/aermod_dump
 make refs           # run every case through ref/aermod: the oracles in out/ref
 make suite-tier-a   # run the port on the Tier A cases + Tier A holdout, score into out/suite_port.json
-make demo           # reload: the Certification tab now certifies the port
+make demo           # reload: the Proof page now certifies the port
 ```
 
-`make suite-port` runs and scores every case, Tier B included, so the Certification tab can certify both tiers; `TESTPM10` (5 years with PRIME) takes about 21 minutes in the port. For the full test suite: `make dumps debug-refs && make test`.
+`make suite-port` runs and scores every case, Tier B included, so the Proof page can certify both tiers; `TESTPM10` (5 years with PRIME) takes about 21 minutes in the port. For the full test suite: `make dumps debug-refs && make test`.
 
 **Re-run Argon** (needs `GEMINI_API_KEY`; costs real money, see "Cost controls"):
 
@@ -148,27 +148,30 @@ make readme                                  # refresh the results block above
 
 `make demo` (or `python server.py --root OTHER_CHECKOUT` to read another checkout's runs and results). Read-only: every number is computed from files on disk at page load, and nothing on the page starts a model run.
 
-| Tab | Shows | Read from |
-|---|---|---|
-| Fuel & stack check | The cement-kiln what-if below: a verdict card per scenario (% of the NAAQS, pass / near limit / exceeds), gauges against the standard line, the plume footprint | `whatif/kiln.toml`, `whatif/cache/` |
-| Model verification | Per EPA test case, in plain terms (hourly concentrations within the strict tolerance, design value matching at every receptor, "identical" only when the largest difference is exactly 0), with slope, p99 and H4H one click down under "Technical detail"; the frozen digest; every file's provenance | `out/suite_port.json`, else `results/tier_*.md`; `harness/compare.py`; `split.trace` |
-| Certification | Certified or not, for which tiers, with each criterion and why | all of the above, recomputed |
-| How it was built | Argon requests, tokens and cost per run; Fortran in scope; files each reply wrote; repair decisions; git history of the port | `agent/runs/`, `results/tier_*.md`, `context/tokens.json` |
+It is written for a cement plant manager or environmental manager first: plain-English questions and answers up front, and every rigorous detail (scores, hashes, CI run, Argon cost) one click down under "For engineers".
 
-The look follows ISA-101 high-performance HMI practice: neutral greys, one steel blue for controls, and colour only for status. Green means within the limit or pass, amber means at or above 80% of the standard (a screening margin chosen for this dashboard, not a regulatory threshold), and red means exceeds or fails. Every status colour comes with an icon and a text label, so nothing depends on colour alone. Emission rates show g/s and lb/hr.
+| Section | Shows | Read from |
+|---|---|---|
+| Fuel & Permit Check | The plant question ("Can we burn more alternative fuel and stay within our air-quality limits?"), a big answer (Within limit / Close to limit / Over limit) with the % of the federal limit and one sentence of explanation, today versus the chosen fuel mix, why to trust the number, the plume footprint; stack, emission and site inputs under "Fine-tune the stack and site" | `whatif/kiln.toml`, `whatif/cache/` |
+| Proof it's accurate | Certified or not (computed, never stored), how many EPA test cases match, how the check works in plain English, every case in plain terms; under "For engineers": slopes, p99 and H4H per case, the rules, every certification criterion, the frozen digest, every file's provenance | `out/suite_port.json`, else `results/tier_*.md`; `harness/compare.py`; `split.trace` |
+| How it was built | Lines translated, AI requests and cost, the four steps from Fortran to a verified model; under "For engineers": tokens and cost per run, files each reply wrote, repair decisions, git history of the port | `agent/runs/`, `results/tier_*.md`, `context/tokens.json` |
+| About | Who it is for, what the demo is and is not, a plain-English glossary, contact | `whatif/kiln.toml` |
+
+The look is a warm limestone page under a graphite control-room header, with Inter and IBM Plex Mono self-hosted in `ui/fonts/` (SIL OFL). One kiln-orange accent marks calls to action; steel blue marks things you can click. Status colours follow ISA-101 high-performance HMI practice and are used only for status: green means within the limit or pass, amber means at or above 80% of the limit (a screening margin chosen for this dashboard, not a regulatory threshold), and red means over the limit or fails. Every status colour comes with an icon and a text label, so nothing depends on colour alone. Jargon (SO2, NOx, stack, building wake, background, NAAQS) carries a hover or tap glossary.
 
 Tier B shows "in progress" until every Tier B case passes in `results/tier_B.md` or `out/suite_port.json`; it is never shown as a result before then.
 
-| Model verification | Certification | How it was built |
+| Proof it's accurate | How it was built | About |
 |---|---|---|
-| ![Model verification tab](docs/screenshots/proof.png) | ![Certification tab](docs/screenshots/decision.png) | ![How it was built tab](docs/screenshots/port.png) |
+| ![Proof it's accurate](docs/screenshots/proof.png) | ![How it was built](docs/screenshots/port.png) | ![About](docs/screenshots/about.png) |
 
 ## Deploy to Vercel
 
 `site/` is a committed, static, read-only copy of the dashboard. Import this GitHub repository in Vercel and deploy with no settings changed: `vercel.json` selects no framework, skips install and build, and serves `site/`; `.vercelignore` uploads only `site/` and `vercel.json`. No Python runs on Vercel, no API key is involved, and the site never calls Gemini or Argon. Preview it locally with `python3 -m http.server -d site`.
 
 - **How it is produced:** `make export-static` (`tools/export_static.py`) calls `server.py`'s API in-process and writes every response the page fetches as JSON under `site/data/`, next to a copy of `ui/`. With `data/static.js` present, `ui/app.js` reads those files instead of `/api/`; under `server.py` nothing changes. CI fails if `site/` is stale, so rerun the export and commit it after changing `ui/`, `results/`, `agent/runs/`, `whatif/` or the port.
-- **What is disabled:** nothing is computed when the site is served. The Fuel & stack check offers each pollutant's precomputed fuel-mix presets; the stack, emission, background and site inputs are disabled with a "read-only demo: run locally to recompute" note. Nothing can be rescored.
+- **What is disabled:** nothing is computed when the site is served. The Fuel & Permit Check offers each pollutant's precomputed fuel-mix presets; the stack, emission, background and site inputs are disabled with a note that the online demo shows presets only. A banner reads "Demo with example plant data. Contact us to run it on your plant." Nothing can be rescored.
+- **Security:** `vercel.json` sends a Content-Security-Policy that allows only the site's own scripts, styles, fonts and data (inline style attributes aside), `frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, a `Referrer-Policy` and a `Permissions-Policy` that turns off camera, microphone, geolocation and similar APIs. The page loads nothing from a third party: no CDN, web fonts, analytics or trackers. "Book a demo" is a plain `mailto:` link.
 - **Certification:** scores come from `results/ci_port_suite.json`, the `out/suite_port.json` uploaded by the `port-suite` job of the latest green `main` CI run (refresh with `python tools/export_static.py --fetch-ci`, which needs `gh`). The export judges it with the same `certify()` as the live dashboard, so the site says "Certified by CI run <id> (<date>) on commit <sha>" only if that run scored exactly the committed `port/aermod_py`. Otherwise it says "Not certified" and names both port digests.
 
 ## Kiln what-if demo
@@ -183,7 +186,7 @@ A cement plant wants to burn part of its kiln fuel as alternative fuels (tyres, 
 ## Limitations and scope
 
 - **Tier A** (certified): POINT sources, FLAT terrain, rural, concentration, 1-hour averages, no building downwash.
-- **Tier B**: adds PRIME building downwash. Every Tier B case passes in `results/tier_B.md`; the Certification tab certifies it once the same port version is scored on your machine.
+- **Tier B**: adds PRIME building downwash. Every Tier B case passes in `results/tier_B.md`; the Proof page certifies it once the same port version is scored on your machine.
 - **Not ported, by design:** input parsing (SETUP) and output writing. The human-written `harness/glue.py` parses the deck with pyaermod and builds every SETUP value the physics reads; it is checked bit for bit against `SETUP.DMP` from an instrumented AERMOD build and round-trips AERMOD's POSTFILE byte for byte.
 - **Reference:** EPA's kit states no numeric slope threshold; 0.001 is pyaermod's default. Our gfortran build differs slightly from EPA's shipped files on two cases, which is why the strict rule always compares against our own build.
 - **Argon calls** ran on another machine; this repository holds the recorded replies, which is what `split.py --verify` checks. Token counts for the Fortran slice use a proxy tokenizer (tiktoken o200k), not Gemini's.
