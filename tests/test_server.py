@@ -212,14 +212,17 @@ def test_call_cost_is_unrounded_only_when_it_agrees_with_the_cell(call, expected
     assert server._call_cost(call, {}) == call["cost_usd"]
 
 
-def test_committed_costs_total_the_unrounded_calls():
-    calls = [c for s in server.results_snapshots() for c in s["calls"]]
-    if not calls:
-        pytest.skip("no results/tier_*.md with an Argon calls table")
-    rates = {"input": 2e-6, "output": 1e-5}
-    exact = sum(c["billed_input_tokens"] * rates["input"]
-                + (c["output_tokens"] + c["thought_tokens"]) * rates["output"] for c in calls)
-    assert sum(c["cost_usd"] for c in calls) == pytest.approx(exact)
+@pytest.mark.parametrize("path,calls,total", [
+    ("results/tier_A.md", 3, 3.833216),
+    ("results/tier_B.md", 10, 3.2545),
+])
+def test_committed_costs_total_the_unrounded_calls(path, calls, total):
+    snaps = {s["path"]: s for s in server.results_snapshots()}
+    if path not in snaps:
+        pytest.skip(f"{path} is not committed")
+    snap = snaps[path]
+    assert len(snap["calls"]) == calls
+    assert sum(c["cost_usd"] for c in snap["calls"]) == pytest.approx(total)
 
 
 def test_results_snapshot_supplies_scores_and_costs(client):
