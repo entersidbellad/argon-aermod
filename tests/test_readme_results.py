@@ -30,6 +30,13 @@ def test_block_totals_match_the_run_records():
         assert f"**${argon['cost_usd']:,.2f}**" in text
 
 
+def test_scores_are_called_approved_only_when_compare_also_matches_its_pinned_digest():
+    summary, scores = server.summary(use_suite=False), server._scores("port", use_suite=False)
+    summary["scores"]["hash_matches"] = True
+    summary["compare_frozen"] = False
+    assert "**not** with the approved `harness/compare.py`" in readme_results.render(summary, scores)
+
+
 def test_replace_needs_the_markers_and_swaps_only_the_block():
     text = f"intro\n{readme_results.BEGIN}\nold\n{readme_results.END}\noutro\n"
     new = readme_results.replace(text, f"{readme_results.BEGIN}\nnew\n{readme_results.END}")

@@ -55,7 +55,7 @@ def render(summary: dict, scores: dict) -> str:
                      f"{_count(t['holdout'])} | {STATUS[t['status']]} |")
     s = summary["scores"]
     lines += ["", f"Scores from `{s['source']}`" + (f", scored {s['suite_time']}" if s["suite_time"] else "")
-              + (", with the approved `harness/compare.py`." if s["hash_matches"]
+              + (", with the approved `harness/compare.py`." if s["hash_matches"] and summary["compare_frozen"]
                  else ", **not** with the approved `harness/compare.py`."), ""]
 
     rows = [(name, info, scores["results"][name]) for name, info in scores["cases"].items()
