@@ -6,7 +6,7 @@ PORT ?= 8000
 # The Tier A training cases plus every holdout whose deck needs no PRIME (server._case_info).
 TIER_A_CASES = $(shell $(PY) -c 'import server; print(" ".join(n for n, c in server._case_info().items() if c["tests_tier"] == "A"))')
 
-.PHONY: help install demo freeze check-frozen ref refs debug-refs dumps context test test-fast fuzz suite-port suite-tier-a verify whatif serve readme readme-check screenshots clean
+.PHONY: help install demo freeze check-frozen ref refs debug-refs dumps context test test-fast fuzz suite-port suite-tier-a verify whatif serve export-static readme readme-check screenshots clean
 
 help:
 	@echo "install     create $(VENV) and install requirements.txt into it"
@@ -26,6 +26,7 @@ help:
 	@echo "check-frozen  fail unless compare.py matches harness/compare.sha256"
 	@echo "whatif      precompute the kiln what-if stack grid with the port into whatif/cache"
 	@echo "serve       read-only dashboard on http://$(HOST):$(PORT)"
+	@echo "export-static  static read-only copy of the dashboard into site/ (what vercel.json deploys)"
 	@echo "readme      regenerate README.md's results block from results/, agent/runs/, context/, port/"
 	@echo "readme-check  fail if README.md's results block is stale"
 	@echo "screenshots full-page PNGs of every dashboard tab into docs/screenshots (needs playwright)"
@@ -93,6 +94,9 @@ whatif:
 
 serve:
 	$(PY) server.py --host $(HOST) --port $(PORT)
+
+export-static:
+	$(PY) tools/export_static.py
 
 readme:
 	$(PY) tools/readme_results.py
