@@ -262,8 +262,8 @@ def scope_issues(config: dict, inputs: Inputs) -> list[str]:
             issues.append(
                 f"A {hb:g} m tall, {wb:g} m wide building {dist:g} m from the stack is within "
                 f"{config['scope']['downwash_lengths']:g}L = {reach:g} m (L = {length:g} m), so "
-                "AERMOD would apply PRIME building downwash. Downwash is Tier B, which is not "
-                "certified yet.")
+                "AERMOD would apply PRIME building downwash, which this demo's precomputed "
+                "grid (no buildings) does not cover.")
     if inputs.urban:
         issues.append("Urban dispersion (URBANOPT) is outside Tier A scope, which is rural only.")
     if inputs.complex_terrain:

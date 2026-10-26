@@ -3,154 +3,73 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AERMOD port - Gemini 4 Argon</title>
-<style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f5f7; color: #222; }
-    .wrap { max-width: 1280px; margin: 0 auto; padding: 24px; }
-    header h1 { font-size: 24px; }
-    header p { color: #666; margin-top: 4px; }
-    nav { display: flex; gap: 8px; margin: 20px 0; }
-    nav button { padding: 10px 22px; border: 1px solid #ccd; background: #fff; border-radius: 6px; font-size: 15px; cursor: pointer; }
-    nav button.active { background: #1a73e8; color: #fff; border-color: #1a73e8; }
-    .screen { display: none; }
-    .screen.active { display: block; }
-    .panel { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-    .panel h2 { font-size: 17px; margin-bottom: 12px; }
-    .muted { color: #666; font-size: 13px; }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
-    .card { background: #f7f8fa; border-radius: 6px; padding: 14px; }
-    .card .k { font-size: 12px; text-transform: uppercase; color: #666; letter-spacing: .4px; }
-    .card .v { font-size: 22px; font-weight: 600; margin-top: 4px; }
-    .mono { font-family: Menlo, Consolas, monospace; font-size: 12px; word-break: break-all; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
-    th { color: #555; font-weight: 600; background: #fafafa; }
-    tr.clickable { cursor: pointer; }
-    tr.clickable:hover { background: #f2f6fd; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin: 8px 0 16px; }
-    .case { border: 2px solid #ddd; border-radius: 6px; padding: 10px; font-size: 13px; }
-    .case b { display: block; font-size: 14px; margin-bottom: 4px; }
-    .pass { border-color: #43a047; background: #eef8ef; }
-    .fail { border-color: #e53935; background: #fdeeee; }
-    .pending { border-color: #fb8c00; background: #fff5e8; }
-    .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; color: #fff; }
-    .badge.ok { background: #43a047; }
-    .badge.no { background: #e53935; }
-    .badge.warn { background: #fb8c00; }
-    .big { font-size: 20px; padding: 6px 18px; }
-    code { background: #f0f1f3; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
-    pre { white-space: pre-wrap; font-size: 12px; }
-    .wi-layout { display: grid; grid-template-columns: 330px 1fr; gap: 18px; align-items: start; }
-    .wi-controls label { display: block; font-size: 13px; font-weight: 600; margin-top: 12px; }
-    .wi-controls label span.val { float: right; font-weight: 400; color: #1a73e8; }
-    .wi-controls input[type=range] { width: 100%; }
-    .wi-controls select, .wi-controls input[type=number] { width: 100%; padding: 5px; margin-top: 4px; }
-    .wi-controls fieldset { border: 1px solid #e3e5e8; border-radius: 6px; padding: 8px 12px 12px; margin-top: 14px; }
-    .wi-controls legend { font-size: 12px; color: #666; padding: 0 4px; }
-    .wi-controls .check { font-weight: 400; }
-    .illustrative { background: #fff5e8; border-left: 4px solid #fb8c00; padding: 8px 12px; font-size: 13px; border-radius: 4px; }
-    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .scen { border: 1px solid #e3e5e8; border-radius: 8px; padding: 14px; }
-    .scen h3 { font-size: 15px; margin-bottom: 8px; }
-    .metric { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
-    .metric .num { font-size: 18px; font-weight: 600; }
-    .warnbox { background: #fdeeee; border: 2px solid #e53935; border-radius: 8px; padding: 14px; font-size: 14px; }
-    .note-argon { font-size: 12px; color: #555; margin-top: 10px; }
-    .note-argon a { color: #1a73e8; cursor: pointer; }
-    .maps { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .maps svg { width: 100%; height: auto; }
-</style>
+<title>Kiln permit check · AERMOD in Python, ported by Gemini 4 Argon and verified on EPA's test cases</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232b3138'/%3E%3Cpath d='M6 22c6-10 14-12 20-12' stroke='%23a9bccf' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="app.css">
 </head>
 <body>
-<div class="wrap">
-    <header>
-        <h1>AERMOD 26135 &rarr; Python, ported by Gemini 4 Argon</h1>
-        <p>Read-only view of <code>agent/runs</code>, the suite results and <code>port/aermod_py</code>. Nothing on this page starts a run.</p>
-    </header>
-    <nav>
-        <button class="active" data-screen="port">Port</button>
-        <button data-screen="proof">Proof</button>
-        <button data-screen="decision">Decision</button>
-        <button data-screen="whatif">What-if</button>
+<header class="top">
+    <div class="wrap">
+        <div>
+            <div class="eyebrow">EPA AERMOD 26135 · Fortran <span aria-hidden="true">→</span> Python · ported by Gemini 4 Argon</div>
+            <h1>Kiln permit check <span class="arrow">·</span> AERMOD in Python</h1>
+            <p class="tagline">Will a fuel or stack change keep the plant inside the air-quality standards?
+                <span class="sub">Answered with EPA's regulatory dispersion model, ported from Fortran with zero hand edits and checked against EPA's own test cases.</span></p>
+        </div>
+        <div class="chips" id="chips" aria-live="polite">
+            <span class="chip"><span class="ic prog" aria-hidden="true">…</span>Loading status…</span>
+        </div>
+    </div>
+</header>
+
+<section class="pipeline" aria-label="How it works">
+    <div class="wrap">
+        <div class="pipeline-title">How the model was built and checked</div>
+        <ol class="steps" id="steps">
+            <li><button class="step" data-go="port"><span class="n"><span class="ic neutral" aria-hidden="true">1</span>Input</span><span class="t">AERMOD Fortran</span><span class="v"><span class="skeleton" style="display:block;width:80%"></span></span></button></li>
+            <li><button class="step" data-go="port"><span class="n"><span class="ic neutral" aria-hidden="true">2</span>Translate</span><span class="t">Gemini 4 Argon</span><span class="v"><span class="skeleton" style="display:block;width:80%"></span></span></button></li>
+            <li><button class="step" data-go="proof"><span class="n"><span class="ic neutral" aria-hidden="true">3</span>Output</span><span class="t">Python model</span><span class="v"><span class="skeleton" style="display:block;width:80%"></span></span></button></li>
+            <li><button class="step" data-go="proof"><span class="n"><span class="ic neutral" aria-hidden="true">4</span>Verify</span><span class="t">EPA test cases</span><span class="v"><span class="skeleton" style="display:block;width:80%"></span></span></button></li>
+            <li><button class="step" data-go="decision"><span class="n"><span class="ic neutral" aria-hidden="true">5</span>Decide</span><span class="t">Certified?</span><span class="v"><span class="skeleton" style="display:block;width:80%"></span></span></button></li>
+        </ol>
+    </div>
+</section>
+
+<main class="wrap">
+    <nav class="tabs" role="tablist">
+        <button role="tab" data-screen="whatif" aria-selected="true">Fuel &amp; stack check <span class="sub">cement kiln what-if</span></button>
+        <button role="tab" data-screen="proof" aria-selected="false">Model verification <span class="sub">against EPA test cases</span></button>
+        <button role="tab" data-screen="decision" aria-selected="false">Certification <span class="sub">can the model be used?</span></button>
+        <button role="tab" data-screen="port" aria-selected="false">How it was built <span class="sub">Argon runs and cost</span></button>
     </nav>
 
-    <section id="port" class="screen active">
-        <div class="panel">
-            <h2>Fortran in scope</h2>
-            <div class="cards" id="token-cards"></div>
-            <p class="muted" id="token-note" style="margin-top:10px"></p>
-        </div>
-        <div class="panel">
-            <h2>Argon runs (<code>agent/runs</code>)</h2>
-            <div class="cards" style="margin-bottom:12px" id="spend"></div>
-            <div id="runs"></div>
-            <p class="muted" id="prices" style="margin-top:8px"></p>
-            <div id="run-detail" style="margin-top:14px"></div>
-        </div>
-    </section>
-
-    <section id="proof" class="screen">
-        <div class="panel">
-            <h2>Frozen scoring rules</h2>
-            <div class="cards">
-                <div class="card"><div class="k">harness/compare.py sha256</div><div class="mono" id="cmp-now"></div></div>
-                <div class="card"><div class="k">approved (harness/compare.sha256)</div><div class="mono" id="cmp-approved"></div></div>
-                <div class="card"><div class="k">status</div><div class="v" id="cmp-status"></div></div>
+    <!-- Fuel & stack check -->
+    <section id="whatif" class="screen active" role="tabpanel">
+        <div class="panel wi-intro">
+            <div>
+                <h2 id="wi-title">Fuel &amp; stack check</h2>
+                <p id="wi-story" style="margin-top:6px;color:var(--ink-2)"><span class="loading">Loading scenario config…</span></p>
             </div>
-        </div>
-        <div class="panel">
-            <h2>Per-case results</h2>
-            <p class="muted" id="score-source"></p>
-            <div class="cards" style="margin:12px 0" id="rates"></div>
-            <h3 class="muted">Tier A (no building downwash)</h3><div class="grid" id="grid-a"></div>
-            <h3 class="muted">Tier B (adds PRIME)</h3><div class="grid" id="grid-b"></div>
-            <h3 class="muted">Holdout (never shown to the repair loop)</h3><div class="grid" id="grid-h"></div>
-        </div>
-        <div class="panel">
-            <h2>Provenance: every port file and the Argon interaction that wrote it</h2>
-            <p id="prov-status"></p>
-            <div id="prov-table" style="margin-top:10px"></div>
-        </div>
-    </section>
-
-    <section id="decision" class="screen">
-        <div class="panel">
-            <h2>Certification</h2>
-            <p class="muted">Computed on every load from the suite results, the current compare.py, the current port and its provenance. Nothing is stored.</p>
-            <p style="margin:16px 0"><span id="certified" class="badge warn big">loading</span></p>
-            <table id="criteria"></table>
-        </div>
-    </section>
-
-    <section id="whatif" class="screen">
-        <div class="panel">
-            <h2 id="wi-title">What-if</h2>
-            <p class="muted" id="wi-story"></p>
-            <p class="illustrative" style="margin-top:10px">
-                <b>Illustrative example values, not real plant data.</b> Stack defaults, fuel-mix factors,
-                emission rates and background concentrations are made up for this demo and live in one
-                editable file, <code>whatif/kiln.toml</code>.
-            </p>
+            <div class="sources" id="wi-sources"></div>
         </div>
         <div class="wi-layout">
             <div class="panel wi-controls" id="wi-controls">
-                <h2>Scenario</h2>
+                <h2>Plant inputs</h2>
                 <label>Pollutant<select id="wi-pollutant"></select></label>
-                <label>Fuel mix (preset)<select id="wi-fuel"></select></label>
-                <p class="muted" style="margin-top:4px">A preset sets the emission rate and exit temperature below.</p>
+                <label>Fuel mix <span class="tag">illustrative</span><select id="wi-fuel"></select></label>
+                <p class="hint">A fuel mix sets the emission rate and exit gas temperature below.</p>
+                <label>Emission rate <span class="tag">illustrative</span> <span class="val" id="wi-emission-v"></span><input type="range" id="wi-emission" step="0.5"></label>
                 <label>Stack height <span class="val" id="wi-height-v"></span><input type="range" id="wi-height"></label>
                 <label>Stack diameter <span class="val" id="wi-diameter-v"></span><input type="range" id="wi-diameter"></label>
                 <label>Exit gas temperature <span class="val" id="wi-temperature-v"></span><input type="range" id="wi-temperature"></label>
-                <label>Exit velocity <span class="val" id="wi-velocity-v"></span><input type="range" id="wi-velocity"></label>
-                <label>Emission rate <span class="val" id="wi-emission-v"></span><input type="range" id="wi-emission" step="0.5"></label>
+                <label>Exit gas velocity <span class="val" id="wi-velocity-v"></span><input type="range" id="wi-velocity"></label>
                 <fieldset>
-                    <legend>Background already in the air (illustrative)</legend>
-                    <label>1-hour, &micro;g/m&sup3;<input type="number" id="wi-bg1" min="0" step="1"></label>
-                    <label>Annual, &micro;g/m&sup3;<input type="number" id="wi-bgA" min="0" step="1"></label>
+                    <legend>Background already in the air <span class="tag">illustrative</span></legend>
+                    <label>1-hour, µg/m³<input type="number" id="wi-bg1" min="0" step="1"></label>
+                    <label>Annual, µg/m³<input type="number" id="wi-bgA" min="0" step="1"></label>
                 </fieldset>
                 <fieldset>
-                    <legend>Site (Tier A scope check)</legend>
+                    <legend>Site conditions (scope check)</legend>
                     <label class="check"><input type="checkbox" id="wi-bldg"> Building near the stack</label>
                     <div id="wi-bldg-box" style="display:none">
                         <label>Building height <span class="val" id="wi-bh-v"></span><input type="range" id="wi-bh" min="5" max="80" step="1" value="30"></label>
@@ -163,445 +82,114 @@
             </div>
             <div>
                 <div class="panel">
-                    <h2>Baseline vs scenario</h2>
-                    <div class="compare" id="wi-compare"></div>
-                    <div id="wi-bars" style="margin-top:16px"></div>
+                    <div class="panel-head"><h2>Verdict against the NAAQS</h2><p id="wi-verdict-sub">Design value at the worst receptor, kiln plus background</p></div>
+                    <div class="verdicts" id="wi-verdicts"><div class="loading">Computing…</div></div>
+                    <div class="key" id="wi-key"></div>
                     <p class="note-argon" id="wi-argon"></p>
                 </div>
                 <div class="panel">
-                    <h2>Plume footprint</h2>
-                    <label class="muted">Show <select id="wi-metric">
-                        <option value="annual" selected>annual mean</option>
-                        <option value="one_hour">1-hour NAAQS statistic</option>
-                        <option value="max_1h">highest 1-hour value</option>
-                    </select></label>
-                    <div class="maps" id="wi-maps" style="margin-top:10px"></div>
-                    <p class="muted" id="wi-map-note"></p>
+                    <div class="panel-head"><h2>Where the plume lands</h2>
+                        <label class="muted small">Show <select id="wi-metric" style="font:inherit;padding:3px 6px;border:1px solid var(--line);border-radius:4px">
+                            <option value="annual" selected>annual mean</option>
+                            <option value="one_hour">1-hour design value</option>
+                            <option value="max_1h">highest single hour</option>
+                        </select></label>
+                    </div>
+                    <div class="maps" id="wi-maps"></div>
+                    <div class="muted small" id="wi-map-note" style="margin-top:8px"></div>
                 </div>
-                <div class="panel">
-                    <h2>Standards and caveats</h2>
-                    <div id="wi-standards" class="muted"></div>
+                <div class="panel standards">
+                    <details class="tech panel-details">
+                        <summary>Standards, method and caveats <span class="muted">how the design value and % of standard are computed</span></summary>
+                        <div class="body muted small" id="wi-standards"></div>
+                    </details>
                 </div>
             </div>
         </div>
     </section>
-</div>
 
-<script>
-const esc = s => String(s ?? '').replace(/[&<>"']/g,
-    c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
-const fmt = n => (n === null || n === undefined) ? '-' : Number(n).toLocaleString();
-const num = (x, d = 6) => (x === null || x === undefined) ? '-' : Number(x).toPrecision(d);
-const usd = x => `$${Number(x).toFixed(2)}`;
-const verdict = flag => flag === true ? 'pass' : flag === false ? 'fail' : 'not recorded';
-const badge = (ok, yes = 'ok', no = 'no') => `<span class="badge ${ok ? 'ok' : 'no'}">${ok ? yes : no}</span>`;
-async function getJson(url) {
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(`${url}: ${r.status}`);
-    return r.json();
-}
-function table(headers, rows) {
-    return `<table><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>${rows.join('')}</table>`;
-}
+    <!-- Model verification -->
+    <section id="proof" class="screen" role="tabpanel">
+        <p class="lede"><b>Can the Python model be trusted with a permit question?</b> Each EPA test case is run through the Python model
+            and through the original Fortran AERMOD. A case passes only if the Python model's hourly concentrations match the Fortran's within a strict tolerance
+            and its regulatory design value matches at every receptor. The scoring script is frozen (its fingerprint is pinned), so the bar cannot move after the results are in.</p>
+        <div class="kpis" id="rates"><div class="kpi"><div class="loading">Loading scores…</div></div></div>
+        <div class="panel">
+            <div class="panel-head"><h2>Results by test case</h2><p id="score-source"></p></div>
+            <div id="case-groups"><div class="loading">Loading…</div></div>
+        </div>
+        <div class="panel">
+            <div class="panel-head"><h2>What "pass" means</h2><p id="rules-source"></p></div>
+            <div class="rules" id="rules"><div class="loading">Loading…</div></div>
+        </div>
+        <div class="panel">
+            <details class="tech panel-details">
+                <summary>Technical detail: best-fit slope by case <span class="muted">a slope of 1 means identical output</span></summary>
+                <div class="body" id="slope-chart"><div class="loading">Loading…</div></div>
+            </details>
+        </div>
+        <div class="panel">
+            <div class="panel-head"><h2>Frozen scoring script</h2><p>harness/compare.py against the fingerprint approved in harness/compare.sha256</p></div>
+            <div class="hash-row" id="frozen"><div class="loading">Loading…</div></div>
+        </div>
+        <div class="panel">
+            <div class="panel-head"><h2>Provenance: every model file traces to the Argon request that wrote it</h2></div>
+            <p id="prov-status"><span class="loading">Tracing files…</span></p>
+            <details class="tech"><summary>File-by-file trace</summary><div class="body" id="prov-table"></div></details>
+        </div>
+    </section>
 
-async function loadPort() {
-    const tokens = await getJson('/api/tokens');
-    document.getElementById('token-cards').innerHTML = ['A', 'B'].filter(t => tokens[t]).map(t => `
-        <div class="card"><div class="k">Tier ${t}: code only (default)</div><div class="v">${fmt(tokens[t].tokens_code_only)}</div></div>
-        <div class="card"><div class="k">Tier ${t}: with comments</div><div class="v">${fmt(tokens[t].tokens_with_comments)}</div></div>`).join('');
-    document.getElementById('token-note').textContent = tokens.A
-        ? `Tokens of the packed Fortran (${tokens.A.method}); prompts add the contract, glue, setup table and debug catalogue.`
-        : 'context/tokens.json missing: run python pack.py';
+    <!-- Certification -->
+    <section id="decision" class="screen" role="tabpanel">
+        <p class="lede">Certification is recomputed on every page load from the test scores, the scoring script, the current Python model
+            and its provenance. Nothing is stored, so editing any of them by hand revokes it immediately.</p>
+        <div id="verdict" class="verdict"><div class="loading">Checking every criterion…</div></div>
+        <div class="panel" style="margin-top:16px">
+            <div class="panel-head"><h2>Criteria</h2><p>All must hold. Technical detail on the right.</p></div>
+            <ul class="criteria" id="criteria"></ul>
+        </div>
+        <div class="panel" id="scope-note"></div>
+    </section>
 
-    const [runs, snapshots] = await Promise.all([getJson('/api/runs'), getJson('/api/results')]);
-    const all = runs.flatMap(r => r.interactions);
-    const sum = k => all.reduce((s, i) => s + (i.usage[k] || 0), 0);
-    const costs = all.map(i => i.cost_usd).filter(c => c !== null && c !== undefined);
-    document.getElementById('spend').innerHTML = [
-        ['Argon interactions', fmt(all.length)],
-        ['billed input tokens', fmt(sum('total_input_tokens'))],
-        ['output + thinking tokens', fmt(sum('total_output_tokens') + sum('total_thought_tokens'))],
-        ['spend', costs.length ? `${usd(costs.reduce((a, b) => a + b, 0))}${costs.length < all.length ? ' (partial)' : ''}` : 'not recorded'],
-    ].map(([k, v]) => `<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
-    document.getElementById('prices').innerHTML = snapshots.filter(s => s.prices)
-        .map(s => `Costs from <code>${esc(s.path)}</code>. Prices: ${esc(s.prices)}`).join('<br>');
-    document.getElementById('runs').innerHTML = runs.length === 0
-        ? '<p class="muted">No runs recorded yet.</p>'
-        : table(['run', 'kind', 'tier', 'model / thinking', 'interactions', 'prompt tokens', 'billed input', 'output + thinking', 'cost', 'outcome'],
-            runs.map(r => `<tr class="clickable" data-run="${esc(r.id)}">
-                <td class="mono">${esc(r.id)}</td><td>${esc(r.kind ?? '-')}</td><td>${esc(r.tier ?? '-')}</td>
-                <td>${esc(r.model ?? '-')} / ${esc(r.thinking ?? '-')}</td><td>${r.replies}</td>
-                <td>${fmt(r.prompt_tokens)}${r.expected_input_multiplier > 1 ? ` <span class="badge warn">up to ${r.expected_input_multiplier}x input billing</span>` : ''}</td>
-                <td>${fmt(r.usage.total_input_tokens)}${r.prompt_tokens && r.usage.total_input_tokens > 1.05 * r.prompt_tokens
-                    ? ` <span class="badge warn">${(r.usage.total_input_tokens / r.prompt_tokens).toFixed(1)}x prompt</span>` : ''}</td>
-                <td>${fmt(r.usage.total_output_tokens + r.usage.total_thought_tokens)}</td>
-                <td>${r.cost_usd !== null && r.cost_usd !== undefined ? usd(r.cost_usd) : '-'}</td>
-                <td>${outcome(r)}</td>
-            </tr>`));
-    document.querySelectorAll('tr[data-run]').forEach(tr => tr.onclick = () => showRun(tr.dataset.run));
-}
+    <!-- Port -->
+    <section id="port" class="screen" role="tabpanel">
+        <p class="lede">For the engineers: Gemini 4 Argon read the in-scope AERMOD Fortran in one full-context request and wrote the whole Python package.
+            An automated repair loop then fixed divergences against the reference build. Every request is recorded under
+            <code>agent/runs/</code>; the numbers below are read from those records and <code>results/</code>.</p>
+        <div class="kpis" id="spend"><div class="kpi"><div class="loading">Loading Argon runs…</div></div></div>
+        <div class="cols-port">
+            <div class="panel">
+                <div class="panel-head"><h2>Fortran in scope</h2><p id="token-method"></p></div>
+                <div id="token-table"><div class="loading">Loading…</div></div>
+                <p class="muted small" id="token-note" style="margin-top:10px"></p>
+            </div>
+            <div class="panel">
+                <div class="panel-head"><h2>Where the tokens went</h2><p>per Argon interaction, from the saved replies</p></div>
+                <div id="token-chart"><div class="loading">Loading…</div></div>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-head"><h2>Argon runs <code>agent/runs/</code></h2><p>Click a run for its interactions, files written and repair decisions.</p></div>
+            <div id="runs"><div class="loading">Loading…</div></div>
+            <p class="muted xsmall" id="prices" style="margin-top:8px"></p>
+            <div id="run-detail"></div>
+        </div>
+        <div class="panel">
+            <div class="panel-head"><h2>Port history <code>port/aermod_py</code></h2><p>Every commit that touched the generated package.</p></div>
+            <div id="commits"><div class="loading">Loading…</div></div>
+        </div>
+    </section>
 
-function outcome(r) {
-    if (r.kind === 'repair') {
-        const parts = [`${fmt(r.iterations)} iteration(s)`, `${fmt(r.patches_kept ?? 0)} patch(es) kept`];
-        if (r.cases_scored) parts.push(`${r.cases_passing}/${r.cases_scored} training cases pass`);
-        if (r.stop_reason) parts.push(esc(r.stop_reason));
-        return parts.join('; ');
-    }
-    const files = new Set(r.interactions.flatMap(i => i.files));
-    return [files.size ? `${files.size} files written` : '', esc(r.fortran_pack ?? '')].filter(Boolean).join('; ') || '-';
-}
+</main>
 
-async function showRun(id) {
-    const run = await getJson(`/api/runs/${id.split('/').map(encodeURIComponent).join('/')}`);
-    document.getElementById('run-detail').innerHTML = `<h3 style="margin-bottom:8px">${esc(id)}</h3>` +
-        (run.token_method ? `<p class="muted">Prompt tokens: ${fmt(run.prompt_tokens)} by ${esc(run.token_method)}</p>` : '') +
-        table(['Argon interaction', 'step', 'files written', 'billed input', 'output', 'thinking', 'seconds', 'cost', 'decision'],
-            run.interactions.map(i => `<tr><td class="mono">${esc(i.id)}<br><span class="muted">${esc(i.status)}, ${esc(i.path)}</span></td>
-                <td>${esc(i.step ?? '-')}${i.iteration ? ` ${i.iteration}` : ''}</td>
-                <td class="mono">${i.files.map(esc).join(', ') || '-'}</td>
-                <td>${fmt(i.usage.total_input_tokens)}</td><td>${fmt(i.usage.total_output_tokens)}</td>
-                <td>${fmt(i.usage.total_thought_tokens)}</td><td>${i.seconds ? Math.round(i.seconds) : '-'}</td>
-                <td>${i.cost_usd !== null && i.cost_usd !== undefined ? usd(i.cost_usd) : '-'}</td>
-                <td>${i.decision ? `${badge(i.decision.accepted, 'kept', 'rolled back')} ${esc(i.decision.reason ?? '')}
-                    <div class="muted" style="margin-top:4px">${esc(i.decision.hypothesis ?? '')}</div>` : '-'}</td></tr>`));
-}
-
-function caseCard(name, r) {
-    if (!r) return `<div class="case pending"><b>${esc(name)}</b>not scored</div>`;
-    const lines = r.error ? `<pre>${esc(r.error.trim().split('\n').slice(-2).join('\n'))}</pre>`
-        : r.slope !== null && r.slope !== undefined
-            ? `EPA ${verdict(r.epa_pass)}: slope ${num(r.slope)} / ${num(r.slope_ols)} / ${num(r.mean_ratio)}<br>
-               strict ${verdict(r.strict_pass)}: zero agreement ${r.zero_agreement != null ? (100 * r.zero_agreement).toFixed(3) + '%' : '-'},
-               p99 rel ${num(r.p99_rel_err, 3)}, H4H fails ${esc(r.h4h_fails ?? '-')}`
-            : `<pre>${esc(r.summary ?? '')}</pre>`;
-    return `<div class="case ${r.passes ? 'pass' : 'fail'}"><b>${esc(name)}</b>${lines}</div>`;
-}
-
-async function loadProof() {
-    const lock = await getJson('/api/frozen');
-    document.getElementById('cmp-now').textContent = lock.compare_hash;
-    document.getElementById('cmp-approved').textContent = lock.approved_hash ?? 'missing';
-    document.getElementById('cmp-status').innerHTML = badge(lock.matches, 'unchanged', 'CHANGED');
-
-    const data = await getJson('/api/test-results');
-    const src = document.getElementById('score-source');
-    if (!data.source) {
-        src.textContent = 'No scores yet: run make suite-port (or a repair run).';
-    } else if (data.suite_found) {
-        src.innerHTML = `Scores from <code>${esc(data.source)}</code> (${esc(data.suite_time)}). ` +
-            (data.hash_matches ? 'Scored with the current compare.py. ' : '<b>Scored with a different compare.py.</b> ') +
-            (data.port_matches ? 'Scored the current port.' : '<b>The port changed since it was scored.</b>');
-    } else if (data.source.startsWith('results/')) {
-        src.innerHTML = `Scores from the committed snapshot <code>${esc(data.source)}</code> (scored ${esc(data.suite_time ?? '?')}), ` +
-            (data.hash_matches ? 'with the current compare.py. ' : '<b>with a different compare.py.</b> ') +
-            'Run <code>make suite-port</code> to rescore this checkout\'s port (needed to certify).';
-    } else {
-        src.innerHTML = `Scores from <code>${esc(data.source)}</code>, the repair loop's last scoring. ` +
-            'Run <code>make suite-port</code> for scores tied to the port version (needed to certify).';
-    }
-    for (const [id, cases] of [['grid-a', data.tier_a], ['grid-b', data.tier_b], ['grid-h', data.holdout]]) {
-        document.getElementById(id).innerHTML = cases.map(c => caseCard(c, data.results[c])).join('');
-    }
-    const passed = cs => cs.filter(c => data.results[c]?.passes === true).length;
-    const tierB = data.tier_a.concat(data.tier_b);
-    document.getElementById('rates').innerHTML = [
-        ['Tier A', passed(data.tier_a), data.tier_a.length],
-        ['Tier B (incl. A)', passed(tierB), tierB.length],
-        ['Holdout', passed(data.holdout), data.holdout.length],
-    ].map(([k, p, n]) => `<div class="card"><div class="k">${k} passing</div><div class="v">${p}/${n}</div></div>`).join('');
-
-    const prov = await getJson('/api/provenance');
-    document.getElementById('prov-status').innerHTML = prov.files.length === 0
-        ? '<span class="muted">port/aermod_py holds only its README.</span>'
-        : `${badge(prov.ok, 'verified', 'unverified')} ${prov.files.length} files from ${prov.interactions.length} Argon interaction(s): ` +
-          prov.interactions.map(i => `<code>${esc(i)}</code>`).join(' ');
-    document.getElementById('prov-table').innerHTML = prov.files.length === 0 ? '' :
-        table(['file', 'Argon interaction', 'reply', 'step', 'status'], prov.files.map(f => `<tr>
-            <td class="mono">aermod_py/${esc(f.file)}</td><td class="mono">${esc(f.interaction_id ?? '-')}</td>
-            <td class="mono">${esc(f.reply ?? '-')}</td><td>${esc(f.step ?? '-')}</td>
-            <td>${f.problem ? `<span class="badge no">no</span> ${esc(f.problem)}` : badge(true)}</td></tr>`));
-}
-
-async function loadDecision() {
-    const data = await getJson('/api/certify');
-    const b = document.getElementById('certified');
-    b.className = `badge big ${data.certified ? 'ok' : 'no'}`;
-    b.textContent = data.certified ? 'CERTIFIED' : 'NOT CERTIFIED';
-    document.getElementById('criteria').innerHTML = '<tr><th>criterion</th><th></th><th>detail</th></tr>' +
-        data.criteria.map(c => `<tr><td>${esc(c.name)}</td><td>${badge(c.ok)}</td><td class="mono">${esc(c.detail)}</td></tr>`).join('');
-}
-
-// --- What-if --------------------------------------------------------------------
-const $ = id => document.getElementById(id);
-const WI_SLIDERS = {height: 'stack_height_m', diameter: 'stack_diameter_m',
-                    temperature: 'exit_temperature_k', velocity: 'exit_velocity_ms'};
-const WI_FMT = {height: v => `${v} m`, diameter: v => `${v} m`,
-                temperature: v => `${v} K (${Math.round(v - 273.15)} °C)`, velocity: v => `${v} m/s`};
-const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-const compass = deg => COMPASS[Math.round((deg % 360) / 22.5) % 16];
-const ug = x => `${Number(x).toLocaleString(undefined, {maximumFractionDigits: x < 10 ? 2 : 1})} µg/m³`;
-let WI = null, wiTimer = null, wiLast = null;
-
-const gridValue = id => WI.grid[WI_SLIDERS[id]][Number($(`wi-${id}`).value)];
-
-async function loadWhatif() {
-    if (!WI) {
-        WI = await getJson('/api/whatif/config');
-        initWhatif();
-    }
-    await updateWhatif();
-}
-
-function initWhatif() {
-    const far = Math.max(...WI.receptors.distances_m) / 1000;
-    $('wi-title').textContent = WI.title;
-    $('wi-story').innerHTML = `A cement plant wants to burn part of its kiln fuel as alternative fuels or plastics, or change its stack.
-        Pick a fuel mix and stack below to see whether the air around the plant still meets the US limits (NAAQS).
-        One kiln stack on flat, rural ground; a full year of hourly weather from ${esc(WI.met.label)};
-        concentrations at ${WI.receptors.directions} directions &times; ${WI.receptors.distances_m.length} distances out to ${far} km.`;
-    $('wi-pollutant').innerHTML = Object.entries(WI.pollutants)
-        .map(([k, p]) => `<option value="${esc(k)}">${esc(p.label)}</option>`).join('');
-    $('wi-pollutant').value = WI.defaults.pollutant;
-    $('wi-fuel').innerHTML = Object.entries(WI.fuel_mix)
-        .map(([k, m]) => `<option value="${esc(k)}">${esc(m.label)}</option>`).join('');
-    $('wi-fuel').value = WI.defaults.fuel_mix;
-    for (const [id, key] of Object.entries(WI_SLIDERS)) {
-        const el = $(`wi-${id}`);
-        el.min = 0; el.max = WI.grid[key].length - 1; el.step = 1;
-        el.value = Math.max(0, WI.grid[key].indexOf(WI.defaults[key]));
-    }
-    applyPollutant();
-    $('wi-pollutant').onchange = () => { applyPollutant(); scheduleWhatif(); };
-    $('wi-fuel').onchange = () => { applyPreset(); scheduleWhatif(); };
-    $('wi-bldg').onchange = () => { $('wi-bldg-box').style.display = $('wi-bldg').checked ? 'block' : 'none'; scheduleWhatif(); };
-    $('wi-metric').onchange = () => wiLast && renderMaps(wiLast);
-    for (const id of ['height', 'diameter', 'temperature', 'velocity', 'emission', 'bg1', 'bgA', 'bh', 'bw', 'bd', 'urban', 'terrain']) {
-        $(`wi-${id}`).addEventListener('input', scheduleWhatif);
-    }
-}
-
-function applyPreset() {
-    const p = WI.presets[$('wi-pollutant').value][$('wi-fuel').value];
-    $('wi-emission').value = p.emission_rate_gs;
-    $('wi-temperature').value = WI.grid.exit_temperature_k.indexOf(p.exit_temperature_k);
-}
-
-function applyPollutant() {
-    const pol = WI.pollutants[$('wi-pollutant').value];
-    $('wi-emission').min = 0;
-    $('wi-emission').max = pol.emission_rate_max_gs;
-    $('wi-bg1').value = pol.background_1h_ugm3;
-    $('wi-bgA').value = pol.background_annual_ugm3;
-    applyPreset();
-}
-
-function wiLabels() {
-    for (const id of Object.keys(WI_SLIDERS)) $(`wi-${id}-v`).textContent = WI_FMT[id](gridValue(id));
-    $('wi-emission-v').textContent = `${Number($('wi-emission').value)} g/s`;
-    $('wi-bh-v').textContent = `${$('wi-bh').value} m`;
-    $('wi-bw-v').textContent = `${$('wi-bw').value} m`;
-    $('wi-bd-v').textContent = `${$('wi-bd').value} m`;
-}
-
-function scheduleWhatif() {
-    wiLabels();
-    clearTimeout(wiTimer);
-    wiTimer = setTimeout(() => updateWhatif().catch(err => console.error(err)), 120);
-}
-
-async function updateWhatif() {
-    wiLabels();
-    const bldg = $('wi-bldg').checked;
-    const q = new URLSearchParams({
-        pollutant: $('wi-pollutant').value, height: gridValue('height'), diameter: gridValue('diameter'),
-        temperature: gridValue('temperature'), velocity: gridValue('velocity'), emission: $('wi-emission').value,
-        background_1h: $('wi-bg1').value || 0, background_annual: $('wi-bgA').value || 0,
-        building_height: bldg ? $('wi-bh').value : 0, building_width: bldg ? $('wi-bw').value : 0,
-        building_distance: bldg ? $('wi-bd').value : 0,
-        urban: $('wi-urban').checked, complex_terrain: $('wi-terrain').checked,
-    });
-    const data = await getJson(`/api/whatif?${q}`);
-    wiLast = data;
-    renderCompare(data);
-    renderBars(data);
-    renderMaps(data);
-    renderStandards();
-    renderArgonNote(data);
-}
-
-function stackText(i) {
-    const s = i.stack;
-    return `${s.height_m} m stack, ${s.diameter_m} m wide, ${s.temperature_k} K, ${s.velocity_ms} m/s, ${i.emission_rate_gs} g/s`;
-}
-
-function scenCard(title, r) {
-    if (r.status === 'unavailable') {
-        return `<div class="scen"><h3>${esc(title)}</h3><div class="warnbox" style="background:#f4f5f7;border-color:#999">
-            <b>No result for this scenario</b><ul style="margin:8px 0 0 18px">${r.issues.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div></div>`;
-    }
-    if (!r.certified) {
-        return `<div class="scen"><h3>${esc(title)}</h3><div class="warnbox"><b>Not certified for this scenario</b>
-            <ul style="margin:8px 0 0 18px">${r.issues.map(i => `<li>${esc(i)}</li>`).join('')}</ul>
-            <p style="margin-top:8px">No number is shown: the Argon-ported AERMOD is only certified for Tier A
-            (one stack, flat rural terrain, no building downwash).</p></div></div>`;
-    }
-    const verdict = c => `${badge(c.passes, 'PASS', 'FAIL')} <span class="muted">${c.percent_of_limit.toFixed(0)}% of limit</span>`;
-    const m = r.max_1h;
-    return `<div class="scen"><h3>${esc(title)}</h3><p class="muted">${esc(stackText(r.inputs))}</p>
-        <div class="metric"><span>1-hour standard (${ordinal(r.one_hour.rank)}-highest daily max + background)</span>
-            <span><span class="num">${ug(r.one_hour.total_ugm3)}</span> ${verdict(r.one_hour)}</span></div>
-        <div class="metric"><span>Annual mean + background</span>
-            <span><span class="num">${ug(r.annual.total_ugm3)}</span> ${verdict(r.annual)}</span></div>
-        <div class="metric"><span>Highest single hour (model only)</span><span class="num">${ug(m.value_ugm3)}</span></div>
-        <div class="metric"><span>Where the highest hour occurs</span>
-            <span class="num">${(m.distance_m / 1000).toFixed(1)} km ${compass(m.direction_deg)}</span></div>
-        </div>`;
-}
-const ordinal = n => `${n}${n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}`;
-
-function renderCompare(data) {
-    const mix = WI.fuel_mix[$('wi-fuel').value].label;
-    $('wi-compare').innerHTML = scenCard(`Baseline: ${WI.fuel_mix[WI.defaults.fuel_mix].label}, current stack`, data.baseline)
-        + scenCard(`Scenario: ${mix}`, data.scenario);
-}
-
-function barChart(title, rows, limit, limitLabel) {
-    const W = 640, left = 90, right = 30, rowH = 30, top = 26, H = top + rows.length * rowH + 26;
-    const vmax = Math.max(limit * 1.25, ...rows.map(r => r.total * 1.08));
-    const x = v => left + (W - left - right) * v / vmax;
-    let s = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px"><text x="0" y="16" font-size="13" font-weight="600">${esc(title)}</text>`;
-    rows.forEach((r, i) => {
-        const y = top + i * rowH;
-        s += `<text x="0" y="${y + 19}" font-size="12">${esc(r.label)}</text>`;
-        if (r.total === null) {
-            s += `<text x="${left}" y="${y + 19}" font-size="12" fill="#e53935">${r.why}</text>`;
-            return;
-        }
-        s += `<rect x="${left}" y="${y + 5}" width="${x(r.background) - left}" height="20" fill="#b0bec5"><title>background ${ug(r.background)}</title></rect>`;
-        s += `<rect x="${x(r.background)}" y="${y + 5}" width="${x(r.total) - x(r.background)}" height="20" fill="${r.ok ? '#43a047' : '#e53935'}"><title>kiln ${ug(r.total - r.background)}</title></rect>`;
-        s += `<text x="${x(r.total) + 4}" y="${y + 19}" font-size="12">${ug(r.total)}</text>`;
-    });
-    s += `<line x1="${x(limit)}" x2="${x(limit)}" y1="${top - 4}" y2="${H - 18}" stroke="#c62828" stroke-width="2" stroke-dasharray="5,3"/>`;
-    s += `<text x="${x(limit)}" y="${H - 4}" font-size="11" fill="#c62828" text-anchor="middle">${esc(limitLabel)}</text>`;
-    return s + '</svg>';
-}
-
-function renderBars(data) {
-    const pol = $('wi-pollutant').value, std = WI.naaqs[pol];
-    const row = (label, r, key) => r.certified
-        ? {label, total: r[key].total_ugm3, background: r[key].background_ugm3, ok: r[key].passes}
-        : {label, total: null, why: r.status === 'unavailable' ? 'not precomputed - no value' : 'not certified for this scenario - no value'};
-    const charts = [['one_hour', '1-hour standard'], ['annual', 'Annual standard']].map(([key, name]) =>
-        barChart(`${name}: kiln contribution (green/red) on top of background (grey)`,
-            [row('Baseline', data.baseline, key), row('Scenario', data.scenario, key)],
-            std[key].limit_ugm3, `NAAQS ${std[key].ppb} ppb = ${std[key].limit_ugm3.toFixed(0)} µg/m³`));
-    $('wi-bars').innerHTML = charts.join('');
-}
-
-const PALETTE = [[255, 255, 229], [254, 227, 145], [254, 153, 41], [217, 95, 14], [153, 52, 4], [80, 20, 90]];
-function color(t) {
-    t = Math.max(0, Math.min(1, t)) * (PALETTE.length - 1);
-    const i = Math.min(Math.floor(t), PALETTE.length - 2), f = t - i;
-    const c = PALETTE[i].map((a, k) => Math.round(a + (PALETTE[i + 1][k] - a) * f));
-    return `rgb(${c.join(',')})`;
-}
-
-function polarMap(title, r, metric, vmax) {
-    const S = 340, cx = S / 2, cy = S / 2 + 6, r0 = 14, R = S / 2 - 26;
-    const dists = [...WI.receptors.distances_m].sort((a, b) => a - b), n = WI.receptors.directions;
-    const w = (R - r0) / dists.length, half = Math.PI / n;
-    const pt = (rad, ang) => [cx + rad * Math.sin(ang), cy - rad * Math.cos(ang)];
-    let s = `<svg viewBox="0 0 ${S} ${S + 40}"><text x="${cx}" y="14" font-size="13" font-weight="600" text-anchor="middle">${esc(title)}</text>`;
-    if (!r.certified) {
-        const msg = r.status === 'unavailable' ? 'not precomputed' : 'not certified for this scenario';
-        return s + `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#fdeeee" stroke="#e53935"/>
-            <text x="${cx}" y="${cy}" text-anchor="middle" font-size="14" fill="#c62828">${msg}</text></svg>`;
-    }
-    const vals = r.field[metric];
-    r.field.x.forEach((x, i) => {
-        const y = r.field.y[i], d = Math.hypot(x, y), ang = Math.atan2(x, y);
-        const ring = dists.findIndex(v => Math.abs(v - d) < 1);
-        const [ri, ro] = [r0 + ring * w, r0 + (ring + 1) * w];
-        const [a, b] = [ang - half, ang + half];
-        const p = [pt(ro, a), pt(ro, b), pt(ri, b), pt(ri, a)];
-        s += `<path d="M${p[0]} A${ro},${ro} 0 0 1 ${p[1]} L${p[2]} A${ri},${ri} 0 0 0 ${p[3]} Z" fill="${color(vals[i] / vmax)}" stroke="#fff" stroke-width="0.5">
-            <title>${Math.round(d)} m ${compass((Math.atan2(x, y) * 180 / Math.PI + 360) % 360)}: ${ug(vals[i])}</title></path>`;
-    });
-    dists.forEach((d, k) => {
-        s += `<text x="${cx + 3}" y="${cy - (r0 + (k + 1) * w) + 10}" font-size="8" fill="#333" paint-order="stroke" stroke="#fff" stroke-width="3">${d >= 1000 ? d / 1000 + ' km' : d + ' m'}</text>`;
-    });
-    const best = vals.indexOf(Math.max(...vals));
-    const bx = r.field.x[best], by = r.field.y[best], bd = Math.hypot(bx, by);
-    const bring = dists.findIndex(v => Math.abs(v - bd) < 1);
-    const [mx, my] = pt(r0 + (bring + 0.5) * w, Math.atan2(bx, by));
-    s += `<circle cx="${mx}" cy="${my}" r="5" fill="none" stroke="#1a73e8" stroke-width="2.5"><title>highest: ${ug(vals[best])}</title></circle>`;
-    s += `<circle cx="${cx}" cy="${cy}" r="4" fill="#222"><title>kiln stack</title></circle>`;
-    for (const [lab, ang] of [['N', 0], ['E', 90], ['S', 180], ['W', 270]]) {
-        const [tx, ty] = pt(R + 12, ang * Math.PI / 180);
-        s += `<text x="${tx}" y="${ty + 4}" font-size="11" text-anchor="middle" fill="#555">${lab}</text>`;
-    }
-    s += `<text x="${cx}" y="${S + 34}" font-size="12" text-anchor="middle">highest ${ug(vals[best])} (blue ring)</text>`;
-    return s + '</svg>';
-}
-
-function renderMaps(data) {
-    const metric = $('wi-metric').value;
-    const shown = [data.baseline, data.scenario].filter(r => r.certified);
-    const vmax = Math.max(1e-12, ...shown.flatMap(r => r.field[metric]));
-    const legend = `<svg viewBox="0 0 640 34" style="width:100%;max-width:640px">${[...Array(50).keys()].map(i =>
-        `<rect x="${60 + i * 10}" y="4" width="10" height="12" fill="${color(i / 49)}"/>`).join('')}
-        <text x="56" y="14" font-size="11" text-anchor="end">0</text><text x="566" y="14" font-size="11">${ug(vmax)}</text>
-        <text x="60" y="30" font-size="11" fill="#555">same colour scale for both maps; the kiln's contribution only (no background)</text></svg>`;
-    $('wi-maps').innerHTML = polarMap('Baseline', data.baseline, metric, vmax) + polarMap('Scenario', data.scenario, metric, vmax);
-    $('wi-map-note').innerHTML = legend + `Each cell is one receptor (${WI.receptors.directions} directions, rings at
-        ${WI.receptors.distances_m.map(d => d >= 1000 ? d / 1000 + ' km' : d + ' m').join(', ')}).
-        Rings are drawn evenly spaced, so read distance from the labels. Hover a cell for its value.`;
-}
-
-function renderStandards() {
-    const pol = $('wi-pollutant').value, std = WI.naaqs[pol], mw = WI.pollutants[pol].molecular_weight;
-    const line = (name, s) => `<li><b>${name}: ${s.ppb} ppb = ${s.limit_ugm3.toFixed(1)} µg/m³</b>
-        (${esc(s.form)}). ${esc(s.cite)}.</li>`;
-    $('wi-standards').innerHTML = `<ul style="margin-left:18px">
-        ${line('1-hour', std.one_hour)}${line('Annual', std.annual)}</ul>
-        <p style="margin-top:6px">Source: US EPA, <a href="https://www.epa.gov/criteria-air-pollutants/naaqs-table" target="_blank" rel="noopener">NAAQS Table</a>
-        (40 CFR part 50). Converted with µg/m³ = ppb &times; ${mw} / 24.45 (25 °C, 1 atm, 40 CFR 50.3).</p>
-        <ul style="margin:8px 0 0 18px">
-        <li>The 1-hour standard's form is a percentile of daily maximum 1-hour values averaged over 3 years. With one year of
-            weather this demo uses the ${ordinal(std.one_hour.rank)}-highest daily maximum at each receptor, the single-year stand-in
-            used in EPA modelling practice. The annual standard is compared with the one-year mean.</li>
-        ${pol === 'NOX' ? '<li>All NOx is treated as NO2 (EPA Tier 1 full conversion), which overstates NO2.</li>' : ''}
-        <li>Background values are illustrative. A permit study uses monitored background for the site.</li>
-        <li>Stack values snap to the ${WI.stacks} precomputed stacks. Emission rate is continuous, because AERMOD's
-            concentrations scale exactly with emission rate.</li>
-        <li>A real study uses a denser receptor grid, several years of local weather, nearby buildings (downwash) and terrain.
-            Those are outside the certified Tier A scope, so the demo refuses them.</li></ul>`;
-}
-
-function renderArgonNote(data) {
-    const p = (data.scenario.certified ? data.scenario : data.baseline).provenance;
-    const coverage = WI.cached < WI.stacks ? ` <b>Only ${WI.cached} of ${WI.stacks} stacks are precomputed.</b>` : '';
-    $('wi-argon').innerHTML = !p ? `No precomputed results.${coverage}` :
-        `Computed by the Argon-ported AERMOD (<code>port/aermod_py</code>, version <code>${esc(p.port_sha256.slice(0, 12))}</code>)
-        &mdash; see the <a onclick="show('proof')">Proof tab</a>. Each stack is ${fmt(p.hours)} hours of weather
-        (${fmt(p.excluded_hours)} calm or missing) on ${WI.receptors.directions * WI.receptors.distances_m.length} receptors,
-        run once at 1 g/s (${Math.round(p.seconds)} s for this stack) and scaled to the chosen emission rate.` +
-        (p.port_is_current ? '' : ' <span class="badge no">computed with a different port version: rerun whatif/precompute.py</span>') + coverage;
-}
-
-const loaders = {port: loadPort, proof: loadProof, decision: loadDecision, whatif: loadWhatif};
-function show(screen) {
-    document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.screen === screen));
-    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === screen));
-    loaders[screen]().catch(err => {
-        console.error(err);
-        document.getElementById(screen).insertAdjacentHTML('afterbegin',
-            `<div class="panel fail"><b>Could not load:</b> ${esc(err.message)}</div>`);
-    });
-}
-document.querySelectorAll('nav button').forEach(b => b.onclick = () => { history.replaceState(null, '', `#${b.dataset.screen}`); show(b.dataset.screen); });
-show(loaders[location.hash.slice(1)] ? location.hash.slice(1) : 'port');
-</script>
+<footer>
+    <div class="wrap">
+        <span>Read-only dashboard: nothing on this page starts a model run or a test. Data from <code>agent/runs/</code>,
+            <code>results/</code>, <code>out/</code>, <code>port/aermod_py/</code> and <code>whatif/cache/</code>.</span>
+        <span id="footer-port"></span>
+    </div>
+</footer>
+<div id="tooltip" role="tooltip"></div>
+<script src="app.js"></script>
 </body>
 </html>

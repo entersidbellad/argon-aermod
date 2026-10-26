@@ -17,11 +17,13 @@ e.g. agent/runs/repair_A_box/step_001); its id is that folder's path.
   GET /api/results              results/tier_*.md snapshots: case table and Argon calls
   GET /api/test-results?who=    per-case scores: out/suite_<who>.json, else the
                                 results/tier_*.md snapshots, else the latest result.json
-  GET /api/frozen               compare.py's digest against harness/compare.sha256
+  GET /api/frozen               compare.py's digest against harness/compare.sha256, and its thresholds
   GET /api/provenance           every port file traced to its Argon interaction (split.trace)
   GET /api/tokens               context/tokens.json
   GET /api/commits              git log of port/aermod_py
   GET /api/certify              every certification criterion, computed now
+  GET /api/overview             per-tier status, Argon usage, provenance and certification in one
+                                summary (the header, the pipeline strip and the README's results)
   GET /api/whatif/config        what-if sliders, fuel-mix presets, NAAQS and cache coverage
   GET /api/whatif?...           baseline and scenario concentrations from whatif/cache
 """
@@ -44,6 +46,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "harness"))
 sys.path.insert(0, str(ROOT / "whatif"))
 import cases as catalog  # noqa: E402
+import compare  # noqa: E402
 import run_port  # noqa: E402
 import scenario as whatif  # noqa: E402
 import split  # noqa: E402
@@ -307,6 +310,7 @@ def _suite_row(r: dict) -> dict:
         "error": r.get("error"), "slope": epa.get("slope"), "slope_ols": epa.get("slope_ols"),
         "mean_ratio": epa.get("mean_ratio"), "p99_rel_err": strict.get("p99_rel_err"),
         "zero_agreement": strict.get("zero_agreement"),
+        "max_abs_diff": strict.get("max_abs_diff"),
         "h4h_max_rel_diff": strict.get("h4h_max_rel_diff"),
         "h4h_fails": f"{strict['h4h_n_fail']}/{strict['h4h_n_receptors']}"
         if "h4h_n_fail" in strict else None,
@@ -331,12 +335,30 @@ def _scored_port(suite: dict, names: list[str]) -> str | None:
     return None if len(stamps) > 1 else suite.get("port_sha256")
 
 
+def _holdout_tier(case: catalog.Case) -> str:
+    """The tier a holdout tests: B if its deck carries PRIME building data, else A."""
+    deck = case.inp.read_text() if case.inp.is_file() else ""
+    return "B" if re.search(r"^\s*(SO\s+)?BUILDHGT\b", deck, re.MULTILINE) else "A"
+
+
+def _case_info() -> dict:
+    return {c.name: {"tier": c.tier, "tests_tier": _holdout_tier(c) if c.tier == "holdout" else c.tier,
+                     "reference": "EPA POSTFILE" if c.epa_postfile else "our gfortran build",
+                     "notes": c.notes}
+            for c in catalog.CASES}
+
+
 @app.get("/api/test-results")
 def test_results(who: str = "port") -> dict:
+    return _scores(who, use_suite=True)
+
+
+def _scores(who: str, use_suite: bool) -> dict:
+    """Per-case scores; ``use_suite=False`` ignores this machine's out/ and reads committed files."""
     if not NAME.fullmatch(who):
         raise HTTPException(status_code=400, detail="who must be a plain name")
     tier_a = [c.name for c in catalog.tier_cases("A")]
-    suite = _json(OUT_DIR / f"suite_{who}.json")
+    suite = _json(OUT_DIR / f"suite_{who}.json") if use_suite else None
     snapshots = results_snapshots() if who == "port" else []
     scored_with, scored_at = None, None
     if suite is not None:
@@ -371,6 +393,7 @@ def test_results(who: str = "port") -> dict:
         "tier_a": tier_a,
         "tier_b": [c.name for c in catalog.CASES if c.tier == "B"],
         "holdout": [c.name for c in catalog.CASES if c.tier == "holdout"],
+        "cases": _case_info(),
         "results": results,
     }
 
@@ -379,7 +402,12 @@ def test_results(who: str = "port") -> dict:
 def frozen() -> dict:
     current, approved = compare_hash(), approved_hash()
     return {"compare_hash": current, "approved_hash": approved,
-            "matches": approved is not None and current == approved}
+            "matches": approved is not None and current == approved,
+            "rules": {"slope_tolerance": compare.SLOPE_TOL,
+                      "zero_agreement_min": compare.ZERO_AGREEMENT_MIN,
+                      "relative_tolerance": compare.REL_TOL,
+                      "significant_fraction": compare.SIGNIFICANT_FRACTION,
+                      "percentile": compare.PERCENTILE}}
 
 
 @app.get("/api/provenance")
@@ -444,6 +472,80 @@ def certify() -> dict:
         "certified": all(ok for _, ok, _ in criteria),
         "criteria": [{"name": n, "ok": bool(ok), "detail": d} for n, ok, d in criteria],
     }
+
+
+def _tally(names: list[str], scored: dict) -> dict:
+    rows = [scored.get(n) for n in names]
+    return {"cases": names, "scored": sum(r is not None for r in rows),
+            "passing": sum(1 for r in rows if r and r.get("passes") is True)}
+
+
+def _tier_status(tier: str, training: dict, holdout: dict) -> str:
+    """passing when every case of the tier passes. Tier B stays in_progress until then,
+    because its PRIME port is still being written; tier A failing means a regression."""
+    cases = len(training["cases"]) + len(holdout["cases"])
+    if cases and training["passing"] + holdout["passing"] == cases:
+        return "passing"
+    if tier == "B":
+        return "in_progress"
+    return "failing" if training["scored"] + holdout["scored"] else "not_scored"
+
+
+def summary(use_suite: bool = True) -> dict:
+    """Everything the header, the pipeline strip and the README's results block show.
+
+    ``use_suite=False`` reads only committed files (results/, agent/runs/, port/), not
+    this machine's out/suite_port.json, and skips certification, which needs out/.
+    """
+    scores = _scores("port", use_suite)
+    info, scored = scores["cases"], scores["results"]
+    tiers = {}
+    for tier in ("A", "B"):
+        training = _tally([n for n, c in info.items() if c["tier"] == tier], scored)
+        holdout = _tally([n for n, c in info.items()
+                          if c["tier"] == "holdout" and c["tests_tier"] == tier], scored)
+        tiers[tier] = {"training": training, "holdout": holdout,
+                       "status": _tier_status(tier, training, holdout)}
+    runs = list_runs()
+    interactions = [i for r in runs for i in r["interactions"]]
+    known = [i["cost_usd"] for i in interactions if i["cost_usd"] is not None]
+    prov = provenance()
+    certified = certify()["certified"] if use_suite else None
+    suite = _json(OUT_DIR / "suite_port.json") if certified else None
+    tier_b = tiers["B"]["training"]["cases"] + tiers["B"]["holdout"]["cases"]
+    b_scored_here = suite is not None and port_hash() is not None \
+        and _scored_port(suite, tier_b) == port_hash()
+    return {
+        "tiers": tiers,
+        "scores": {k: scores[k] for k in ("source", "suite_found", "suite_time", "hash_matches",
+                                          "port_matches")},
+        "argon": {
+            "runs": [{k: r[k] for k in ("id", "kind", "tier", "model", "thinking", "replies",
+                                        "prompt_tokens", "usage", "cost_usd", "cost_complete")}
+                     for r in runs],
+            "interactions": len(interactions),
+            "usage": {k: sum(int(i["usage"].get(k) or 0) for i in interactions) for k in USAGE_KEYS},
+            "cost_usd": sum(known) if known else None,
+            "cost_complete": bool(interactions) and len(known) == len(interactions),
+            "prices": [{"path": s["path"], "prices": s["prices"]}
+                       for s in results_snapshots() if s["prices"]],
+        },
+        "provenance": {"ok": prov["ok"], "python_files": len(prov["python_files"]),
+                       "interactions": len(prov["interactions"])},
+        "compare_frozen": frozen()["matches"],
+        "tokens": tokens(),
+        "port_sha256": port_hash(),
+        "certified": certified,
+        # Certification criteria cover Tier A; Tier B joins once every Tier B case passes
+        # in the same suite, scored on this exact port.
+        "certified_tiers": (["A"] + (["B"] if tiers["B"]["status"] == "passing" and b_scored_here
+                                     else [])) if certified else [],
+    }
+
+
+@app.get("/api/overview")
+def overview() -> dict:
+    return summary(use_suite=True)
 
 
 # --- what-if (whatif/) ------------------------------------------------------------
