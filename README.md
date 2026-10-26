@@ -1,8 +1,22 @@
 # AERMOD → Python, ported by Gemini 4 Argon
 
-EPA's regulatory air-dispersion model (AERMOD 26135, Fortran) ported to Python by Gemini 4 Argon with **zero hand edits**, and verified against **EPA's own test cases** by a frozen, strict scoring script.
+**Can your cement plant burn more alternative fuel and still stay within its air-quality limits?** This demo answers that in seconds, using the same air model the US EPA requires for permits.
+
+**Try it: [argon-aermod.vercel.app](https://argon-aermod.vercel.app)** (works on a phone; example plant data, read-only)
+
+- **Pick a fuel mix and get a plain answer:** within the limit, close to it, or over it, as a share of the federal limit at the worst spot around the plant, next to today's operation.
+- **Trust the number:** the model gives the same answers as EPA's own version on EPA's official test cases, hour by hour and location by location, and an independent build server rechecks this on every change.
+- **Built by AI, with nothing tuned by hand:** Gemini 4 Argon translated EPA's model into modern code. Every file traces back to the AI request that wrote it, and the pass mark is locked.
 
 ![Fuel & Permit Check: a 50/50 alternative-fuel mix reaches 63% of the federal 1-hour SO2 limit, within the limit, compared with 53% today](docs/screenshots/whatif.png)
+
+Want the answer for your plant? Contact Siddharth Bellad through the "Book a demo" link on the site.
+
+---
+
+## For engineers
+
+EPA's regulatory air-dispersion model (AERMOD 26135, Fortran) ported to Python by Gemini 4 Argon with **zero hand edits**, and verified against **EPA's own test cases** by a frozen, strict scoring script. Everything below is the technical detail: results, how verification works, how to run it, and how the static demo is deployed.
 
 ## Why this matters
 
