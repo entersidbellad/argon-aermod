@@ -509,6 +509,11 @@ def summary(use_suite: bool = True) -> dict:
     interactions = [i for r in runs for i in r["interactions"]]
     known = [i["cost_usd"] for i in interactions if i["cost_usd"] is not None]
     prov = provenance()
+    certified = certify()["certified"] if use_suite else None
+    suite = _json(OUT_DIR / "suite_port.json") if certified else None
+    tier_b = tiers["B"]["training"]["cases"] + tiers["B"]["holdout"]["cases"]
+    b_scored_here = suite is not None and port_hash() is not None \
+        and _scored_port(suite, tier_b) == port_hash()
     return {
         "tiers": tiers,
         "scores": {k: scores[k] for k in ("source", "suite_found", "suite_time", "hash_matches",
@@ -529,7 +534,11 @@ def summary(use_suite: bool = True) -> dict:
         "compare_frozen": frozen()["matches"],
         "tokens": tokens(),
         "port_sha256": port_hash(),
-        "certified": certify()["certified"] if use_suite else None,
+        "certified": certified,
+        # Certification criteria cover Tier A; Tier B joins once every Tier B case passes
+        # in the same suite, scored on this exact port.
+        "certified_tiers": (["A"] + (["B"] if tiers["B"]["status"] == "passing" and b_scored_here
+                                     else [])) if certified else [],
     }
 
 

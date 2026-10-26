@@ -252,6 +252,30 @@ def test_overview_keeps_tier_b_in_progress_until_every_tier_b_case_passes(client
     assert client.get("/api/overview").json()["tiers"]["A"]["status"] == "failing"
 
 
+def test_tier_b_joins_the_certified_scope_once_every_tier_b_case_passes_on_this_port(client):
+    port_from_argon("port_1", "def run_case(*a, **k): pass\n")
+    cases = client.get("/api/test-results").json()["cases"]
+    tier_a = [n for n, c in cases.items() if c["tests_tier"] == "A"]
+    tier_b = [n for n, c in cases.items() if c["tests_tier"] == "B"]
+    port = server.port_hash()
+
+    suite([passing(c) for c in tier_a], server.compare_hash(), port)
+    overview = client.get("/api/overview").json()
+    assert overview["certified"] and overview["certified_tiers"] == ["A"]
+
+    suite([passing(c) for c in tier_a + tier_b], server.compare_hash(), port)
+    assert client.get("/api/overview").json()["certified_tiers"] == ["A", "B"]
+
+    stale_b = [{**passing(c), "port_sha256": "0" * 64} for c in tier_b]
+    a_here = [{**passing(c), "port_sha256": port} for c in tier_a]
+    suite(a_here + stale_b, server.compare_hash(), None)
+    assert client.get("/api/overview").json()["certified_tiers"] == ["A"]
+
+    port_from_argon("port_2", "def run_case(*a, **k): return None\n")
+    overview = client.get("/api/overview").json()
+    assert not overview["certified"] and overview["certified_tiers"] == []
+
+
 def test_overview_without_the_suite_reads_only_committed_snapshots(client):
     server.RESULTS_DIR.joinpath("tier_A.md").write_text(SNAPSHOT.format(digest=server.compare_hash()))
     suite([], server.compare_hash())
