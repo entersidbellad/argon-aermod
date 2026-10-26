@@ -487,6 +487,7 @@ tr.clickable:hover, tr.selected { background: var(--steel-50); }
     .ans-side { padding: 22px 20px; }
     .ans-big .pct { font-size: 56px; }
     .kpis, .timeline, .glossary { grid-template-columns: 1fr; }
+    .facts { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     details.fold > summary { padding: 16px 20px; }
     .fold-body { padding: 18px 20px 22px; }
     .cta-band { padding: 26px 22px; }
