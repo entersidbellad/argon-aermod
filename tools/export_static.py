@@ -27,6 +27,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from datetime import datetime
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -79,7 +80,9 @@ def build() -> tuple[dict[str, str], dict]:
             data = {name: get(f"/api/{name}") for name in
                     ("overview", "frozen", "runs", "results", "tokens", "test-results",
                      "provenance", "certify", "whatif/config")}
-            data["commits"] = get(f"/api/commits?limit={COMMITS}")
+            # git 2.55 writes UTC as Z in %aI, older gits as +00:00; keep the export byte-stable.
+            data["commits"] = [{**c, "date": datetime.fromisoformat(c["date"]).isoformat()}
+                               for c in get(f"/api/commits?limit={COMMITS}")]
             for run in data["runs"]:
                 data[f"runs/{run['id']}"] = get(f"/api/runs/{run['id']}")
             config = server.whatif.load_config(server.WHATIF_CONFIG)
