@@ -2,80 +2,13 @@
 
 from __future__ import annotations
 
-import importlib.util
-import pathlib
-import sys
-
 import numpy as xp
 import glue
 
-
-def _load_package():
-    """Load package submodules while resolving circular top-level imports."""
-    pkg_dir = pathlib.Path(__file__).resolve().parent
-    pkg_mod = sys.modules[__name__]
-    stems = [
-        p.stem
-        for p in sorted(pkg_dir.glob("*.py"))
-        if p.stem != "__init__" and not p.stem.startswith("_")
-    ]
-    specs = {}
-    mods = {}
-    started = set()
-    finished = set()
-
-    for stem in stems:
-        full_name = f"{__name__}.{stem}"
-        if full_name in sys.modules:
-            mods[stem] = sys.modules[full_name]
-            started.add(stem)
-            finished.add(stem)
-            continue
-        spec = importlib.util.find_spec(full_name)
-        if spec is None or spec.loader is None:
-            continue
-        mod = importlib.util.module_from_spec(spec)
-        specs[stem] = spec
-        mods[stem] = mod
-
-        def _make_getattr(s=stem, m=mod, sp=spec, fn=full_name):
-            def __getattr__(attr: str):
-                if attr.startswith("_"):
-                    raise AttributeError(attr)
-                if s not in started:
-                    started.add(s)
-                    sp.loader.exec_module(m)
-                    finished.add(s)
-                if attr in m.__dict__:
-                    return m.__dict__[attr]
-                if s not in finished:
-                    def _proxy(*args, **kwargs):
-                        return m.__dict__[attr](*args, **kwargs)
-                    return _proxy
-                raise AttributeError(f"module {fn!r} has no attribute {attr!r}")
-
-            return __getattr__
-
-        mod.__dict__["__getattr__"] = _make_getattr()
-        sys.modules[full_name] = mod
-        setattr(pkg_mod, stem, mod)
-
-    order = [s for s in ("state", "hrloop") if s in specs] + [
-        s for s in stems if s in specs and s not in ("state", "hrloop")
-    ]
-    for stem in order:
-        if stem not in started:
-            started.add(stem)
-            specs[stem].loader.exec_module(mods[stem])
-            finished.add(stem)
-
-    for mod in mods.values():
-        mod.__dict__.pop("__getattr__", None)
-
-    return mods["state"].AermodState, mods["hrloop"].hrloop
-
-
-AermodState, hrloop = _load_package()
+from .state import AermodState
+from .prime_state import PrimeState
+from .prime_base import numpr1, prime1
+from .hrloop import hrloop
 
 
 def run_case(
@@ -87,6 +20,9 @@ def run_case(
 ) -> glue.Result:
     """Run HRLOOP and all in-scope AERMOD physics for a prepared case."""
     state = AermodState.from_setup(project, met, setup, debug=debug)
+    state.prime = PrimeState()
+    numpr1(state)
+    prime1(state)
     hrloop(state)
     dates = xp.asarray(state.dates_out, dtype=xp.int64)
     if len(state.conc_out) > 0:

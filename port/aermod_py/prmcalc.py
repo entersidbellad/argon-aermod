@@ -1,0 +1,489 @@
+"""PRIME concentration and wake-blending routines (calc1.f: PRMCALC, GAMCALC,
+PRMHEFF, PRM_PCHI, PRM_PLUME).
+"""
+
+from __future__ import annotations
+
+import math
+from typing import TYPE_CHECKING
+
+import numpy as xp
+
+from .calc2 import decay, fyplm, vrtsbl, vrtsbn
+from .iblval import anyavg, locate
+from .metext import gintrp
+from .prime_base import position, wake_xa2, wake_xsig
+from .prime_rise import prmdelh
+from .prime_wake import cav_src
+
+if TYPE_CHECKING:
+    from .state import AermodState
+
+
+def prmcalc(state: AermodState, xbrec: float, ybrec: float) -> None:
+    """SUBROUTINE PRMCALC (calc1.f)."""
+    p = state.prime
+    state.MODNAM = "PRMCALC"
+    state.PRMVAL[:] = 0.0
+    if state.GRSM:
+        state.PRMVAL_Src1 = 0.0
+    p.ueff_save = 0.0
+    p.sweff_save = 0.0
+    p.sveff_save = 0.0
+
+    ipositn = position(state, xbrec, ybrec, state.ZFLAG)
+    if ipositn == 4 and state.X <= 0.0:
+        state.PRMVAL[:] = state.AERVAL
+        if state.GRSM:
+            # Fortran AERVAL(1) -> index 0
+            state.PRMVAL_Src1 = float(state.AERVAL[0])
+    elif ipositn != 2 and state.DISTR < 0.99:
+        state.PRMVAL[:] = state.AERVAL
+        if state.GRSM:
+            # Fortran AERVAL(1) -> index 0
+            state.PRMVAL_Src1 = float(state.AERVAL[0])
+    elif not state.WAKE:
+        state.PRMVAL[:] = state.AERVAL
+        if state.GRSM:
+            # Fortran AERVAL(1) -> index 0
+            state.PRMVAL_Src1 = float(state.AERVAL[0])
+    else:
+        zhi = (
+            1.2
+            * state.RSCALE
+            * (15.0 + (state.DSBH / (1.2 * state.RSCALE)) ** 3) ** state.THIRD
+        )
+        if state.UNSTAB:
+            zhi = min(zhi, state.ZI)
+        zlo = 0.0
+        if state.L_AWMA_UTurb or state.L_AWMA_UTurbHX:
+            betaj = 1.0 / 3.0 + state.US / state.VS
+            p.zeff_prm2 = (
+                0.9
+                * (state.FM * state.US / state.USTAR) ** 0.5
+                / (state.US * betaj)
+            )
+            p.zeff_prm2 = p.zeff_prm2 + state.HS
+            p.zeff_prm2 = max(p.zeff_prm2, p.hb, 5.0)
+            zhi = p.zeff_prm2 + 5.0
+            zlo = p.zeff_prm2 - 5.0
+
+        ndxbhi = locate(state.GRIDHT, 1, state.MXGLVL, zhi)
+        ndxblo = locate(state.GRIDHT, 1, state.MXGLVL, zlo)
+        ndxalo = ndxblo + 1
+        state.UEFF = anyavg(
+            state.MXGLVL, state.GRIDHT, state.GRIDWS, zlo, ndxalo, zhi, ndxbhi
+        )
+        state.SVEFF = anyavg(
+            state.MXGLVL, state.GRIDHT, state.GRIDSV, zlo, ndxalo, zhi, ndxbhi
+        )
+        state.SWEFF = anyavg(
+            state.MXGLVL, state.GRIDHT, state.GRIDSW, zlo, ndxalo, zhi, ndxbhi
+        )
+        state.TGEFF = anyavg(
+            state.MXGLVL, state.GRIDHT, state.GRIDTG, zlo, ndxalo, zhi, ndxbhi
+        )
+
+        if state.L_AWMA_UTurbHX:
+            p.ueff_save = state.UEFF
+            p.sweff_save = state.SWEFF
+            p.sveff_save = state.SVEFF
+
+        if state.L_AWMA_UTurb or state.L_AWMA_UTurbHX:
+            z30lo = 28.0
+            z30hi = 32.0
+            ndxblo = locate(state.GRIDHT, 1, state.MXGLVL, z30lo)
+            ndxbhi = locate(state.GRIDHT, 1, state.MXGLVL, z30hi)
+            ndxalo = ndxblo + 1
+            p.u30 = anyavg(
+                state.MXGLVL, state.GRIDHT, state.GRIDWS, z30lo, ndxalo, z30hi, ndxbhi
+            )
+            p.sv30 = anyavg(
+                state.MXGLVL, state.GRIDHT, state.GRIDSV, z30lo, ndxalo, z30hi, ndxbhi
+            )
+            p.sw30 = anyavg(
+                state.MXGLVL, state.GRIDHT, state.GRIDSW, z30lo, ndxalo, z30hi, ndxbhi
+            )
+
+        state.SWEFF = max(state.SWEFF, state.SWMIN)
+        state.SVEFF = max(state.SVEFF, state.SVMIN, state.SVUMIN * state.UEFF)
+        if state.L_VECTORWS:
+            state.UEFF = math.sqrt(
+                state.UEFF * state.UEFF + 2.0 * state.SVEFF * state.SVEFF
+            )
+        state.UEFF = max(state.UEFF, state.WSMIN)
+
+        if state.L_AWMA_UTurb or state.L_AWMA_UTurbHX:
+            p.sw30 = max(p.sw30, state.SWMIN)
+            p.sv30 = max(p.sv30, state.SVMIN, state.SVUMIN * p.u30)
+            if state.L_VECTORWS:
+                p.u30 = math.sqrt(p.u30 * p.u30 + 2.0 * p.sv30 * p.sv30)
+            p.u30 = max(p.u30, state.WSMIN)
+
+        if state.PRIMEDBG:
+            p.emit_debug(state, "PRMCALC", "ZLO", zlo, irec=state.IREC)
+            p.emit_debug(state, "PRMCALC", "ZHI", zhi, irec=state.IREC)
+            p.emit_debug(state, "PRMCALC", "SWEFF", state.SWEFF, irec=state.IREC)
+            p.emit_debug(state, "PRMCALC", "SVEFF", state.SVEFF, irec=state.IREC)
+            p.emit_debug(state, "PRMCALC", "UEFF", state.UEFF, irec=state.IREC)
+            p.emit_debug(state, "PRMCALC", "TGEFF", state.TGEFF, irec=state.IREC)
+
+        l_inwake = prmdelh(state, state.X, False)
+        if state.RUNERR:
+            return
+        if not l_inwake:
+            state.PRMVAL[:] = state.AERVAL
+            if state.GRSM:
+                # Fortran AERVAL(1) -> index 0
+                state.PRMVAL_Src1 = float(state.AERVAL[0])
+            return
+
+        prmheff(state)
+        if state.UNSTAB and state.HE >= state.ZI:
+            state.PRMVAL[:] = state.AERVAL
+            if state.GRSM:
+                # Fortran AERVAL(1) -> index 0
+                state.PRMVAL_Src1 = float(state.AERVAL[0])
+            return
+
+        dhpout = state.DHP
+        szout, syout, szcav, sycav = wake_xsig(
+            state, state.X, state.HS, dhpout, state.NOBID
+        )
+        state.SY = syout
+        state.SZ = szout
+        qtksav = state.QTK
+        ppfsav = state.PPF
+
+        q2 = xp.zeros(3, dtype=xp.float64)
+        y2 = xp.zeros(3, dtype=xp.float64)
+        sy2 = xp.zeros(3, dtype=xp.float64)
+        z2 = xp.zeros(3, dtype=xp.float64)
+        h2 = xp.zeros(3, dtype=xp.float64)
+        sz2 = xp.zeros(3, dtype=xp.float64)
+        qc2 = xp.zeros(3, dtype=xp.float64)
+
+        # Fortran 1-based index 1 -> 0
+        q2[0] = state.QTK
+        y2[0] = state.Y
+        sy2[0] = state.SY
+        z2[0] = state.ZFLAG
+        h2[0] = state.HE
+        sz2[0] = state.SZ
+        n1 = 1
+        n2 = 1
+        if state.WAKE:
+            fqcav, n1, n2 = cav_src(
+                state, state.X, state.Y, state.ZFLAG, qc2, h2, y2, z2, sz2, sy2
+            )
+            if state.SCREEN:
+                y2[:] = 0.0
+            if fqcav > 0.0:
+                # Fortran 1-based indices 1, 2, 3 -> 0, 1, 2
+                q2[0] = state.QTK * (1.0 - fqcav)
+                q2[1] = state.QTK * fqcav * float(qc2[1])
+                q2[2] = state.QTK * fqcav * float(qc2[2])
+
+        state.PRMVAL[:] = 0.0
+        if state.GRSM:
+            state.PRMVAL_Src1 = 0.0
+
+        # Fortran IS = N1..N2 -> 0-based index is_ - 1
+        for is_ in range(n1, n2 + 1):
+            idx = is_ - 1
+            if float(q2[idx]) == 0.0:
+                continue
+            state.QTK = float(q2[idx])
+            state.Y = float(y2[idx])
+            state.SY = float(sy2[idx])
+            state.SZ = float(sz2[idx])
+            state.HE = float(h2[idx])
+            state.ZFLAG = float(z2[idx])
+            fyout = fyplm(state, state.SY)
+            state.FSUBY = fyout
+            if state.FSUBY == 0.0:
+                state.PRMVAL[:] = 0.0
+                if state.GRSM:
+                    state.PRMVAL_Src1 = 0.0
+            else:
+                state.FOPT = 0.5
+                if state.NPD == 0:
+                    if (
+                        (state.LDGAS or state.LWGAS)
+                        and is_ != 3
+                        and state.X > 1.0
+                    ):
+                        state.SY = float(sy2[idx])
+                        state.SZ = float(sz2[idx])
+                        state.HE = float(h2[idx])
+                    else:
+                        state.DQCORG = 1.0
+                        state.WQCORG = 1.0
+                    adj = state.DQCORG * state.WQCORG
+                    prm_pchi(state, adj, state.VDEPG, 0, is_)
+                else:
+                    if (
+                        (state.LDPART or state.LWPART)
+                        and is_ != 3
+                        and state.X > 1.0
+                    ):
+                        state.SY = float(sy2[idx])
+                        state.SZ = float(sz2[idx])
+                        state.HE = float(h2[idx])
+                    else:
+                        state.DQCOR[:] = 1.0
+                        state.WQCOR[:] = 1.0
+                    # Fortran J = 1..NPD -> 0-based j - 1
+                    for j in range(1, state.NPD + 1):
+                        j_idx = j - 1
+                        adj = (
+                            float(state.PHI[j_idx])
+                            * float(state.DQCOR[j_idx])
+                            * float(state.WQCOR[j_idx])
+                        )
+                        state.HV = (state.X / state.US) * float(state.VGRAV[j_idx])
+                        state.HE = max(0.0, state.HE - state.HV)
+                        prm_pchi(state, adj, float(state.VDEP[j_idx]), j, is_)
+                if state.GRSM and is_ == 1:
+                    # Fortran PRMVAL(1) -> index 0
+                    state.PRMVAL_Src1 = float(state.PRMVAL[0])
+
+        state.QTK = qtksav
+        state.PPF = ppfsav
+        # Fortran 1-based index 1 -> 0
+        state.Y = float(y2[0])
+        state.SY = float(sy2[0])
+        state.SZ = float(sz2[0])
+        state.HE = float(h2[0])
+        state.ZFLAG = float(z2[0])
+
+
+def gamcalc(state: AermodState, xarg: float, yarg: float) -> None:
+    """SUBROUTINE GAMCALC (calc1.f)."""
+    state.MODNAM = "GAMCALC"
+    if xarg <= 0.0 or not state.WAKE:
+        state.GAMFACT = 0.0
+    else:
+        wake_hgt = (
+            1.2
+            * state.RSCALE
+            * (xarg / state.RSCALE + (state.DSBH / (1.2 * state.RSCALE)) ** 3)
+            ** state.THIRD
+        )
+        wake_wid = (
+            0.5 * state.DSBW
+            + (state.RSCALE / 3.0) * (xarg / state.RSCALE) ** state.THIRD
+        )
+        xaz, xay = wake_xa2(state, state.DSBL, state.RSCALE)
+        xamx = max(xaz, xay)
+        wake_len = max(15.0 * state.RSCALE, xamx)
+        sigma_xg = wake_len
+        sigma_yg = wake_wid
+        sigma_zg = wake_hgt
+        if xarg <= sigma_xg:
+            exparg_xg = 0.0
+        else:
+            exparg_xg = -((xarg - sigma_xg) ** 2 / (2.0 * sigma_xg**2))
+        if abs(yarg) <= sigma_yg:
+            exparg_yg = 0.0
+        else:
+            exparg_yg = -((abs(yarg) - sigma_yg) ** 2 / (2.0 * sigma_yg**2))
+        if state.ZRT <= sigma_zg:
+            exparg_zg = 0.0
+        else:
+            exparg_zg = -((state.ZRT - sigma_zg) ** 2 / (2.0 * sigma_zg**2))
+        if (
+            exparg_xg > state.EXPLIM
+            and exparg_yg > state.EXPLIM
+            and exparg_zg > state.EXPLIM
+        ):
+            state.GAMFACT = (
+                math.exp(exparg_xg) * math.exp(exparg_yg) * math.exp(exparg_zg)
+            )
+        else:
+            state.GAMFACT = 0.0
+
+
+def prmheff(state: AermodState) -> None:
+    """SUBROUTINE PRMHEFF (calc1.f)."""
+    state.MODNAM = "PRMHEFF"
+    if state.STABLE:
+        state.HE = state.HS + state.DHP
+        state.HE = max(0.0, state.HE)
+    elif state.UNSTAB:
+        state.HE = state.HS + state.DHP
+        state.HE = max(0.0, state.HE)
+
+
+def prm_pchi(
+    state: AermodState, adj: float, vdinp: float, jin: int, insrc: int
+) -> None:
+    """SUBROUTINE PRM_PCHI (calc1.f)."""
+    p = state.prime
+    zpht_min = 0.5
+    state.MODNAM = "PRM_PCHI"
+    dryflux = 0.0
+    wetflux = 0.0
+    decay(state, state.X)
+    if state.L_ORD_Ueff:
+        zpht = state.DHP + state.HS
+        ndxbloe = locate(state.GRIDHT, 1, state.MXGLVL, state.ZFLAG)
+        ndxbhie = locate(state.GRIDHT, 1, state.MXGLVL, zpht)
+        ndxbldg = locate(state.GRIDHT, 1, state.MXGLVL, p.hb)
+        # Fortran 1-based NDXBLDG -> ndxbldg - 1
+        uhb = float(state.GRIDWS[ndxbldg - 1])
+        ueffe = anyavg(
+            state.MXGLVL,
+            state.GRIDHT,
+            state.GRIDWS,
+            state.ZFLAG,
+            ndxbloe + 1,
+            zpht,
+            ndxbhie,
+        )
+        if insrc == 2 or insrc == 3:
+            ueffe = state.US
+    elif state.L_AWMA_Ueff:
+        zpht = state.DHP + state.HS
+        ht2use = max(zpht, zpht_min)
+        ht_ndx = locate(state.GRIDHT, 1, state.MXGLVL, ht2use)
+        # Fortran 1-based HT_NDX -> ht_ndx - 1, HT_NDX+1 -> ht_ndx
+        u_below = float(state.GRIDWS[ht_ndx - 1])
+        u_above = float(state.GRIDWS[ht_ndx])
+        ueffe = gintrp(
+            float(state.GRIDHT[ht_ndx - 1]),
+            u_below,
+            float(state.GRIDHT[ht_ndx]),
+            u_above,
+            ht2use,
+        )
+        if insrc == 3:
+            ueffe = state.US
+        elif insrc == 2:
+            ndxbldg = locate(state.GRIDHT, 1, state.MXGLVL, p.hb)
+            # Fortran 1-based NDXBLDG -> ndxbldg - 1
+            uhb = float(state.GRIDWS[ndxbldg - 1])
+            ueffe = uhb
+    else:
+        ueffe = state.US
+
+    if state.RUNTTRM:
+        pass
+
+    state.ITYP = 0
+    if state.CONC:
+        state.ITYP = 1
+        if state.FOPT == 0.0:
+            state.CWRAP = 0.0
+        else:
+            state.CWRAP = prm_plume(state, state.ZRT, ueffe)
+        if state.ZRT == state.ZFLAG:
+            state.CLIFT = state.CWRAP
+        elif state.FOPT == 1.0:
+            state.CLIFT = 0.0
+        else:
+            state.CLIFT = prm_plume(state, state.ZFLAG, ueffe)
+        # Fortran 1-based ITYP -> state.ITYP - 1
+        ityp_idx = state.ITYP - 1
+        state.PRMVAL[ityp_idx] = (
+            float(state.PRMVAL[ityp_idx])
+            + adj
+            * float(state.EMIFAC[ityp_idx])
+            * (state.FOPT * state.CWRAP + (1.0 - state.FOPT) * state.CLIFT)
+            * state.D
+        )
+
+    if state.DEPOS or state.DDEP:
+        if state.FOPT == 0.0:
+            state.CWRAP = 0.0
+        else:
+            state.CWRAP = prm_plume(
+                state, state.ZRT - state.ZFLAG + state.ZRDEP, ueffe
+            )
+        if state.ZRT == state.ZFLAG:
+            state.CLIFT = state.CWRAP
+        elif state.FOPT == 1.0:
+            state.CLIFT = 0.0
+        else:
+            state.CLIFT = prm_plume(state, state.ZRDEP, ueffe)
+        dryflux = (
+            state.FOPT * state.CWRAP + (1.0 - state.FOPT) * state.CLIFT
+        ) * state.D
+
+    if state.DEPOS or state.WDEP:
+        if state.PRATE > 0.0:
+            if state.NPD == 0:
+                # Fortran 1-based ISRC -> state.ISRC - 1
+                wetflux = (
+                    adj * state.FRACSAT * state.PRATE * 1.0e6 * state.RGAS * state.TA
+                ) / (
+                    state.ZSUBP
+                    * float(state.HENRY[state.ISRC - 1])
+                    * 1.0e9
+                    * state.DENOM
+                    * 3600.0
+                )
+            else:
+                # Fortran 1-based JIN -> jin - 1
+                wetflux = (
+                    1.0e-3
+                    * adj
+                    * float(state.WASHOUT[jin - 1])
+                    * state.PRATE
+                    / (state.ZSUBP * 3600.0)
+                )
+        else:
+            wetflux = 0.0
+
+    if state.DEPOS:
+        state.ITYP = state.ITYP + 1
+        # Fortran 1-based ITYP -> state.ITYP - 1
+        ityp_idx = state.ITYP - 1
+        state.PRMVAL[ityp_idx] = (
+            float(state.PRMVAL[ityp_idx])
+            + adj * vdinp * float(state.EMIFAC[ityp_idx]) * dryflux
+            + state.QTK
+            * wetflux
+            * float(state.EMIFAC[ityp_idx])
+            * state.FSUBY
+            / state.UEFF
+        )
+    if state.DDEP:
+        state.ITYP = state.ITYP + 1
+        # Fortran 1-based ITYP -> state.ITYP - 1
+        ityp_idx = state.ITYP - 1
+        state.PRMVAL[ityp_idx] = (
+            float(state.PRMVAL[ityp_idx])
+            + adj * vdinp * float(state.EMIFAC[ityp_idx]) * dryflux
+        )
+    if state.WDEP:
+        state.ITYP = state.ITYP + 1
+        # Fortran 1-based ITYP -> state.ITYP - 1
+        ityp_idx = state.ITYP - 1
+        state.PRMVAL[ityp_idx] = (
+            float(state.PRMVAL[ityp_idx])
+            + state.QTK
+            * wetflux
+            * float(state.EMIFAC[ityp_idx])
+            * state.FSUBY
+            / state.UEFF
+        )
+
+    if state.DEBUG:
+        from .calc1 import debout
+
+        debout(state)
+
+
+def prm_plume(state: AermodState, zarg: float, ueffph: float) -> float:
+    """SUBROUTINE PRM_PLUME (calc1.f). Returns cout."""
+    state.MODNAM = "PRM_PLUME"
+    state.ZR = zarg
+    if state.STABLE:
+        vrtsbn(state, state.SZ, state.HE)
+    elif state.UNSTAB and state.HE <= state.ZI:
+        vrtsbl(state, state.SZ, state.HE, state.ZI)
+    else:
+        state.FSUBZ = 0.0
+    cout = (state.QTK / ueffph) * (state.FSUBY * state.FSUBZ)
+    return cout

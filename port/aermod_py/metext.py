@@ -6,7 +6,7 @@ import math
 import numpy as xp
 
 from .state import AermodState, f_idiv, f_mod_int, f_nint, f_sign
-from .hrloop import cent_date, julian
+from .dateutil import cent_date, julian
 from .iblval import locate
 from .tempgrid import comptg, tginit, grdptg, grdpt, grdden
 from .windgrid import grdws, grdwd

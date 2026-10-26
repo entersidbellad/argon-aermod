@@ -1,0 +1,53 @@
+{
+ "run_id": "tierB_c1_base",
+ "kind": "edit",
+ "model": "gemini-4-argon",
+ "thinking": "high",
+ "task": "prompts/tasks/tier_b/c1_base.md",
+ "shown": [],
+ "units": [
+  "PRIME1",
+  "NUMPR1",
+  "WAKE_INI",
+  "WAKE_SCALES",
+  "WAKE_DIM",
+  "POSITION",
+  "CAVITY_HT",
+  "SZSFCLPR",
+  "SIGYPR",
+  "SIGZPR",
+  "WAKE_XSIG",
+  "FNERF",
+  "FNERFC",
+  "ERFDIF",
+  "FRGAUSS",
+  "NUMGRAD",
+  "WAKE_DRDX",
+  "WAKE_XA",
+  "WAKE_XA2",
+  "WAKE_CAV0",
+  "ZMET",
+  "ZSTREAM",
+  "RATE",
+  "LUMP",
+  "MARCHING",
+  "UNLUMP"
+ ],
+ "fortran_ranges": [
+  "modules.f:4065-4331"
+ ],
+ "strip_comments": true,
+ "notes": [
+  "prompts/tasks/tier_b/plan.md"
+ ],
+ "prompt_tokens": 60782,
+ "token_method": "Gemini count_tokens (gemini-4-argon)",
+ "max_output_tokens": 65536,
+ "budget_usd": 49.0,
+ "spent_before_usd": 0.27,
+ "prices_usd_per_mtok": {
+  "input": 2.0,
+  "output": 10.0
+ },
+ "started": "2026-10-25T22:38:02.459856+00:00"
+}

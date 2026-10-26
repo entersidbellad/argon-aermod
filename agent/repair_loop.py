@@ -335,7 +335,11 @@ def consult_input(problem: Problem, history: list[Attempt], port_dir: Path, tier
              f"# Current problem on {problem.case}\n\n{problem.text}"]
     for rel, text in python_files(port_dir).items():
         parts.append(f"# Current Python: aermod_py/{rel}\n\n```python\n{text}```")
-    parts.append(f"# Fortran, tier {tier}\n\n" + (pack.CONTEXT / f"tier_{tier}.txt").read_text())
+    # Comment-stripped pack (agent/port.py's default): about 40% fewer tokens than tier_<T>.txt.
+    fortran = pack.code_path(tier)
+    if not fortran.exists():
+        fortran = pack.CONTEXT / f"tier_{tier}.txt"
+    parts.append(f"# Fortran, tier {tier}\n\n" + fortran.read_text())
     return "\n\n".join(parts) + "\n"
 
 
@@ -424,7 +428,9 @@ def repair(cases: list[catalog.Case], *, client, run_dir: Path, port_dir: Path =
         (it_dir / "prompt.txt").write_text(system + "\n\n" + prompt)
         try:
             reply = argon.ask(client, input=prompt, system_instruction=system,
-                              thinking_level=thinking)
+                              thinking_level=thinking,
+                              on_created=lambda i: (it_dir / "pending.json").write_text(
+                                  json.dumps({"interaction_id": i}) + "\n"))
         except argon.ArgonError as exc:
             cost = 0.0
             if exc.reply is not None:

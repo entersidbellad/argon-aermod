@@ -1,0 +1,32 @@
+{
+ "run_id": "tierB_c4_prmcalc",
+ "kind": "edit",
+ "model": "gemini-4-argon",
+ "thinking": "high",
+ "task": "prompts/tasks/tier_b/c4_prmcalc.md",
+ "shown": [
+  "prime_state.py"
+ ],
+ "units": [
+  "PRMCALC",
+  "GAMCALC",
+  "PRMHEFF",
+  "PRM_PCHI",
+  "PRM_PLUME"
+ ],
+ "fortran_ranges": [],
+ "strip_comments": true,
+ "notes": [
+  "prompts/tasks/tier_b/plan.md"
+ ],
+ "prompt_tokens": 58702,
+ "token_method": "Gemini count_tokens (gemini-4-argon)",
+ "max_output_tokens": 65536,
+ "budget_usd": 49.0,
+ "spent_before_usd": 2.02,
+ "prices_usd_per_mtok": {
+  "input": 2.0,
+  "output": 10.0
+ },
+ "started": "2026-10-25T23:27:30.404411+00:00"
+}
