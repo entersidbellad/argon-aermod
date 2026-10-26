@@ -40,6 +40,7 @@ SNAPSHOT_NAME = "results/ci_port_suite.json"
 SNAPSHOT = ROOT / SNAPSHOT_NAME
 SITE = ROOT / "site"
 UI_FILES = ("index.html", "app.css", "app.js")
+UI_ASSETS = "fonts"  # binary assets copied byte for byte
 APP_SCRIPT = '<script src="app.js"></script>'
 COMMITS = 20  # the How it was built tab asks for this many
 SECRETS = re.compile(r"AIza[0-9A-Za-z_-]{30,}|ghp_[0-9A-Za-z]{30,}|github_pat_\w{30,}|sk-[0-9A-Za-z]{30,}"
@@ -60,7 +61,7 @@ def _ci_label(ci: dict | None, port_now: str | None, certified: bool) -> str:
     return f"Certified by {run}" if certified else f"Not certified: {run} fails a criterion"
 
 
-def build() -> tuple[dict[str, str], dict]:
+def build() -> tuple[dict[str, str | bytes], dict]:
     """Every file of the static site keyed by its path under the site root, and the
     certification metadata the site shows (also written to data/static.js)."""
     snapshot = json.loads(SNAPSHOT.read_text()) if SNAPSHOT.is_file() else None
@@ -127,31 +128,36 @@ def build() -> tuple[dict[str, str], dict]:
              "data/static.js": "// Written by tools/export_static.py: app.js reads data/*.json instead of server.py.\n"
                                f"window.AERMOD_STATIC = {json.dumps(meta, indent=1)};\n"}
     files.update({f"data/{name}.json": _dump(body) for name, body in data.items()})
-    leaks = [path for path, text in files.items() if SECRETS.search(text)]
+    assets = server.UI_DIR / UI_ASSETS
+    files.update({p.relative_to(server.UI_DIR).as_posix(): p.read_bytes()
+                  for p in sorted(assets.rglob("*")) if p.is_file()})
+    leaks = [path for path, text in files.items() if isinstance(text, str) and SECRETS.search(text)]
     if leaks:
         raise SystemExit(f"refusing to export, secret-like strings in: {', '.join(leaks)}")
     return files, meta
 
 
-def write(files: dict[str, str], out: Path) -> None:
+def write(files: dict[str, str | bytes], out: Path) -> None:
     shutil.rmtree(out / "data", ignore_errors=True)
-    for rel, text in files.items():
+    shutil.rmtree(out / UI_ASSETS, ignore_errors=True)
+    for rel, body in files.items():
         path = out / rel
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(text)
+        path.write_bytes(body) if isinstance(body, bytes) else path.write_text(body)
 
 
 def stale(out: Path) -> list[str]:
     """A line per file under out that is missing, changed or extra against a fresh export,
     each followed by the start of its diff."""
-    want = build()[0]
-    have = {p.relative_to(out).as_posix(): p.read_text() for p in out.rglob("*") if p.is_file()} \
+    want = {rel: body if isinstance(body, bytes) else body.encode() for rel, body in build()[0].items()}
+    have = {p.relative_to(out).as_posix(): p.read_bytes() for p in out.rglob("*") if p.is_file()} \
         if out.is_dir() else {}
     report = []
     for rel in sorted(have.keys() | want.keys()):
         if have.get(rel) != want.get(rel):
             report.append(f"stale: {out.name}/{rel}")
-            diff = difflib.unified_diff((have.get(rel) or "").splitlines(), (want.get(rel) or "").splitlines(),
+            text = lambda b: (b or b"").decode(errors="replace")  # noqa: E731
+            diff = difflib.unified_diff(text(have.get(rel)).splitlines(), text(want.get(rel)).splitlines(),
                                         "committed", "fresh", n=1, lineterm="")
             report += [f"    {line}" for line in itertools.islice(diff, 12)]
     return report
