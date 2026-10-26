@@ -2,7 +2,7 @@
 
 EPA's regulatory air-dispersion model (AERMOD 26135, Fortran) ported to Python by Gemini 4 Argon with **zero hand edits**, and verified against **EPA's own test cases** by a frozen, strict scoring script.
 
-![Proof tab: every EPA test case scored by the frozen compare.py](docs/screenshots/proof.png)
+![Fuel & stack check: baseline and proposed fuel mix as % of the 1-hour SO2 NAAQS, with pass / near-limit / exceeds verdicts](docs/screenshots/whatif.png)
 
 ## Why this matters
 
@@ -69,7 +69,7 @@ flowchart LR
     CMP -- "divergence on a training case" --> REPAIR["repair loop<br/>Argon patch, kept only if nothing regresses"]
     REPAIR --> SPLIT
     SPLIT --> VERIFY["split.py --verify<br/>every file traced to a recorded Argon reply"]
-    CMP -- "all Tier A cases pass" --> CERT(["Decision: certified"])
+    CMP -- "all Tier A cases pass" --> CERT(["Certification: certified"])
     VERIFY --> CERT
 ```
 
@@ -86,7 +86,7 @@ flowchart LR
 - **H4H ("high fourth-high").** At each receptor, the 4th-highest daily maximum 1-hour concentration in a year: the design value regulators compare with the 1-hour SO2 standard (`pyaermod.design_values`).
 - **Holdout.** `testpm10_stack2` and `TESTPM10` are never shown to the repair loop, so passing them is evidence the port generalises rather than being tuned. `testpm10_stack2` needs no downwash and tests Tier A; `TESTPM10` has PRIME building data and tests Tier B.
 - **Provenance.** `split.py` writes each file Argon produces into `port/aermod_py` and records its sha256 in `files.json` next to the saved reply. `split.py --verify` re-splits every recorded reply and fails unless each file is byte-identical to one, and that reply's `reply.json` records a completed Argon interaction. `port/aermod_py/README.md` is the only human-owned file there.
-- **Certification** (the Decision tab, recomputed on every load): the approved `compare.py` scored *this exact* port version on this machine, every Tier A training case passes both rules, and provenance is clean.
+- **Certification** (the Certification tab, recomputed on every load): the approved `compare.py` scored *this exact* port version on this machine, every Tier A training case passes both rules, and provenance is clean. Tier B joins the certified scope automatically once every Tier B case passes in the same scoring of the same port; nothing is hard-coded.
 
 ## Quickstart
 
@@ -103,7 +103,7 @@ make test-fast      # unit tests; tests that need the EPA download skip with a r
 make demo           # dashboard on http://127.0.0.1:8000 (Ctrl-C to stop)
 ```
 
-`make demo` alone is enough for a live demo: it installs if needed, runs the provenance check and serves the dashboard from the committed results. It runs offline and loads nothing from a CDN. Until you score the port on your machine, the Decision tab says "not yet certified here".
+`make demo` alone is enough for a live demo: it installs if needed, runs the provenance check and serves the dashboard from the committed results. It runs offline and loads nothing from a CDN. It opens on the Fuel & stack check. Until you score the port on your machine, the Certification tab says "not yet certified here".
 
 **Reproduce the scores** (downloads about 10 MB from EPA, builds AERMOD with gfortran, then runs the Python port on every Tier A case; the 5-year holdout takes a few minutes):
 
@@ -111,7 +111,7 @@ make demo           # dashboard on http://127.0.0.1:8000 (Ctrl-C to stop)
 make ref            # fetch EPA source + test cases (checksummed), build ref/aermod and ref/aermod_dump
 make refs           # run every case through ref/aermod: the oracles in out/ref
 make suite-tier-a   # run the port on the Tier A cases + Tier A holdout, score into out/suite_port.json
-make demo           # reload: the Decision tab now certifies the port
+make demo           # reload: the Certification tab now certifies the port
 ```
 
 `make suite-port` runs and scores every case, Tier B included. While Tier B is in progress its PRIME cases fail on the Tier A port, so that target exits non-zero; the dashboard labels those cases "in progress". For the full test suite: `make dumps debug-refs && make test`.
@@ -131,16 +131,18 @@ make readme                                  # refresh the results block above
 
 | Tab | Shows | Read from |
 |---|---|---|
-| Port | Argon interactions, tokens and cost per run; Fortran in scope; files each reply wrote; repair decisions; git history of the port | `agent/runs/`, `results/tier_*.md`, `context/tokens.json` |
-| Proof | Both rules in plain English, best-fit slope per case, per-case scores by tier, the frozen digest, every file's provenance | `out/suite_port.json`, else `results/tier_*.md`; `harness/compare.py`; `split.trace` |
-| Decision | Certified or not, with each criterion and why | all of the above, recomputed |
-| What-if | The cement-kiln scenario below | `whatif/kiln.toml`, `whatif/cache/` |
+| Fuel & stack check | The cement-kiln what-if below: a verdict card per scenario (% of the NAAQS, pass / near limit / exceeds), gauges against the standard line, the plume footprint | `whatif/kiln.toml`, `whatif/cache/` |
+| Model verification | Per EPA test case, in plain terms (same concentrations, same design value at every receptor), with slope, p99 and H4H one click down under "Technical detail"; the frozen digest; every file's provenance | `out/suite_port.json`, else `results/tier_*.md`; `harness/compare.py`; `split.trace` |
+| Certification | Certified or not, for which tiers, with each criterion and why | all of the above, recomputed |
+| How it was built | Argon requests, tokens and cost per run; Fortran in scope; files each reply wrote; repair decisions; git history of the port | `agent/runs/`, `results/tier_*.md`, `context/tokens.json` |
+
+The look follows ISA-101 high-performance HMI practice: neutral greys, one steel blue for controls, and colour only for status. Green means within the limit or pass, amber means at or above 80% of the standard (a screening margin chosen for this dashboard, not a regulatory threshold), and red means exceeds or fails. Every status colour comes with an icon and a text label, so nothing depends on colour alone. Emission rates show g/s and lb/hr.
 
 Tier B shows "in progress" until every Tier B case passes in `results/tier_B.md` or `out/suite_port.json`; it is never shown as a result before then.
 
-| Port | Decision | What-if |
+| Model verification | Certification | How it was built |
 |---|---|---|
-| ![Port tab](docs/screenshots/port.png) | ![Decision tab](docs/screenshots/decision.png) | ![What-if tab](docs/screenshots/whatif.png) |
+| ![Model verification tab](docs/screenshots/proof.png) | ![Certification tab](docs/screenshots/decision.png) | ![How it was built tab](docs/screenshots/port.png) |
 
 ## Kiln what-if demo
 
@@ -148,7 +150,7 @@ A cement plant wants to burn part of its kiln fuel as alternative fuels (tyres, 
 
 - **Real:** the dispersion, computed by the Argon-ported AERMOD (`port/aermod_py`) for every stack in the grid at 1 g/s and cached in `whatif/cache/` with the port's sha256; a full year of met from the Tier A EPA case HRDOW_STACK1; the NAAQS values and forms from 40 CFR part 50. The statistics match `ref/aermod`'s own outputs on the same deck (`tests/test_whatif.py`).
 - **Illustrative:** stack defaults, fuel-mix emission factors, emission rates and background concentrations. All are invented example values in one editable file, `whatif/kiln.toml`.
-- **Guardrail:** a building near the stack, an urban site or complex terrain is outside Tier A, so the demo shows "not certified for this scenario" instead of a number.
+- **Guardrail:** a building near the stack, an urban site or complex terrain is outside what the demo precomputes (one stack, flat rural terrain, no buildings), so the card shows "outside scope" instead of a number.
 - `make whatif` recomputes the cache by running every stack through the port (slow; only needed after changing the grid or the port).
 
 ## Limitations and scope
