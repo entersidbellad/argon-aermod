@@ -81,6 +81,8 @@ agent/baselines/chunked_tier_*/
 # Harness outputs (runs, debug files, reports)
 out/
 runs/
+# ...but the static export's run details are committed (make export-static)
+!site/data/runs/
 
 # what-if precompute writes these then renames them
 whatif/cache/.*.tmp

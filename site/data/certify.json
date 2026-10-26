@@ -1,0 +1,45 @@
+{
+ "certified": true,
+ "criteria": [
+  {
+   "name": "suite_found",
+   "ok": true,
+   "detail": "results/ci_port_suite.json from 2026-10-26T05:00:15"
+  },
+  {
+   "name": "compare_approved",
+   "ok": true,
+   "detail": "compare.py f7f31eed0f4718cead4b77384be2eac1779a8fc75c957fefdeaf0eee72461146, approved f7f31eed0f4718cead4b77384be2eac1779a8fc75c957fefdeaf0eee72461146"
+  },
+  {
+   "name": "compare_frozen",
+   "ok": true,
+   "detail": "scored with f7f31eed0f4718cead4b77384be2eac1779a8fc75c957fefdeaf0eee72461146, compare.py is now f7f31eed0f4718cead4b77384be2eac1779a8fc75c957fefdeaf0eee72461146"
+  },
+  {
+   "name": "scored_this_port",
+   "ok": true,
+   "detail": "tier A scored port dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41, port/aermod_py is now dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41"
+  },
+  {
+   "name": "tier_a_epa",
+   "ok": true,
+   "detail": "all pass"
+  },
+  {
+   "name": "tier_a_strict",
+   "ok": true,
+   "detail": "all pass"
+  },
+  {
+   "name": "port_exists",
+   "ok": true,
+   "detail": "18 Python files in port/aermod_py"
+  },
+  {
+   "name": "provenance",
+   "ok": true,
+   "detail": "every file traced to 8 Argon interaction(s)"
+  }
+ ]
+}

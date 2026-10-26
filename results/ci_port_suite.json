@@ -1,0 +1,578 @@
+{
+ "about": "out/suite_port.json uploaded by the port-suite job of a green main CI run (tools/export_static.py --fetch-ci); the static site scores and certifies from it.",
+ "run_id": 40267985207,
+ "run_url": "https://github.com/entersidbellad/argon-aermod/actions/runs/40267985207",
+ "workflow": ".github/workflows/ci.yml",
+ "job": "port-suite",
+ "commit": "646dcd563a48323d18f4520cd1664831bed59989",
+ "completed_at": "2026-10-26T05:00:17Z",
+ "suite": {
+  "who": "port",
+  "time": "2026-10-26T05:00:15",
+  "compare_sha256": "f7f31eed0f4718cead4b77384be2eac1779a8fc75c957fefdeaf0eee72461146",
+  "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41",
+  "results": [
+   {
+    "tier": "A",
+    "case": "aertest_nobldg",
+    "epa": {
+     "against": "our binary (case has no EPA POSTFILE)",
+     "n_paired": 13824,
+     "slope": 1.0,
+     "slope_ols": 1.0,
+     "mean_ratio": 1.0,
+     "max_abs_error": 0.0,
+     "passes": true
+    },
+    "strict": {
+     "n_paired": 13824,
+     "n_ref_only": 0,
+     "n_cand_only": 0,
+     "zero_agreement": 1.0,
+     "n_significant": 1313,
+     "p99_rel_err": 0.0,
+     "frac_within_tol": 1.0,
+     "max_abs_diff": 0.0,
+     "zero_ok": true,
+     "p99_ok": true,
+     "coverage_ok": true,
+     "h4h_n_receptors": 144,
+     "h4h_max_rel_diff": 0.0,
+     "h4h_n_fail": 0,
+     "h4h_ok": true,
+     "passes": true
+    },
+    "by_stability": {
+     "stable": {
+      "n_hours": 64,
+      "n_values": 9216,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     },
+     "convective": {
+      "n_hours": 32,
+      "n_values": 4608,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     }
+    },
+    "passes": true,
+    "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41"
+   },
+   {
+    "tier": "A",
+    "case": "CAPPED_STACK2",
+    "epa": {
+     "against": "EPA reference POSTFILE",
+     "n_paired": 27648,
+     "slope": 1.0,
+     "slope_ols": 1.0,
+     "mean_ratio": 1.0,
+     "max_abs_error": 0.0,
+     "passes": true
+    },
+    "strict": {
+     "n_paired": 27648,
+     "n_ref_only": 0,
+     "n_cand_only": 0,
+     "zero_agreement": 1.0,
+     "n_significant": 2490,
+     "p99_rel_err": 0.0,
+     "frac_within_tol": 1.0,
+     "max_abs_diff": 0.0,
+     "zero_ok": true,
+     "p99_ok": true,
+     "coverage_ok": true,
+     "h4h_n_receptors": 288,
+     "h4h_max_rel_diff": 0.0,
+     "h4h_n_fail": 0,
+     "h4h_ok": true,
+     "passes": true
+    },
+    "by_stability": {
+     "stable": {
+      "n_hours": 64,
+      "n_values": 18432,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     },
+     "convective": {
+      "n_hours": 32,
+      "n_values": 9216,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     }
+    },
+    "passes": true,
+    "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41"
+   },
+   {
+    "tier": "A",
+    "case": "CAPPED_STACK2C0",
+    "epa": {
+     "against": "EPA reference POSTFILE",
+     "n_paired": 27648,
+     "slope": 1.0,
+     "slope_ols": 1.0,
+     "mean_ratio": 1.0,
+     "max_abs_error": 0.0,
+     "passes": true
+    },
+    "strict": {
+     "n_paired": 27648,
+     "n_ref_only": 0,
+     "n_cand_only": 0,
+     "zero_agreement": 1.0,
+     "n_significant": 14142,
+     "p99_rel_err": 0.0,
+     "frac_within_tol": 1.0,
+     "max_abs_diff": 0.0,
+     "zero_ok": true,
+     "p99_ok": true,
+     "coverage_ok": true,
+     "h4h_n_receptors": 288,
+     "h4h_max_rel_diff": 0.0,
+     "h4h_n_fail": 0,
+     "h4h_ok": true,
+     "passes": true
+    },
+    "by_stability": {
+     "stable": {
+      "n_hours": 64,
+      "n_values": 18432,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     },
+     "convective": {
+      "n_hours": 32,
+      "n_values": 9216,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     }
+    },
+    "passes": true,
+    "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41"
+   },
+   {
+    "tier": "A",
+    "case": "CAPPED_STACK2CE",
+    "epa": {
+     "against": "EPA reference POSTFILE",
+     "n_paired": 27648,
+     "slope": 1.0,
+     "slope_ols": 1.0,
+     "mean_ratio": 1.0,
+     "max_abs_error": 0.0,
+     "passes": true
+    },
+    "strict": {
+     "n_paired": 27648,
+     "n_ref_only": 0,
+     "n_cand_only": 0,
+     "zero_agreement": 1.0,
+     "n_significant": 3965,
+     "p99_rel_err": 0.0,
+     "frac_within_tol": 1.0,
+     "max_abs_diff": 0.0,
+     "zero_ok": true,
+     "p99_ok": true,
+     "coverage_ok": true,
+     "h4h_n_receptors": 288,
+     "h4h_max_rel_diff": 0.0,
+     "h4h_n_fail": 0,
+     "h4h_ok": true,
+     "passes": true
+    },
+    "by_stability": {
+     "stable": {
+      "n_hours": 64,
+      "n_values": 18432,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     },
+     "convective": {
+      "n_hours": 32,
+      "n_values": 9216,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     }
+    },
+    "passes": true,
+    "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41"
+   },
+   {
+    "tier": "A",
+    "case": "HRDOW_STACK1",
+    "epa": {
+     "against": "EPA reference POSTFILE",
+     "n_paired": 316224,
+     "slope": 1.0,
+     "slope_ols": 1.0,
+     "mean_ratio": 1.0,
+     "max_abs_error": 0.0,
+     "passes": true
+    },
+    "strict": {
+     "n_paired": 316224,
+     "n_ref_only": 0,
+     "n_cand_only": 0,
+     "zero_agreement": 1.0,
+     "n_significant": 10318,
+     "p99_rel_err": 0.0,
+     "frac_within_tol": 1.0,
+     "max_abs_diff": 0.0,
+     "zero_ok": true,
+     "p99_ok": true,
+     "coverage_ok": true,
+     "h4h_n_receptors": 36,
+     "h4h_max_rel_diff": 0.0,
+     "h4h_n_fail": 0,
+     "h4h_ok": true,
+     "passes": true
+    },
+    "by_stability": {
+     "stable": {
+      "n_hours": 3520,
+      "n_values": 126720,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     },
+     "convective": {
+      "n_hours": 5264,
+      "n_values": 189504,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     }
+    },
+    "passes": true,
+    "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41"
+   },
+   {
+    "tier": "A",
+    "case": "FLATELEV_FLAT_STK",
+    "epa": {
+     "against": "EPA reference POSTFILE",
+     "n_paired": 96624,
+     "slope": 1.0,
+     "slope_ols": 1.0,
+     "mean_ratio": 1.0,
+     "max_abs_error": 0.0,
+     "passes": true
+    },
+    "strict": {
+     "n_paired": 96624,
+     "n_ref_only": 0,
+     "n_cand_only": 0,
+     "zero_agreement": 1.0,
+     "n_significant": 7804,
+     "p99_rel_err": 0.0,
+     "frac_within_tol": 1.0,
+     "max_abs_diff": 0.0,
+     "zero_ok": true,
+     "p99_ok": true,
+     "coverage_ok": true,
+     "h4h_n_receptors": 11,
+     "h4h_max_rel_diff": 0.0,
+     "h4h_n_fail": 0,
+     "h4h_ok": true,
+     "passes": true
+    },
+    "by_stability": {
+     "stable": {
+      "n_hours": 5144,
+      "n_values": 56584,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     },
+     "convective": {
+      "n_hours": 3640,
+      "n_values": 40040,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     }
+    },
+    "passes": true,
+    "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41"
+   },
+   {
+    "tier": "B",
+    "case": "AERTEST",
+    "epa": {
+     "against": "EPA reference POSTFILE",
+     "n_paired": 13824,
+     "slope": 1.0,
+     "slope_ols": 1.0,
+     "mean_ratio": 1.0,
+     "max_abs_error": 0.0,
+     "passes": true
+    },
+    "strict": {
+     "n_paired": 13824,
+     "n_ref_only": 0,
+     "n_cand_only": 0,
+     "zero_agreement": 1.0,
+     "n_significant": 415,
+     "p99_rel_err": 0.0,
+     "frac_within_tol": 1.0,
+     "max_abs_diff": 0.0,
+     "zero_ok": true,
+     "p99_ok": true,
+     "coverage_ok": true,
+     "h4h_n_receptors": 144,
+     "h4h_max_rel_diff": 0.0,
+     "h4h_n_fail": 0,
+     "h4h_ok": true,
+     "passes": true
+    },
+    "by_stability": {
+     "stable": {
+      "n_hours": 64,
+      "n_values": 9216,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     },
+     "convective": {
+      "n_hours": 32,
+      "n_values": 4608,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     }
+    },
+    "passes": true,
+    "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41"
+   },
+   {
+    "tier": "B",
+    "case": "CAPPED_STACK1C0",
+    "epa": {
+     "against": "EPA reference POSTFILE",
+     "n_paired": 27648,
+     "slope": 0.9999914714989399,
+     "slope_ols": 0.9999916333732223,
+     "mean_ratio": 1.0000098098136605,
+     "max_abs_error": 6.674430000000939,
+     "passes": true
+    },
+    "strict": {
+     "n_paired": 27648,
+     "n_ref_only": 0,
+     "n_cand_only": 0,
+     "zero_agreement": 1.0,
+     "n_significant": 6112,
+     "p99_rel_err": 0.0,
+     "frac_within_tol": 1.0,
+     "max_abs_diff": 0.0,
+     "zero_ok": true,
+     "p99_ok": true,
+     "coverage_ok": true,
+     "h4h_n_receptors": 288,
+     "h4h_max_rel_diff": 0.0,
+     "h4h_n_fail": 0,
+     "h4h_ok": true,
+     "passes": true
+    },
+    "by_stability": {
+     "stable": {
+      "n_hours": 64,
+      "n_values": 18432,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     },
+     "convective": {
+      "n_hours": 32,
+      "n_values": 9216,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     }
+    },
+    "passes": true,
+    "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41"
+   },
+   {
+    "tier": "B",
+    "case": "ALLSRCS_STACKDW",
+    "epa": {
+     "against": "EPA reference POSTFILE",
+     "n_paired": 32064,
+     "slope": 1.0,
+     "slope_ols": 1.0,
+     "mean_ratio": 1.0,
+     "max_abs_error": 0.0,
+     "passes": true
+    },
+    "strict": {
+     "n_paired": 32064,
+     "n_ref_only": 0,
+     "n_cand_only": 0,
+     "zero_agreement": 1.0,
+     "n_significant": 1173,
+     "p99_rel_err": 0.0,
+     "frac_within_tol": 1.0,
+     "max_abs_diff": 0.0,
+     "zero_ok": true,
+     "p99_ok": true,
+     "coverage_ok": true,
+     "h4h_n_receptors": 331,
+     "h4h_max_rel_diff": 0.0,
+     "h4h_n_fail": 0,
+     "h4h_ok": true,
+     "passes": true
+    },
+    "by_stability": {
+     "stable": {
+      "n_hours": 64,
+      "n_values": 21376,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     },
+     "convective": {
+      "n_hours": 32,
+      "n_values": 10688,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     }
+    },
+    "passes": true,
+    "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41"
+   },
+   {
+    "tier": "holdout",
+    "case": "TESTPM10",
+    "epa": {
+     "against": "EPA reference POSTFILE",
+     "n_paired": 1577664,
+     "slope": 0.9999995213867514,
+     "slope_ols": 0.9999995253413165,
+     "mean_ratio": 1.0000005878933467,
+     "max_abs_error": 0.026429999999997733,
+     "passes": true
+    },
+    "strict": {
+     "n_paired": 1577664,
+     "n_ref_only": 0,
+     "n_cand_only": 0,
+     "zero_agreement": 1.0,
+     "n_significant": 126888,
+     "p99_rel_err": 0.0,
+     "frac_within_tol": 1.0,
+     "max_abs_diff": 0.0,
+     "zero_ok": true,
+     "p99_ok": true,
+     "coverage_ok": true,
+     "h4h_n_receptors": 36,
+     "h4h_max_rel_diff": 0.0,
+     "h4h_n_fail": 0,
+     "h4h_ok": true,
+     "passes": true
+    },
+    "by_stability": {
+     "stable": {
+      "n_hours": 20926,
+      "n_values": 753336,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     },
+     "convective": {
+      "n_hours": 22898,
+      "n_values": 824328,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     }
+    },
+    "passes": true,
+    "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41"
+   },
+   {
+    "tier": "holdout",
+    "case": "testpm10_stack2",
+    "epa": {
+     "against": "our binary (case has no EPA POSTFILE)",
+     "n_paired": 1577664,
+     "slope": 1.0,
+     "slope_ols": 1.0,
+     "mean_ratio": 1.0,
+     "max_abs_error": 0.0,
+     "passes": true
+    },
+    "strict": {
+     "n_paired": 1577664,
+     "n_ref_only": 0,
+     "n_cand_only": 0,
+     "zero_agreement": 1.0,
+     "n_significant": 86820,
+     "p99_rel_err": 0.0,
+     "frac_within_tol": 1.0,
+     "max_abs_diff": 0.0,
+     "zero_ok": true,
+     "p99_ok": true,
+     "coverage_ok": true,
+     "h4h_n_receptors": 36,
+     "h4h_max_rel_diff": 0.0,
+     "h4h_n_fail": 0,
+     "h4h_ok": true,
+     "passes": true
+    },
+    "by_stability": {
+     "stable": {
+      "n_hours": 20926,
+      "n_values": 753336,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     },
+     "convective": {
+      "n_hours": 22898,
+      "n_values": 824328,
+      "zero_agreement": 1.0,
+      "p99_rel_err": 0.0,
+      "pass_rate": 1.0,
+      "passes": true
+     }
+    },
+    "passes": true,
+    "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41"
+   }
+  ]
+ }
+}

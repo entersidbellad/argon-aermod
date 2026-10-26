@@ -1,0 +1,275 @@
+{
+ "who": "port",
+ "source": "results/ci_port_suite.json",
+ "suite_found": true,
+ "suite_time": "2026-10-26T05:00:15",
+ "compare_hash": "f7f31eed0f4718cead4b77384be2eac1779a8fc75c957fefdeaf0eee72461146",
+ "suite_compare_hash": "f7f31eed0f4718cead4b77384be2eac1779a8fc75c957fefdeaf0eee72461146",
+ "hash_matches": true,
+ "port_hash": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41",
+ "suite_port_hash": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41",
+ "port_matches": true,
+ "tier_a": [
+  "aertest_nobldg",
+  "CAPPED_STACK2",
+  "CAPPED_STACK2C0",
+  "CAPPED_STACK2CE",
+  "HRDOW_STACK1",
+  "FLATELEV_FLAT_STK"
+ ],
+ "tier_b": [
+  "AERTEST",
+  "CAPPED_STACK1C0",
+  "ALLSRCS_STACKDW"
+ ],
+ "holdout": [
+  "TESTPM10",
+  "testpm10_stack2"
+ ],
+ "cases": {
+  "aertest_nobldg": {
+   "tier": "A",
+   "tests_tier": "A",
+   "reference": "our gfortran build",
+   "notes": "AERTEST with BUILDHGT/BUILDWID/BUILDLEN/XBADJ/YBADJ removed; oracle is our binary."
+  },
+  "CAPPED_STACK2": {
+   "tier": "A",
+   "tests_tier": "A",
+   "reference": "EPA POSTFILE",
+   "notes": ""
+  },
+  "CAPPED_STACK2C0": {
+   "tier": "A",
+   "tests_tier": "A",
+   "reference": "EPA POSTFILE",
+   "notes": ""
+  },
+  "CAPPED_STACK2CE": {
+   "tier": "A",
+   "tests_tier": "A",
+   "reference": "EPA POSTFILE",
+   "notes": ""
+  },
+  "HRDOW_STACK1": {
+   "tier": "A",
+   "tests_tier": "A",
+   "reference": "EPA POSTFILE",
+   "notes": "Exercises EMISFACT HRDOW emission factors."
+  },
+  "FLATELEV_FLAT_STK": {
+   "tier": "A",
+   "tests_tier": "A",
+   "reference": "EPA POSTFILE",
+   "notes": "FLAT source inside an ELEV run; receptors from INCLUDED lovett_rec.dat."
+  },
+  "AERTEST": {
+   "tier": "B",
+   "tests_tier": "B",
+   "reference": "EPA POSTFILE",
+   "notes": "Hero case (aertest_01H)."
+  },
+  "CAPPED_STACK1C0": {
+   "tier": "B",
+   "tests_tier": "B",
+   "reference": "EPA POSTFILE",
+   "notes": ""
+  },
+  "ALLSRCS_STACKDW": {
+   "tier": "B",
+   "tests_tier": "B",
+   "reference": "EPA POSTFILE",
+   "notes": ""
+  },
+  "TESTPM10": {
+   "tier": "holdout",
+   "tests_tier": "B",
+   "reference": "EPA POSTFILE",
+   "notes": "5 years of Salem met; STACK1 has PRIME building data."
+  },
+  "testpm10_stack2": {
+   "tier": "holdout",
+   "tests_tier": "A",
+   "reference": "our gfortran build",
+   "notes": "No-PRIME companion: TESTPM10 with only STACK2; oracle is our binary."
+  }
+ },
+ "results": {
+  "aertest_nobldg": {
+   "passes": true,
+   "epa_pass": true,
+   "strict_pass": true,
+   "error": null,
+   "slope": 1.0,
+   "slope_ols": 1.0,
+   "mean_ratio": 1.0,
+   "p99_rel_err": 0.0,
+   "zero_agreement": 1.0,
+   "max_abs_diff": 0.0,
+   "h4h_max_rel_diff": 0.0,
+   "h4h_fails": "0/144",
+   "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41",
+   "summary": null
+  },
+  "CAPPED_STACK2": {
+   "passes": true,
+   "epa_pass": true,
+   "strict_pass": true,
+   "error": null,
+   "slope": 1.0,
+   "slope_ols": 1.0,
+   "mean_ratio": 1.0,
+   "p99_rel_err": 0.0,
+   "zero_agreement": 1.0,
+   "max_abs_diff": 0.0,
+   "h4h_max_rel_diff": 0.0,
+   "h4h_fails": "0/288",
+   "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41",
+   "summary": null
+  },
+  "CAPPED_STACK2C0": {
+   "passes": true,
+   "epa_pass": true,
+   "strict_pass": true,
+   "error": null,
+   "slope": 1.0,
+   "slope_ols": 1.0,
+   "mean_ratio": 1.0,
+   "p99_rel_err": 0.0,
+   "zero_agreement": 1.0,
+   "max_abs_diff": 0.0,
+   "h4h_max_rel_diff": 0.0,
+   "h4h_fails": "0/288",
+   "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41",
+   "summary": null
+  },
+  "CAPPED_STACK2CE": {
+   "passes": true,
+   "epa_pass": true,
+   "strict_pass": true,
+   "error": null,
+   "slope": 1.0,
+   "slope_ols": 1.0,
+   "mean_ratio": 1.0,
+   "p99_rel_err": 0.0,
+   "zero_agreement": 1.0,
+   "max_abs_diff": 0.0,
+   "h4h_max_rel_diff": 0.0,
+   "h4h_fails": "0/288",
+   "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41",
+   "summary": null
+  },
+  "HRDOW_STACK1": {
+   "passes": true,
+   "epa_pass": true,
+   "strict_pass": true,
+   "error": null,
+   "slope": 1.0,
+   "slope_ols": 1.0,
+   "mean_ratio": 1.0,
+   "p99_rel_err": 0.0,
+   "zero_agreement": 1.0,
+   "max_abs_diff": 0.0,
+   "h4h_max_rel_diff": 0.0,
+   "h4h_fails": "0/36",
+   "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41",
+   "summary": null
+  },
+  "FLATELEV_FLAT_STK": {
+   "passes": true,
+   "epa_pass": true,
+   "strict_pass": true,
+   "error": null,
+   "slope": 1.0,
+   "slope_ols": 1.0,
+   "mean_ratio": 1.0,
+   "p99_rel_err": 0.0,
+   "zero_agreement": 1.0,
+   "max_abs_diff": 0.0,
+   "h4h_max_rel_diff": 0.0,
+   "h4h_fails": "0/11",
+   "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41",
+   "summary": null
+  },
+  "AERTEST": {
+   "passes": true,
+   "epa_pass": true,
+   "strict_pass": true,
+   "error": null,
+   "slope": 1.0,
+   "slope_ols": 1.0,
+   "mean_ratio": 1.0,
+   "p99_rel_err": 0.0,
+   "zero_agreement": 1.0,
+   "max_abs_diff": 0.0,
+   "h4h_max_rel_diff": 0.0,
+   "h4h_fails": "0/144",
+   "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41",
+   "summary": null
+  },
+  "CAPPED_STACK1C0": {
+   "passes": true,
+   "epa_pass": true,
+   "strict_pass": true,
+   "error": null,
+   "slope": 0.9999914714989399,
+   "slope_ols": 0.9999916333732223,
+   "mean_ratio": 1.0000098098136605,
+   "p99_rel_err": 0.0,
+   "zero_agreement": 1.0,
+   "max_abs_diff": 0.0,
+   "h4h_max_rel_diff": 0.0,
+   "h4h_fails": "0/288",
+   "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41",
+   "summary": null
+  },
+  "ALLSRCS_STACKDW": {
+   "passes": true,
+   "epa_pass": true,
+   "strict_pass": true,
+   "error": null,
+   "slope": 1.0,
+   "slope_ols": 1.0,
+   "mean_ratio": 1.0,
+   "p99_rel_err": 0.0,
+   "zero_agreement": 1.0,
+   "max_abs_diff": 0.0,
+   "h4h_max_rel_diff": 0.0,
+   "h4h_fails": "0/331",
+   "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41",
+   "summary": null
+  },
+  "TESTPM10": {
+   "passes": true,
+   "epa_pass": true,
+   "strict_pass": true,
+   "error": null,
+   "slope": 0.9999995213867514,
+   "slope_ols": 0.9999995253413165,
+   "mean_ratio": 1.0000005878933467,
+   "p99_rel_err": 0.0,
+   "zero_agreement": 1.0,
+   "max_abs_diff": 0.0,
+   "h4h_max_rel_diff": 0.0,
+   "h4h_fails": "0/36",
+   "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41",
+   "summary": null
+  },
+  "testpm10_stack2": {
+   "passes": true,
+   "epa_pass": true,
+   "strict_pass": true,
+   "error": null,
+   "slope": 1.0,
+   "slope_ols": 1.0,
+   "mean_ratio": 1.0,
+   "p99_rel_err": 0.0,
+   "zero_agreement": 1.0,
+   "max_abs_diff": 0.0,
+   "h4h_max_rel_diff": 0.0,
+   "h4h_fails": "0/36",
+   "port_sha256": "dcce07fcfcdfaad164199a78577ac908892a481421c6a9862f8a89dfcb399d41",
+   "summary": null
+  }
+ }
+}

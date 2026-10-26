@@ -1,0 +1,4 @@
+# Upload only the committed static export (make export-static), never server.py or the harness.
+/*
+!site
+!vercel.json

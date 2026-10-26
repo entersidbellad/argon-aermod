@@ -1,5 +1,6 @@
 'use strict';
-// Read-only dashboard. Every number is fetched from server.py, which reads it from files on disk.
+// Read-only dashboard. Every number is fetched from server.py, which reads it from files on disk,
+// or, in the static export (tools/export_static.py), from the JSON it saved from server.py.
 
 // --- helpers -----------------------------------------------------------------------
 const $ = id => document.getElementById(id);
@@ -20,11 +21,28 @@ const badge = (cls, text) => `<span class="badge ${cls}">${ic(cls)}${esc(text)}<
 const loading = text => `<div class="loading">${esc(text)}</div>`;
 const empty = html => `<div class="empty">${html}</div>`;
 
+// Set by data/static.js in the static export; undefined under server.py.
+const STATIC = window.AERMOD_STATIC ?? null;
+const apiUrl = url => STATIC ? `data/${url.split('?')[0].replace(/^\/api\//, '')}.json` : url;
+
 async function getJson(url) {
-    const r = await fetch(url);
+    const r = await fetch(apiUrl(url));
     if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
     return r.json();
 }
+
+const ciRun = () => STATIC.ci
+    ? `<a href="${esc(STATIC.ci.run_url)}" target="_blank" rel="noopener">CI run ${esc(STATIC.ci.run_id)}</a>` : 'CI';
+
+function staticBanner() {
+    const cert = STATIC.certified ? badge('ok', 'certified') : badge('bad', 'not certified');
+    document.querySelector('header.top').insertAdjacentHTML('afterend', `<div class="demo-banner" role="note"><div class="wrap">
+        <span>${ic('neutral')}<b>Read-only demo</b>: a static export of the dashboard. Nothing is computed here, so what-if inputs are
+            limited to the precomputed fuel-mix presets and nothing can be rescored. Run locally to recompute (<code>make demo</code>).</span>
+        <span class="cert">${cert}${esc(STATIC.label)}${STATIC.ci ? ` (<a href="${esc(STATIC.ci.run_url)}" target="_blank" rel="noopener">run</a>,
+            <a href="${esc(STATIC.ci.run_url.split('/actions/')[0])}/commit/${esc(STATIC.ci.commit)}" target="_blank" rel="noopener">commit</a>)` : ''}</span></div></div>`);
+}
+if (STATIC) staticBanner();
 
 function table(headers, rows) {
     const th = headers.map(h => typeof h === 'string' ? `<th>${h}</th>`
@@ -127,11 +145,16 @@ function renderChips() {
     chip(p.python_files && p.ok ? 'ok' : p.python_files ? 'bad' : 'neutral',
          !p.python_files ? 'No model yet' : p.ok ? 'Provenance verified' : 'Provenance broken',
          `${p.python_files} Python files, traced to ${p.interactions} Argon interaction(s) by split.py --verify.`);
-    chip(o.certified ? 'ok' : 'bad',
-         o.certified ? `Certified: ${certifiedScope(o)}` : o.scores.suite_found ? 'Not certified' : 'Not yet certified here',
-         o.certified ? 'Every certification criterion holds now (Certification tab).'
-             : o.scores.suite_found ? 'Some certification criterion fails: see the Certification tab.'
-                 : 'Certification needs the model scored on this machine: run make ref refs suite-tier-a, then reload.');
+    if (STATIC) {
+        chip(o.certified ? 'ok' : 'bad', o.certified ? `Certified by CI: ${certifiedScope(o)}` : 'Not certified',
+             `${STATIC.label}. See the Certification tab.`);
+    } else {
+        chip(o.certified ? 'ok' : 'bad',
+             o.certified ? `Certified: ${certifiedScope(o)}` : o.scores.suite_found ? 'Not certified' : 'Not yet certified here',
+             o.certified ? 'Every certification criterion holds now (Certification tab).'
+                 : o.scores.suite_found ? 'Some certification criterion fails: see the Certification tab.'
+                     : 'Certification needs the model scored on this machine: run make ref refs suite-tier-a, then reload.');
+    }
     $('chips').innerHTML = chips.join('');
 }
 
@@ -145,7 +168,8 @@ function renderSteps() {
         [o.tiers.A.status === 'passing' ? 'ok' : o.tiers.A.status === 'failing' ? 'bad' : 'neutral',
          o.tiers.A.status === 'not_scored' ? 'not scored yet'
              : `Tier A <b>${a.passing}/${a.total}</b> · Tier B ${o.tiers.B.status === 'passing' ? `<b>${b.passing}/${b.total}</b>` : 'in progress'}`],
-        [o.certified ? 'ok' : 'bad', o.certified ? `<b>Yes</b>: ${certifiedScope(o)}` : o.scores.suite_found ? '<b>No</b>: see Certification' : '<b>Not yet</b>: score on this machine'],
+        [o.certified ? 'ok' : 'bad', o.certified ? `<b>Yes</b>: ${certifiedScope(o)}${STATIC ? ', by CI' : ''}`
+            : o.scores.suite_found || STATIC ? '<b>No</b>: see Certification' : '<b>Not yet</b>: score on this machine'],
     ];
     document.querySelectorAll('#steps .step').forEach((el, i) => {
         const [cls, html] = values[i];
@@ -433,7 +457,7 @@ async function loadProof() {
     if (!data.source) {
         src.innerHTML = 'No scores yet: run <code>make suite-tier-a</code>.';
     } else if (data.suite_found) {
-        src.innerHTML = `From <code>${esc(data.source)}</code> (${esc(data.suite_time)}). ` +
+        src.innerHTML = `From ${STATIC ? `${ciRun()}, ` : ''}<code>${esc(data.source)}</code> (${esc(data.suite_time)}). ` +
             (data.hash_matches ? 'Scored with the current compare.py. ' : '<b>Scored with a different compare.py.</b> ') +
             (data.port_matches ? 'Scored the current port.' : '<b>The port changed since it was scored.</b>');
     } else if (data.source.startsWith('results/')) {
@@ -493,22 +517,34 @@ const CRITERIA = {
     provenance: ['Every file came from Argon', 'Each file traces to a saved, completed Argon interaction; any hand edit breaks the trace.'],
 };
 
+// The static export scores from the CI snapshot instead of this machine's out/suite_port.json.
+const STATIC_CRITERIA = {
+    suite_found: ['Scores come from CI', 'The port-suite job of the latest green main CI run scored the port with the frozen compare.py; its out/suite_port.json is committed as results/ci_port_suite.json.'],
+};
+
 async function loadDecision() {
     await refreshShared();
     const data = await getJson('/api/certify');
+    const criteria = STATIC ? {...CRITERIA, ...STATIC_CRITERIA} : CRITERIA;
     const failing = data.criteria.filter(c => !c.ok);
     const needsScoring = failing.length > 0 && failing.every(c => ['suite_found', 'scored_this_port'].includes(c.name));
     const withB = data.certified && OVERVIEW.certified_tiers.includes('B');
+    if (STATIC) {
+        document.querySelector('#decision .lede').innerHTML = `In this read-only demo, certification was computed when the site was exported
+            (<code>tools/export_static.py</code>), from the scores the latest green main CI run recorded. It is shown as certified only if
+            that run scored exactly the committed Python model. Run <code>make demo</code> locally to recompute it.`;
+    }
     const v = $('verdict');
     v.className = `verdict ${data.certified ? 'ok' : 'bad'}`;
     v.innerHTML = `${ic(data.certified ? 'ok' : 'bad')}<div>
         <h2>${data.certified ? `Certified for ${OVERVIEW.certified_tiers.map(t => `Tier ${t}`).join(' and ')}` : 'Not certified'}</h2>
+        ${STATIC ? `<p><b>${esc(STATIC.label)}</b> (${ciRun()}).</p>` : ''}
         <p>${data.certified
-            ? `All ${data.criteria.length} criteria hold right now: the frozen script scored this exact model, every Tier A training case passes both rules${withB ? ', every Tier B case passes in the same scoring' : ''}, and every file traces to Argon.`
-            : `${failing.length} of ${data.criteria.length} criteria fail: ${failing.map(c => esc((CRITERIA[c.name] ?? [c.name])[0].toLowerCase())).join('; ')}.`
-              + (needsScoring ? ' On a fresh checkout this is expected: run <code>make ref refs suite-tier-a</code> to score the port on this machine, then reload.' : '')}</p></div>`;
+            ? `All ${data.criteria.length} criteria hold${STATIC ? '' : ' right now'}: the frozen script scored this exact model, every Tier A training case passes both rules${withB ? ', every Tier B case passes in the same scoring' : ''}, and every file traces to Argon.`
+            : `${failing.length} of ${data.criteria.length} criteria fail: ${failing.map(c => esc((criteria[c.name] ?? [c.name])[0].toLowerCase())).join('; ')}.`
+              + (needsScoring && !STATIC ? ' On a fresh checkout this is expected: run <code>make ref refs suite-tier-a</code> to score the port on this machine, then reload.' : '')}</p></div>`;
     $('criteria').innerHTML = data.criteria.map(c => {
-        const [title, why] = CRITERIA[c.name] ?? [c.name, ''];
+        const [title, why] = criteria[c.name] ?? [c.name, ''];
         return `<li><span role="img" aria-label="${c.ok ? 'pass' : 'fail'}">${ic(c.ok ? 'ok' : 'bad')}</span>
             <div><div class="title">${esc(title)}</div><div class="why">${esc(why)}</div></div>
             <div class="detail"><span class="muted">${esc(c.name)}:</span> ${esc(c.detail)}</div></li>`;
@@ -587,6 +623,11 @@ function initWhatif() {
         <span>${ic('bad')}exceeds the standard</span>
         <span><i class="std"></i>NAAQS</span><span><i class="near"></i>${NEAR_LIMIT_PCT}% of NAAQS</span>`;
     applyPollutant();
+    if (STATIC) {
+        $('wi-controls').querySelectorAll('input').forEach(el => { el.disabled = true; });
+        $('wi-controls').querySelector('h2').insertAdjacentHTML('afterend', `<p class="demo-note">${ic('neutral')}<span><b>Read-only demo: run locally to recompute.</b>
+            Only the precomputed fuel-mix presets are available here; <code>make demo</code> lets you move the stack, emission, background and site inputs.</span></p>`);
+    }
     $('wi-pollutant').onchange = () => { applyPollutant(); scheduleWhatif(); };
     $('wi-fuel').onchange = () => { applyPreset(); scheduleWhatif(); };
     $('wi-bldg').onchange = () => { $('wi-bldg-box').style.display = $('wi-bldg').checked ? 'block' : 'none'; scheduleWhatif(); };
@@ -636,7 +677,7 @@ async function updateWhatif() {
         building_distance: bldg ? $('wi-bd').value : 0,
         urban: $('wi-urban').checked, complex_terrain: $('wi-terrain').checked,
     });
-    const data = await getJson(`/api/whatif?${q}`);
+    const data = await getJson(STATIC ? `/api/whatif/${$('wi-pollutant').value}/${$('wi-fuel').value}` : `/api/whatif?${q}`);
     wiLast = data;
     renderVerdicts(data);
     renderMaps(data);
@@ -808,7 +849,8 @@ function show(screen) {
     if (location.hash.slice(1) !== screen) history.replaceState(null, '', `#${screen}`);
     loaded[screen] = loaders[screen]().catch(err => {
         console.error(err);
-        $(screen).insertAdjacentHTML('afterbegin', `<div class="error"><b>Could not load this tab:</b> ${esc(err.message)}. Is <code>server.py</code> still running?</div>`);
+        $(screen).insertAdjacentHTML('afterbegin', `<div class="error"><b>Could not load this tab:</b> ${esc(err.message)}. ${STATIC
+            ? 'The static export may be incomplete: rerun <code>make export-static</code>.' : 'Is <code>server.py</code> still running?'}</div>`);
     });
     return loaded[screen];
 }

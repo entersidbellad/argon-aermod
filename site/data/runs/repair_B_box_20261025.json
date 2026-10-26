@@ -1,0 +1,54 @@
+{
+ "id": "repair_B_box_20261025",
+ "kind": "repair",
+ "tier": "B",
+ "model": "gemini-4-argon",
+ "thinking": "high",
+ "prompt_tokens": null,
+ "token_method": null,
+ "fortran_pack": null,
+ "expected_input_multiplier": null,
+ "replies": 0,
+ "interactions": [],
+ "output_tokens": 0,
+ "usage": {
+  "total_input_tokens": 0,
+  "total_output_tokens": 0,
+  "total_thought_tokens": 0,
+  "total_tokens": 0
+ },
+ "cost_usd": null,
+ "cost_complete": false,
+ "iterations": null,
+ "patches_kept": null,
+ "cases_passing": null,
+ "cases_scored": null,
+ "stop_reason": null,
+ "spent_usd": null,
+ "run": {
+  "run_id": "repair_B_box_20261025",
+  "kind": "repair",
+  "tier": "B",
+  "model": "gemini-4-argon",
+  "thinking": "high",
+  "iterations": 20,
+  "cases": [
+   "aertest_nobldg",
+   "CAPPED_STACK2",
+   "CAPPED_STACK2C0",
+   "CAPPED_STACK2CE",
+   "HRDOW_STACK1",
+   "FLATELEV_FLAT_STK",
+   "AERTEST",
+   "CAPPED_STACK1C0",
+   "ALLSRCS_STACKDW"
+  ],
+  "budget_usd": 45.0,
+  "prices_usd_per_mtok": {
+   "input": 2.0,
+   "output": 10.0
+  },
+  "stop_at_passing": null
+ },
+ "result": null
+}

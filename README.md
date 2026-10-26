@@ -163,6 +163,14 @@ Tier B shows "in progress" until every Tier B case passes in `results/tier_B.md`
 |---|---|---|
 | ![Model verification tab](docs/screenshots/proof.png) | ![Certification tab](docs/screenshots/decision.png) | ![How it was built tab](docs/screenshots/port.png) |
 
+## Deploy to Vercel
+
+`site/` is a committed, static, read-only copy of the dashboard. Import this GitHub repository in Vercel and deploy with no settings changed: `vercel.json` selects no framework, skips install and build, and serves `site/`; `.vercelignore` uploads only `site/` and `vercel.json`. No Python runs on Vercel, no API key is involved, and the site never calls Gemini or Argon. Preview it locally with `python3 -m http.server -d site`.
+
+- **How it is produced:** `make export-static` (`tools/export_static.py`) calls `server.py`'s API in-process and writes every response the page fetches as JSON under `site/data/`, next to a copy of `ui/`. With `data/static.js` present, `ui/app.js` reads those files instead of `/api/`; under `server.py` nothing changes. CI fails if `site/` is stale, so rerun the export and commit it after changing `ui/`, `results/`, `agent/runs/`, `whatif/` or the port.
+- **What is disabled:** nothing is computed when the site is served. The Fuel & stack check offers each pollutant's precomputed fuel-mix presets; the stack, emission, background and site inputs are disabled with a "read-only demo: run locally to recompute" note. Nothing can be rescored.
+- **Certification:** scores come from `results/ci_port_suite.json`, the `out/suite_port.json` uploaded by the `port-suite` job of the latest green `main` CI run (refresh with `python tools/export_static.py --fetch-ci`, which needs `gh`). The export judges it with the same `certify()` as the live dashboard, so the site says "Certified by CI run <id> (<date>) on commit <sha>" only if that run scored exactly the committed `port/aermod_py`. Otherwise it says "Not certified" and names both port digests.
+
 ## Kiln what-if demo
 
 A cement plant wants to burn part of its kiln fuel as alternative fuels (tyres, plastics, refuse-derived fuel) or change its stack. Will the air around the plant still meet the NAAQS for SO2 and NO2?
@@ -198,8 +206,9 @@ More detail on what is and is not verified: [`PROJECT_STATUS.md`](PROJECT_STATUS
 | `split.py` | Splits Argon replies into `port/aermod_py`; `--verify` checks provenance |
 | `pack.py` | Packs the in-scope Fortran into `context/` and counts tokens |
 | `server.py`, `ui/` | The read-only dashboard (FastAPI + one static page, no external assets) |
+| `site/`, `vercel.json` | Static export of the dashboard (`make export-static`) and its Vercel config |
 | `whatif/` | Kiln demo: `kiln.toml` (config), `scenario.py`, `precompute.py`, `cache/` |
-| `tools/` | `readme_results.py` (this README's results block), `screenshots.py` (`docs/screenshots/`) |
+| `tools/` | `readme_results.py` (this README's results block), `screenshots.py` (`docs/screenshots/`), `export_static.py` (`site/`) |
 | `tests/` | pytest; `stub_ports/` hold replay, zero and buggy fake ports |
 
 ## Under the hood

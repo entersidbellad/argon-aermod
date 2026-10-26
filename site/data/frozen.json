@@ -1,0 +1,12 @@
+{
+ "compare_hash": "f7f31eed0f4718cead4b77384be2eac1779a8fc75c957fefdeaf0eee72461146",
+ "approved_hash": "f7f31eed0f4718cead4b77384be2eac1779a8fc75c957fefdeaf0eee72461146",
+ "matches": true,
+ "rules": {
+  "slope_tolerance": 0.001,
+  "zero_agreement_min": 0.999,
+  "relative_tolerance": 0.0001,
+  "significant_fraction": 0.01,
+  "percentile": 99.0
+ }
+}
