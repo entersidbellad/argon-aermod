@@ -140,6 +140,29 @@ def _num(text: str) -> float | None:
         return None
 
 
+_RATE = re.compile(r"\$([\d.]+)\s*/\s*1M\s+(input|output)")
+
+
+def _rates(prices: str | None) -> dict[str, float]:
+    """USD per token from a "Prices:" line such as "$2 / 1M input, $10 / 1M output"."""
+    return {kind: float(usd) / 1e6 for usd, kind in _RATE.findall(prices or "")}
+
+
+def _call_cost(call: dict, rates: dict[str, float]) -> float | None:
+    """A call's unrounded cost from its token columns, else its cent-rounded Cost cell.
+
+    Totals summed from rounded cells drift by cents. The computed cost is used only
+    when it agrees with the cell to the cent; otherwise the table was priced some
+    other way and the cell is kept.
+    """
+    cell = call["cost_usd"]
+    tokens = (call["billed_input_tokens"], call["output_tokens"], call["thought_tokens"])
+    if cell is None or None in tokens or rates.keys() != {"input", "output"}:
+        return cell
+    exact = tokens[0] * rates["input"] + (tokens[1] + tokens[2]) * rates["output"]
+    return exact if abs(exact - cell) <= 0.005 + 1e-9 else cell
+
+
 def _snapshot_case(row: dict) -> dict:
     passes = row.get("result", "").upper() == "PASS"
     slopes = [_num(s) for s in _col(row, "slope").split("/")]
@@ -178,6 +201,9 @@ def _snapshot(path: Path) -> dict:
     digest = re.search(r"sha256\s+`([0-9a-f]{64})`", text)
     scored = re.search(r"Scored\s+(.+?)\s+on harness\s+`([0-9a-f]+)`", text)
     prices = re.search(r"^Prices:\s*(.+)$", text, re.MULTILINE)
+    rates = _rates(prices.group(1) if prices else None)
+    for call in calls:
+        call["cost_usd"] = _call_cost(call, rates)
     return {
         "path": f"results/{path.name}",
         "title": title.group(1) if title else path.stem,
